@@ -1,9 +1,9 @@
 from collections.abc import Generator
-from typing import Annotated
+from typing import Annotated, Optional
 
 import jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, status, Request, Cookie
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 from sqlmodel import Session
@@ -14,7 +14,8 @@ from app.core.db import engine
 from app.models import TokenPayload, User
 
 reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/login/access-token"
+    tokenUrl=f"{settings.API_V1_STR}/login/access-token",
+    auto_error=False  # Don't auto-error so we can check cookies
 )
 
 
@@ -24,10 +25,43 @@ def get_db() -> Generator[Session, None, None]:
 
 
 SessionDep = Annotated[Session, Depends(get_db)]
-TokenDep = Annotated[str, Depends(reusable_oauth2)]
+TokenDep = Annotated[Optional[str], Depends(reusable_oauth2)]
+
+# TODO: For now, I added coockie based authentication on top of using Autherization header.
+# Once all login endpoints are migrated to use the new cookie based authentication,
+# we can remove Authorization header based authentication.
 
 
-def get_current_user(session: SessionDep, token: TokenDep) -> User:
+def get_token_from_cookie_or_header(
+    request: Request,
+    authorization_token: TokenDep,
+    access_token: Optional[str] = Cookie(default=None),
+) -> str:
+    """
+    Get token from either cookie or Authorization header.
+    Priority: Authorization header > Cookie
+    """
+    # First try to get token from Authorization header
+    if authorization_token:
+        return authorization_token
+
+    # If no Authorization header, try cookie
+    if access_token:
+        return access_token
+
+    # If neither is available, raise an exception
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+TokenFromCookieOrHeader = Annotated[str,
+                                    Depends(get_token_from_cookie_or_header)]
+
+
+def get_current_user(session: SessionDep, token: TokenFromCookieOrHeader) -> User:
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
