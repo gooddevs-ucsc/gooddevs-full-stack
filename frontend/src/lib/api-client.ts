@@ -17,6 +17,9 @@ export const api = Axios.create({
   baseURL: env.API_URL,
 });
 
+// Set default headers for the API client
+api.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
+
 api.interceptors.request.use(authRequestInterceptor);
 api.interceptors.response.use(
   (response) => {
