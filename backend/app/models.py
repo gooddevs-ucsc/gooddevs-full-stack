@@ -1,7 +1,13 @@
 import uuid
+import enum
 
 from pydantic import EmailStr
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, Column, Enum
+
+
+class UserRole(str, enum.Enum):
+    ADMIN = "ADMIN"
+    USER = "USER"
 
 
 # Shared properties
@@ -9,7 +15,10 @@ class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     is_active: bool = True
     is_superuser: bool = False
-    full_name: str | None = Field(default=None, max_length=255)
+    firstname: str | None = Field(default=None, max_length=255)
+    lastname: str | None = Field(default=None, max_length=255)
+    role: UserRole = Field(default=UserRole.USER,
+                           sa_column=Column(Enum(UserRole)))
 
 
 # Properties to receive via API on creation
