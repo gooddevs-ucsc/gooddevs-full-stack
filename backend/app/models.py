@@ -7,7 +7,9 @@ from sqlmodel import Field, Relationship, SQLModel, Column, Enum
 
 class UserRole(str, enum.Enum):
     ADMIN = "ADMIN"
-    USER = "USER"
+    VOLUNTEER = "VOLUNTEER"
+    REQUESTER = "REQUESTER"
+    SPONSOR = "SPONSOR"
 
 
 # Shared properties
@@ -17,7 +19,7 @@ class UserBase(SQLModel):
     is_superuser: bool = False
     firstname: str | None = Field(default=None, max_length=255)
     lastname: str | None = Field(default=None, max_length=255)
-    role: UserRole = Field(default=UserRole.USER,
+    role: UserRole = Field(default=UserRole.VOLUNTEER,
                            sa_column=Column(Enum(UserRole)))
 
 
