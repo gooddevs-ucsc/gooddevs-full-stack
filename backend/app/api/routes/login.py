@@ -54,18 +54,9 @@ def login(
     )
 
     return AuthResponse(
-        user=UserPublic(
-            id=user.id,
-            email=user.email,
-            is_active=user.is_active,
-            is_superuser=user.is_superuser,
-            firstname=user.firstname,
-            lastname=user.lastname,
-            created_at=user.firstname,
-
-
-        ),
-        jwt=access_token)
+        user=user,
+        jwt=access_token
+    )
 
 
 @router.get("/auth/me", response_model=UserResponse)
