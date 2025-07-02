@@ -9,8 +9,18 @@ from app import crud
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.core import security
 from app.core.config import settings
-from app.core.security import get_password_hash
-from app.models import Message, NewPassword, Token, UserPublic, AuthResponse, UserResponse
+from app.core.security import get_password_hash, verify_password
+from app.models import (
+    Message,
+    NewPassword,
+    Token,
+    UserPublic,
+    AuthResponse,
+    UserResponse,
+    UserCreate,
+    UserRegister,
+    UserRole,
+)
 from app.utils import (
     generate_password_reset_token,
     generate_reset_password_email,
@@ -19,6 +29,77 @@ from app.utils import (
 )
 
 router = APIRouter(tags=["login"])
+
+
+@router.post("/auth/register", response_model=AuthResponse)
+def signup(
+    session: SessionDep,
+    user_in: UserRegister,
+    response: Response
+) -> AuthResponse:
+    """
+    Create new user and set authentication cookie.
+    """
+    user = crud.get_user_by_email(session=session, email=user_in.email)
+    if user:
+        raise HTTPException(
+            status_code=400,
+            detail="The user with this email already exists in the system",
+        )
+
+    # Check if user is trying to register as admin
+    if user_in.role == UserRole.ADMIN:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot register as admin",
+        )
+
+    user_create = UserCreate.model_validate(user_in)
+    user = crud.create_user(session=session, user_create=user_create)
+
+    # Create and set access token just like the login endpoint
+    access_token_expires = timedelta(
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = security.create_access_token(
+        user.id, expires_delta=access_token_expires
+    )
+
+    # Set the access token as an httpOnly cookie
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
+        httponly=True,
+        secure=settings.ENVIRONMENT == "production",  # Only secure in production
+        samesite="lax"
+    )
+
+    return AuthResponse(
+        user=user,
+        jwt=access_token
+    )
+
+    # Create and set access token just like the login endpoint
+    access_token_expires = timedelta(
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = security.create_access_token(
+        user.id, expires_delta=access_token_expires
+    )
+
+    # Set the access token as an httpOnly cookie
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
+        httponly=True,
+        secure=settings.ENVIRONMENT == "production",  # Only secure in production
+        samesite="lax"
+    )
+
+    return AuthResponse(
+        user=user,
+        jwt=access_token
+    )
 
 
 @router.post("/auth/login")
