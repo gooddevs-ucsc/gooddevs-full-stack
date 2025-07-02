@@ -10,7 +10,7 @@ from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.core import security
 from app.core.config import settings
 from app.core.security import get_password_hash
-from app.models import Message, NewPassword, Token, UserPublic
+from app.models import Message, NewPassword, Token, UserPublic, AuthResponse, UserResponse
 from app.utils import (
     generate_password_reset_token,
     generate_reset_password_email,
@@ -26,7 +26,7 @@ def login(
     session: SessionDep,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     response: Response
-) -> Token:
+) -> AuthResponse:
     """
     Login endpoint sets a cookie of the access
     """
@@ -53,19 +53,27 @@ def login(
         samesite="lax"
     )
 
-    return Token(
-        access_token=security.create_access_token(
-            user.id, expires_delta=access_token_expires
-        )
-    )
+    return AuthResponse(
+        user=UserPublic(
+            id=user.id,
+            email=user.email,
+            is_active=user.is_active,
+            is_superuser=user.is_superuser,
+            firstname=user.firstname,
+            lastname=user.lastname,
+            created_at=user.firstname,
 
 
-@router.get("/auth/me", response_model=UserPublic)
+        ),
+        jwt=access_token)
+
+
+@router.get("/auth/me", response_model=UserResponse)
 def get_current_user_info(current_user: CurrentUser) -> Any:
     """
     Get current user information (works with both cookie and bearer token auth)
     """
-    return current_user
+    return UserResponse(data=current_user)
 
 
 @router.post("/login/access-token")
