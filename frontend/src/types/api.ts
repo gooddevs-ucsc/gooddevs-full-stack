@@ -18,8 +18,8 @@ export type Meta = {
 };
 
 export type User = Entity<{
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   email: string;
   role: 'ADMIN' | 'USER';
   bio: string;
