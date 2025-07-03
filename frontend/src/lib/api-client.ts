@@ -24,8 +24,9 @@ api.interceptors.response.use(
   },
   (error) => {
     if (
-      error.response?.status === 401 &&
-      window.location.pathname === paths.auth.login.path
+      (error.response?.status === 401 &&
+        window.location.pathname === paths.auth.login.path) ||
+      window.location.pathname === paths.auth.register.path
     ) {
       return { data: null };
     }
