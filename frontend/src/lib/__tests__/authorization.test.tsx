@@ -1,6 +1,7 @@
 import { createUser, renderApp, screen } from '@/testing/test-utils';
 
-import { Authorization, ROLES } from '../authorization';
+import { Authorization } from '../authorization';
+import { ROLES } from '../roles';
 
 test('should view protected resource if user role is matching', async () => {
   const user = await createUser({
@@ -23,7 +24,7 @@ test('should view protected resource if user role is matching', async () => {
 
 test('should not view protected resource if user role does not match and show fallback message instead', async () => {
   const user = await createUser({
-    role: ROLES.USER,
+    role: ROLES.VOLUNTEER,
   });
 
   const protectedResource = 'This is very confidential data';
@@ -61,7 +62,7 @@ test('should view protected resource if policy check passes', async () => {
 
 test('should not view protected resource if policy check fails and show fallback message instead', async () => {
   const user = await createUser({
-    role: ROLES.USER,
+    role: ROLES.VOLUNTEER,
   });
 
   const protectedResource = 'This is very confidential data';

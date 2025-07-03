@@ -6,6 +6,7 @@ import { paths } from '@/config/paths';
 import { AuthResponse, User } from '@/types/api';
 
 import { api } from './api-client';
+import { ROLES } from './roles';
 
 // api call definitions for auth (types, schemas, requests):
 // these are not part of features as this is a module shared across features
@@ -27,29 +28,20 @@ export const loginInputSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginInputSchema>;
 const loginWithEmailAndPassword = (data: LoginInput): Promise<AuthResponse> => {
-  return api.post('/auth/login', data);
+  return api.post('/auth/login', data, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
 };
 
-export const registerInputSchema = z
-  .object({
-    email: z.string().min(1, 'Required'),
-    firstName: z.string().min(1, 'Required'),
-    lastName: z.string().min(1, 'Required'),
-    password: z.string().min(5, 'Required'),
-  })
-  .and(
-    z
-      .object({
-        teamId: z.string().min(1, 'Required'),
-        teamName: z.null().default(null),
-      })
-      .or(
-        z.object({
-          teamName: z.string().min(1, 'Required'),
-          teamId: z.null().default(null),
-        }),
-      ),
-  );
+export const registerInputSchema = z.object({
+  email: z.string().min(1, 'Required').email('Invalid email'),
+  firstname: z.string().min(1, 'Required'),
+  lastname: z.string().min(1, 'Required'),
+  password: z.string().min(5, 'Required'),
+  role: z.enum([ROLES.ADMIN, ROLES.SPONSOR, ROLES.VOLUNTEER, ROLES.REQUESTER]),
+});
 
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 

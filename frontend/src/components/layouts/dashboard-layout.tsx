@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { paths } from '@/config/paths';
 import { useLogout } from '@/lib/auth';
-import { ROLES, useAuthorization } from '@/lib/authorization';
+import { useAuthorization } from '@/lib/authorization';
+import { ROLES } from '@/lib/roles';
 import { cn } from '@/utils/cn';
 
 import {

@@ -21,7 +21,7 @@ export type User = Entity<{
   firstname: string;
   lastname: string;
   email: string;
-  role: 'ADMIN' | 'USER';
+  role: 'ADMIN' | 'SPONSOR' | 'VOLUNTEER' | 'REQUESTER';
   bio: string;
 }>;
 

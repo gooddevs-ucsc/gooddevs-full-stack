@@ -2,24 +2,15 @@ import * as React from 'react';
 import { Link, useSearchParams } from 'react-router';
 
 import { Button } from '@/components/ui/button';
-import { Form, Input, Select, Label, Switch } from '@/components/ui/form';
+import { Form, Input, Select } from '@/components/ui/form';
 import { paths } from '@/config/paths';
 import { useRegister, registerInputSchema } from '@/lib/auth';
-import { Team } from '@/types/api';
 
 type RegisterFormProps = {
   onSuccess: () => void;
-  chooseTeam: boolean;
-  setChooseTeam: () => void;
-  teams?: Team[];
 };
 
-export const RegisterForm = ({
-  onSuccess,
-  chooseTeam,
-  setChooseTeam,
-  teams,
-}: RegisterFormProps) => {
+export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
   const registering = useRegister({ onSuccess });
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get('redirectTo');
@@ -40,14 +31,14 @@ export const RegisterForm = ({
             <Input
               type="text"
               label="First Name"
-              error={formState.errors['firstName']}
-              registration={register('firstName')}
+              error={formState.errors['firstname']}
+              registration={register('firstname')}
             />
             <Input
               type="text"
               label="Last Name"
-              error={formState.errors['lastName']}
-              registration={register('lastName')}
+              error={formState.errors['lastname']}
+              registration={register('lastname')}
             />
             <Input
               type="email"
@@ -61,37 +52,16 @@ export const RegisterForm = ({
               error={formState.errors['password']}
               registration={register('password')}
             />
+            <Select
+              label="Role"
+              error={formState.errors['role']}
+              registration={register('role')}
+              options={[
+                { label: 'Volunteer', value: 'VOLUNTEER' },
+                { label: 'Requester', value: 'REQUESTER' },
+              ]}
+            />
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={chooseTeam}
-                onCheckedChange={setChooseTeam}
-                className={`${
-                  chooseTeam ? 'bg-blue-600' : 'bg-gray-200'
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2`}
-                id="choose-team"
-              />
-              <Label htmlFor="airplane-mode">Join Existing Team</Label>
-            </div>
-
-            {chooseTeam && teams ? (
-              <Select
-                label="Team"
-                error={formState.errors['teamId']}
-                registration={register('teamId')}
-                options={teams?.map((team) => ({
-                  label: team.name,
-                  value: team.id,
-                }))}
-              />
-            ) : (
-              <Input
-                type="text"
-                label="Team Name"
-                error={formState.errors['teamName']}
-                registration={register('teamName')}
-              />
-            )}
             <div>
               <Button
                 isLoading={registering.isPending}
