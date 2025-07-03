@@ -126,6 +126,24 @@ def get_current_user_info(current_user: CurrentUser) -> Any:
     return UserResponse(data=current_user)
 
 
+@router.post("/auth/logout")
+def logout(response: Response) -> Message:
+    """
+    Logout endpoint that clears the access token cookie
+    """
+    # Clear the access token cookie by setting max_age to 0
+    response.set_cookie(
+        key="access_token",
+        value="",
+        max_age=0,
+        httponly=True,
+        secure=settings.ENVIRONMENT == "production",  # Only secure in production
+        samesite="lax"
+    )
+
+    return Message(message="Logged out")
+
+
 @router.post("/login/access-token")
 def login_access_token(
     session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
