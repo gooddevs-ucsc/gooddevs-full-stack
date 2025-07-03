@@ -79,28 +79,6 @@ def signup(
         jwt=access_token
     )
 
-    # Create and set access token just like the login endpoint
-    access_token_expires = timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = security.create_access_token(
-        user.id, expires_delta=access_token_expires
-    )
-
-    # Set the access token as an httpOnly cookie
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
-        httponly=True,
-        secure=settings.ENVIRONMENT == "production",  # Only secure in production
-        samesite="lax"
-    )
-
-    return AuthResponse(
-        user=user,
-        jwt=access_token
-    )
-
 
 @router.post("/auth/login")
 def login(
