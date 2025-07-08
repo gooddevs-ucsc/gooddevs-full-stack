@@ -1,6 +1,7 @@
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { createBrowserRouter } from 'react-router';
+import SponsorRoot from './routes/sponsor/root';
 import { RouterProvider } from 'react-router/dom';
 
 import { paths } from '@/config/paths';
@@ -70,6 +71,21 @@ export const createAppRouter = (queryClient: QueryClient) =>
           path: paths.app.dashboard.path,
           lazy: () =>
             import('./routes/app/dashboard').then(convert(queryClient)),
+        },
+      ],
+    },
+    {
+      path: paths.sponsor.root.path,
+      element: (
+        <ProtectedRoute>
+          <SponsorRoot />
+        </ProtectedRoute>
+      ),
+      ErrorBoundary: () => <div>Sponsor area error!</div>,
+      children: [
+        {
+          path: paths.sponsor.dashboard.path,
+          lazy: () => import('./routes/sponsor/Dashboard').then(convert(queryClient)),
         },
       ],
     },

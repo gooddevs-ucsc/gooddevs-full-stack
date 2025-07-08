@@ -1,3 +1,5 @@
+import { get } from "http";
+
 export const paths = {
   home: {
     path: '/',
@@ -41,6 +43,16 @@ export const paths = {
     profile: {
       path: 'profile',
       getHref: () => '/app/profile',
+    },
+  },
+  sponsor:{
+    root: {
+      path: '/sponsor',
+      getHref: () => '/sponsor',
+    },
+    dashboard: {
+      path: '/sponsor/dashboard',
+      getHref: () => '/sponsor/Dashboard',
     },
   },
 } as const;
