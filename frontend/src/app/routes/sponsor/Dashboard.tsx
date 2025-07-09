@@ -1,5 +1,5 @@
-import Sidebar from './components/Sidebar';
-import DashboardContent from './components/DashboardContent';
+import Sidebar from '@/features/sponsor/components/Sidebar';
+import DashboardContent from '@/features/sponsor/components/DashboardContent';
 
 function Dashboard() {
   return (
