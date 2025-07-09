@@ -1,5 +1,6 @@
 import uuid
 import enum
+from datetime import datetime
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel, Column, Enum
@@ -10,6 +11,23 @@ class UserRole(str, enum.Enum):
     VOLUNTEER = "VOLUNTEER"
     REQUESTER = "REQUESTER"
     SPONSOR = "SPONSOR"
+
+
+class ProjectType(str, enum.Enum):
+    WEBSITE = "WEBSITE"
+    MOBILE_APP = "MOBILE_APP"
+    DATABASE = "DATABASE"
+    API = "API"
+    DESKTOP_APP = "DESKTOP_APP"
+    OTHER = "OTHER"
+
+
+class ProjectStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
 
 
 # Shared properties
@@ -59,6 +77,8 @@ class User(UserBase, table=True):
     hashed_password: str
     items: list["Item"] = Relationship(
         back_populates="owner", cascade_delete=True)
+    projects: list["Project"] = Relationship(
+        back_populates="requester", cascade_delete=True)
 
 
 # Properties to return via API, id is always required
@@ -110,6 +130,65 @@ class ItemPublic(ItemBase):
 
 class ItemsPublic(SQLModel):
     data: list[ItemPublic]
+    count: int
+
+
+# Shared properties
+class ProjectBase(SQLModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: str = Field(min_length=10, max_length=2000)
+    project_type: ProjectType = Field(sa_column=Column(Enum(ProjectType)))
+    preferred_technologies: str | None = Field(default=None, max_length=500)
+    estimated_timeline: str | None = Field(default=None, max_length=100)
+
+
+# Properties to receive via API on creation
+class ProjectCreate(ProjectBase):
+    pass
+
+
+# Properties to receive via API on update
+class ProjectUpdate(SQLModel):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(
+        default=None, min_length=10, max_length=2000)
+    project_type: ProjectType | None = Field(
+        default=None, sa_column=Column(Enum(ProjectType)))
+    preferred_technologies: str | None = Field(default=None, max_length=500)
+    estimated_timeline: str | None = Field(default=None, max_length=100)
+
+
+# Database model, database table inferred from class name
+class Project(ProjectBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    requester_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    status: ProjectStatus = Field(
+        default=ProjectStatus.PENDING, sa_column=Column(Enum(ProjectStatus)))
+
+    # Relationships
+    requester: User | None = Relationship(back_populates="projects")
+
+
+# Properties to return via API, id is always required
+class ProjectPublic(ProjectBase):
+    id: uuid.UUID
+    requester_id: uuid.UUID
+    status: ProjectStatus = Field(
+        default=ProjectStatus.PENDING, sa_column=Column(Enum(ProjectStatus)))
+    created_at: datetime
+    updated_at: datetime
+
+
+# Response wrapper for single project
+class ProjectResponse(SQLModel):
+    data: ProjectPublic
+
+
+class ProjectsPublic(SQLModel):
+    data: list[ProjectPublic]
     count: int
 
 

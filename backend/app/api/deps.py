@@ -36,7 +36,7 @@ def get_token_from_cookie_or_header(
     request: Request,
     authorization_token: TokenDep,
     access_token: Optional[str] = Cookie(default=None),
-) -> str:
+) -> Optional[str]:
     """
     Get token from either cookie or Authorization header.
     Priority: Authorization header > Cookie
@@ -49,15 +49,10 @@ def get_token_from_cookie_or_header(
     if access_token:
         return access_token
 
-    # If neither is available, raise an exception
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Not authenticated",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    return None
 
 
-TokenFromCookieOrHeader = Annotated[str,
+TokenFromCookieOrHeader = Annotated[Optional[str],
                                     Depends(get_token_from_cookie_or_header)]
 
 
@@ -81,6 +76,39 @@ def get_current_user(session: SessionDep, token: TokenFromCookieOrHeader) -> Use
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+# Optional authentication dependency for public endpoints
+
+
+def get_current_user_optional(
+    session: SessionDep,
+    token: TokenFromCookieOrHeader,
+) -> Optional[User]:
+    """
+    Get current user if authenticated, otherwise return None.
+    This allows endpoints to be accessed by both authenticated and non-authenticated users.
+    """
+    try:
+        if not token:
+            return None
+
+        # Validate token
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+        )
+        token_data = TokenPayload(**payload)
+        user = session.get(User, token_data.sub)
+
+        if not user or not user.is_active:
+            return None
+
+        return user
+    except (InvalidTokenError, ValidationError, AttributeError):
+        return None
+
+
+OptionalCurrentUser = Annotated[Optional[User],
+                                Depends(get_current_user_optional)]
 
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:

@@ -1,15 +1,17 @@
 import uuid
 from typing import Any
+from datetime import datetime, timezone
 
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate
+from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
-        user_create, update={"hashed_password": get_password_hash(user_create.password)}
+        user_create, update={
+            "hashed_password": get_password_hash(user_create.password)}
     )
     session.add(db_obj)
     session.commit()
@@ -52,3 +54,48 @@ def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -
     session.commit()
     session.refresh(db_item)
     return db_item
+
+
+# Project CRUD operations
+def create_project(*, session: Session, project_in: ProjectCreate, requester_id: uuid.UUID) -> Project:
+    db_project = Project.model_validate(
+        project_in, update={"requester_id": requester_id})
+    session.add(db_project)
+    session.commit()
+    session.refresh(db_project)
+    return db_project
+
+
+def get_project_by_id(*, session: Session, project_id: uuid.UUID) -> Project | None:
+    return session.get(Project, project_id)
+
+
+def get_approved_projects(*, session: Session, skip: int = 0, limit: int = 100) -> list[Project]:
+    statement = select(Project).where(
+        Project.status == ProjectStatus.APPROVED).offset(skip).limit(limit)
+    return session.exec(statement).all()
+
+
+def get_all_projects(*, session: Session, skip: int = 0, limit: int = 100) -> list[Project]:
+    statement = select(Project).offset(skip).limit(limit)
+    return session.exec(statement).all()
+
+
+def update_project(*, session: Session, db_project: Project, project_in: ProjectUpdate) -> Project:
+    project_data = project_in.model_dump(exclude_unset=True)
+    project_data["updated_at"] = datetime.now(timezone.utc)
+
+    db_project.sqlmodel_update(project_data)
+    session.add(db_project)
+    session.commit()
+    session.refresh(db_project)
+    return db_project
+
+
+def delete_project(*, session: Session, project_id: uuid.UUID) -> bool:
+    project = session.get(Project, project_id)
+    if project:
+        session.delete(project)
+        session.commit()
+        return True
+    return False
