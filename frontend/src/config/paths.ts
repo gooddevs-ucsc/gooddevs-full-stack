@@ -52,7 +52,7 @@ export const paths = {
     },
     dashboard: {
       path: '/sponsor/dashboard',
-      getHref: () => '/sponsor/Dashboard',
+      getHref: () => '/sponsor/dashboard',
     },
   },
 } as const;
