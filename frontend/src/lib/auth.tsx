@@ -1,4 +1,4 @@
-import { configureAuth } from 'react-query-auth';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { z } from 'zod';
 
@@ -6,6 +6,7 @@ import { paths } from '@/config/paths';
 import { AuthResponse, User } from '@/types/api';
 
 import { api } from './api-client';
+import { configureAuth } from './auth-utils';
 import { ROLES } from './roles';
 
 // api call definitions for auth (types, schemas, requests):

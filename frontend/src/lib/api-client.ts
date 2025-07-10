@@ -1,8 +1,6 @@
 import Axios, { InternalAxiosRequestConfig } from 'axios';
 
-import { useNotifications } from '@/components/ui/notifications';
 import { env } from '@/config/env';
-import { paths } from '@/config/paths';
 
 function authRequestInterceptor(config: InternalAxiosRequestConfig) {
   if (config.headers) {
@@ -23,26 +21,12 @@ api.interceptors.response.use(
     return response.data;
   },
   (error) => {
-    if (
-      (error.response?.status === 401 &&
-        window.location.pathname === paths.auth.login.path) ||
-      window.location.pathname === paths.auth.register.path
-    ) {
-      return { data: null };
-    }
-    const message = error.response?.data?.message || error.message;
-    useNotifications.getState().addNotification({
-      type: 'error',
-      title: 'Error',
-      message,
-    });
-
-    if (error.response?.status === 401) {
-      const searchParams = new URLSearchParams();
-      const redirectTo =
-        searchParams.get('redirectTo') || window.location.pathname;
-      window.location.href = paths.auth.login.getHref(redirectTo);
-    }
+    // const message = error.response?.data?.message || error.message;
+    // useNotifications.getState().addNotification({
+    //   type: 'error',
+    //   title: 'Error',
+    //   message,
+    // });
 
     return Promise.reject(error);
   },
