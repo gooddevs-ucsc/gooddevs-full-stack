@@ -1,14 +1,11 @@
-import { Home, PanelLeft, Folder, Users, User2 } from 'lucide-react';
+import { PanelLeft, Bell, Settings, User2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { NavLink, useNavigate, useNavigation } from 'react-router';
 
-import logo from '@/assets/logo.svg';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { paths } from '@/config/paths';
 import { useLogout } from '@/lib/auth';
-import { useAuthorization } from '@/lib/authorization';
-import { ROLES } from '@/lib/roles';
 import { cn } from '@/utils/cn';
 
 import {
@@ -20,7 +17,7 @@ import {
 } from '../ui/dropdown';
 import { Link } from '../ui/link';
 
-type SideNavigationItem = {
+export type SideNavigationItem = {
   name: string;
   to: string;
   icon: (props: React.SVGProps<SVGSVGElement>) => JSX.Element;
@@ -29,9 +26,8 @@ type SideNavigationItem = {
 const Logo = () => {
   return (
     <Link className="flex items-center text-white" to={paths.home.getHref()}>
-      <img className="h-8 w-auto" src={logo} alt="Workflow" />
-      <span className="text-sm font-semibold text-white">
-        Bulletproof React
+      <span className="ml-2 bg-gradient-to-r from-accent to-accent/80 bg-clip-text text-lg font-semibold text-transparent">
+        GoodDevs
       </span>
     </Link>
   );
@@ -71,134 +67,157 @@ const Progress = () => {
 
   return (
     <div
-      className="fixed left-0 top-0 h-1 bg-blue-500 transition-all duration-200 ease-in-out"
+      className="fixed left-0 top-0 z-50 h-1 bg-primary transition-all duration-200 ease-in-out"
       style={{ width: `${progress}%` }}
     ></div>
   );
 };
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
+type DashboardLayoutProps = {
+  children: React.ReactNode;
+  navigation: SideNavigationItem[];
+};
+
+export function DashboardLayout({
+  children,
+  navigation,
+}: DashboardLayoutProps) {
   const navigate = useNavigate();
   const logout = useLogout({
     onSuccess: () => navigate(paths.auth.login.getHref(location.pathname)),
   });
-  const { checkAccess } = useAuthorization();
-  const navigation = [
-    { name: 'Dashboard', to: paths.app.dashboard.getHref(), icon: Home },
-    { name: 'Discussions', to: paths.app.discussions.getHref(), icon: Folder },
-    checkAccess({ allowedRoles: [ROLES.ADMIN] }) && {
-      name: 'Users',
-      to: paths.app.users.getHref(),
-      icon: Users,
-    },
-  ].filter(Boolean) as SideNavigationItem[];
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <aside className="fixed inset-y-0 left-0 z-10 hidden w-60 flex-col border-r bg-black sm:flex">
-        <nav className="flex flex-col items-center gap-4 px-2 py-4">
-          <div className="flex h-16 shrink-0 items-center px-4">
-            <Logo />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      <Progress />
+
+      {/* Modern Header */}
+      <header className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
+        <div className="flex h-16 items-center justify-between px-6">
+          <div className="flex items-center gap-4">
+            <Drawer>
+              <DrawerTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="rounded-full hover:bg-slate-100/80 sm:hidden"
+                >
+                  <PanelLeft className="size-5" />
+                  <span className="sr-only">Toggle Menu</span>
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent
+                side="left"
+                className="border-r border-slate-200/60 bg-white/95 pt-10 text-slate-900 backdrop-blur-xl sm:max-w-64"
+              >
+                <nav className="grid gap-2 px-4 text-sm font-medium">
+                  <div className="flex h-16 shrink-0 items-center px-4">
+                    <Logo />
+                  </div>
+                  {navigation.map((item) => (
+                    <NavLink
+                      key={item.name}
+                      to={item.to}
+                      end
+                      className={({ isActive }) =>
+                        cn(
+                          'flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-600 transition-all hover:bg-slate-100/80 hover:text-slate-900',
+                          isActive && 'bg-primary/10 text-primary shadow-sm',
+                        )
+                      }
+                    >
+                      <item.icon className="size-5" />
+                      {item.name}
+                    </NavLink>
+                  ))}
+                </nav>
+              </DrawerContent>
+            </Drawer>
+
+            <Link
+              to={paths.home.getHref()}
+              className="flex items-center gap-2 transition-opacity hover:opacity-80"
+            >
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-xl font-bold text-transparent">
+                GoodDevs
+              </span>
+            </Link>
           </div>
-          {navigation.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.to}
-              end={item.name !== 'Discussions'}
-              className={({ isActive }) =>
-                cn(
-                  'text-gray-300 hover:bg-gray-700 hover:text-white',
-                  'group flex flex-1 w-full items-center rounded-md p-2 text-base font-medium',
-                  isActive && 'bg-gray-900 text-white',
-                )
-              }
+
+          <div className="flex items-center gap-3">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="rounded-full hover:bg-slate-100/80"
             >
-              <item.icon
-                className={cn(
-                  'text-gray-400 group-hover:text-gray-300',
-                  'mr-4 size-6 shrink-0',
-                )}
-                aria-hidden="true"
-              />
-              {item.name}
-            </NavLink>
-          ))}
-        </nav>
-      </aside>
-      <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-60">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:justify-end sm:border-0 sm:bg-transparent sm:px-6">
-          <Progress />
-          <Drawer>
-            <DrawerTrigger asChild>
-              <Button size="icon" variant="outline" className="sm:hidden">
-                <PanelLeft className="size-5" />
-                <span className="sr-only">Toggle Menu</span>
-              </Button>
-            </DrawerTrigger>
-            <DrawerContent
-              side="left"
-              className="bg-black pt-10 text-white sm:max-w-60"
-            >
-              <nav className="grid gap-6 text-lg font-medium">
-                <div className="flex h-16 shrink-0 items-center px-4">
-                  <Logo />
-                </div>
-                {navigation.map((item) => (
-                  <NavLink
-                    key={item.name}
-                    to={item.to}
-                    end
-                    className={({ isActive }) =>
-                      cn(
-                        'text-gray-300 hover:bg-gray-700 hover:text-white',
-                        'group flex flex-1 w-full items-center rounded-md p-2 text-base font-medium',
-                        isActive && 'bg-gray-900 text-white',
-                      )
-                    }
-                  >
-                    <item.icon
-                      className={cn(
-                        'text-gray-400 group-hover:text-gray-300',
-                        'mr-4 size-6 shrink-0',
-                      )}
-                      aria-hidden="true"
-                    />
-                    {item.name}
-                  </NavLink>
-                ))}
-              </nav>
-            </DrawerContent>
-          </Drawer>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="overflow-hidden rounded-full"
+              <Bell className="size-5 text-slate-600" />
+              <span className="sr-only">Notifications</span>
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full hover:bg-slate-100/80"
+                >
+                  <span className="sr-only">Open user menu</span>
+                  <User2 className="size-5 text-slate-600" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  onClick={() => navigate(paths.app.profile.getHref())}
+                  className="cursor-pointer"
+                >
+                  <User2 className="mr-2 size-4" />
+                  Your Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
+                  <Settings className="mr-2 size-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700"
+                  onClick={() => logout.mutate({})}
+                >
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex">
+        {/* Modern Sidebar */}
+        <aside className="fixed left-0 top-16 z-30 hidden h-[calc(100vh-4rem)] w-64 border-r border-slate-200/60 bg-white/40 backdrop-blur-xl sm:block">
+          <nav className="flex h-full flex-col gap-2 p-4">
+            {navigation.map((item) => (
+              <NavLink
+                key={item.name}
+                to={item.to}
+                end={item.name !== 'Discussions'}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all hover:bg-white/60 hover:shadow-sm',
+                    isActive
+                      ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary shadow-sm border border-primary/20'
+                      : 'text-slate-600 hover:text-slate-900',
+                  )
+                }
               >
-                <span className="sr-only">Open user menu</span>
-                <User2 className="size-6 rounded-full" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => navigate(paths.app.profile.getHref())}
-                className={cn('block px-4 py-2 text-sm text-gray-700')}
-              >
-                Your Profile
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className={cn('block px-4 py-2 text-sm text-gray-700 w-full')}
-                onClick={() => logout.mutate({})}
-              >
-                Sign Out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </header>
-        <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-          {children}
+                <item.icon className="size-5" />
+                {item.name}
+              </NavLink>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 sm:ml-64">
+          <div className="mx-auto max-w-7xl px-6 py-8">{children}</div>
         </main>
       </div>
     </div>
