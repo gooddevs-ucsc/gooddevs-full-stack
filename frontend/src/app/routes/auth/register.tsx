@@ -13,12 +13,9 @@ const RegisterRoute = () => {
     <AuthLayout title="Register your account">
       <RegisterForm
         onSuccess={() => {
-          navigate(
-            `${redirectTo ? `${redirectTo}` : paths.app.dashboard.getHref()}`,
-            {
-              replace: true,
-            },
-          );
+          navigate(`${redirectTo ? `${redirectTo}` : paths.home.getHref()}`, {
+            replace: true,
+          });
         }}
       />
     </AuthLayout>
