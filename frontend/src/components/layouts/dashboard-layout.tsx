@@ -1,12 +1,4 @@
-import {
-  Home,
-  PanelLeft,
-  Folder,
-  Users,
-  User2,
-  Bell,
-  Settings,
-} from 'lucide-react';
+import { PanelLeft, Bell, Settings, User2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { NavLink, useNavigate, useNavigation } from 'react-router';
 
@@ -14,8 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { paths } from '@/config/paths';
 import { useLogout } from '@/lib/auth';
-import { useAuthorization } from '@/lib/authorization';
-import { ROLES } from '@/lib/roles';
 import { cn } from '@/utils/cn';
 
 import {
@@ -27,7 +17,7 @@ import {
 } from '../ui/dropdown';
 import { Link } from '../ui/link';
 
-type SideNavigationItem = {
+export type SideNavigationItem = {
   name: string;
   to: string;
   icon: (props: React.SVGProps<SVGSVGElement>) => JSX.Element;
@@ -83,21 +73,19 @@ const Progress = () => {
   );
 };
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
+type DashboardLayoutProps = {
+  children: React.ReactNode;
+  navigation: SideNavigationItem[];
+};
+
+export function DashboardLayout({
+  children,
+  navigation,
+}: DashboardLayoutProps) {
   const navigate = useNavigate();
   const logout = useLogout({
     onSuccess: () => navigate(paths.auth.login.getHref(location.pathname)),
   });
-  const { checkAccess } = useAuthorization();
-  const navigation = [
-    { name: 'Dashboard', to: paths.app.dashboard.getHref(), icon: Home },
-    { name: 'Discussions', to: paths.app.discussions.getHref(), icon: Folder },
-    checkAccess({ allowedRoles: [ROLES.ADMIN] }) && {
-      name: 'Users',
-      to: paths.app.users.getHref(),
-      icon: Users,
-    },
-  ].filter(Boolean) as SideNavigationItem[];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
