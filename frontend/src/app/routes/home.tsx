@@ -196,7 +196,7 @@ const LandingRoute = () => {
         </section>
 
         {/* Projects Section */}
-        <section id="projects" className="bg-white px-4 py-24 sm:px-6 lg:px-8">
+        <section className="bg-white px-4 py-24 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="mb-16 text-center">
               <h2 className="mb-4 text-3xl font-bold text-slate-900 sm:text-4xl">
