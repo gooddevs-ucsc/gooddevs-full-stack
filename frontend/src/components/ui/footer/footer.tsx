@@ -11,7 +11,8 @@ export const Footer: FC = () => {
             </span>
           </div>
           <p className="mb-8 text-lg text-slate-200">
-            Connecting developers with meaningful projects that make a difference
+            Connecting developers with meaningful projects that make a
+            difference
           </p>
           <div className="mb-8 flex flex-wrap justify-center gap-8">
             <a
