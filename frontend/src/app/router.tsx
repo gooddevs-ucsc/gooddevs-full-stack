@@ -11,9 +11,9 @@ import {
   ErrorBoundary as AppRootErrorBoundary,
 } from './routes/app/root';
 import {
-  default as RequestorRoot,
+  default as RequesterRoot,
   ErrorBoundary as RequestorRootErrorBoundary,
-} from './routes/requestor/root';
+} from './routes/requester/root';
 
 const convert = (queryClient: QueryClient) => (m: any) => {
   const { clientLoader, clientAction, default: Component, ...rest } = m;
@@ -78,10 +78,10 @@ export const createAppRouter = (queryClient: QueryClient) =>
       ],
     },
     {
-      path: paths.requestor.root.path,
+      path: paths.requester.root.path,
       element: (
         <ProtectedRoute>
-          <RequestorRoot />
+          <RequesterRoot />
         </ProtectedRoute>
       ),
       ErrorBoundary: RequestorRootErrorBoundary,
