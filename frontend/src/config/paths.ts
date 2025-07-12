@@ -1,3 +1,5 @@
+import path from "path";
+
 export const paths = {
   home: {
     path: '/',
@@ -41,6 +43,10 @@ export const paths = {
     profile: {
       path: 'profile',
       getHref: () => '/app/profile',
+    },
+    developerDashboard: {
+      path: 'developer-dashboard',
+      getHref: () => '/app/developer-dashboard',
     },
   },
 } as const;
