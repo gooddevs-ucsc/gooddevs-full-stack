@@ -85,7 +85,13 @@ export const createAppRouter = (queryClient: QueryClient) =>
         </ProtectedRoute>
       ),
       ErrorBoundary: RequestorRootErrorBoundary,
-      children: [],
+      children: [
+        {
+          path: paths.requester.dashboard.path,
+          lazy: () =>
+            import('./routes/requester/dashboard').then(convert(queryClient)),
+        },
+      ],
     },
     {
       path: '*',

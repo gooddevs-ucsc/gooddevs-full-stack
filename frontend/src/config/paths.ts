@@ -49,7 +49,7 @@ export const paths = {
       getHerf: () => '/requester',
     },
     dashboard: {
-      path: '/requester/dashboard',
+      path: '',
       getHref: () => '/requester',
     },
   },

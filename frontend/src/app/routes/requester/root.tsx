@@ -25,7 +25,7 @@ const RequesterRoot = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900">Access Denied</h1>
             <p className="mt-2 text-gray-600">
-              This area is only accessible to requestors.
+              This area is only accessible to requesters.
             </p>
             <p className="mt-4">
               <a
