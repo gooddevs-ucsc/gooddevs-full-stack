@@ -10,6 +10,10 @@ import {
   default as AppRoot,
   ErrorBoundary as AppRootErrorBoundary,
 } from './routes/app/root';
+import {
+  default as RequestorRoot,
+  ErrorBoundary as RequestorRootErrorBoundary,
+} from './routes/requestor/root';
 
 const convert = (queryClient: QueryClient) => (m: any) => {
   const { clientLoader, clientAction, default: Component, ...rest } = m;
@@ -72,6 +76,16 @@ export const createAppRouter = (queryClient: QueryClient) =>
             import('./routes/app/dashboard').then(convert(queryClient)),
         },
       ],
+    },
+    {
+      path: paths.requestor.root.path,
+      element: (
+        <ProtectedRoute>
+          <RequestorRoot />
+        </ProtectedRoute>
+      ),
+      ErrorBoundary: RequestorRootErrorBoundary,
+      children: [],
     },
     {
       path: '*',
