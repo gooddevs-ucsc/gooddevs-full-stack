@@ -43,4 +43,14 @@ export const paths = {
       getHref: () => '/app/profile',
     },
   },
+  requestor: {
+    root: {
+      path: '/requestor',
+      getHerf: () => '/requestor',
+    },
+    dashboard: {
+      path: '/requestor/dashboard',
+      getHref: () => '/requestor',
+    },
+  },
 } as const;
