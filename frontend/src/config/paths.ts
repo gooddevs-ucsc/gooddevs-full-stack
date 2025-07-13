@@ -57,4 +57,22 @@ export const paths = {
       getHref: () => '/requester/projects',
     },
   },
+  developer: {
+    root: {
+      path: '/developer',
+      getHref: () => '/developer',
+    },
+    dashboard: {
+      path: '',
+      getHref: () => '/developer',
+    },
+    projects: {
+      path: 'projects',
+      getHref: () => '/developer/projects',
+    },
+    settings: {
+      path: 'settings',
+      getHref: () => '/developer/settings',
+    },
+  },
 } as const;
