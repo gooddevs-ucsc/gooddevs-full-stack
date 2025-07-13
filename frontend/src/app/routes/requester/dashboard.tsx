@@ -305,7 +305,7 @@ const RequestorDashboardRoute = () => {
                     {project.status}
                   </span>
                 </div>
-                <p className="line-clamp-2 mb-3 text-sm text-slate-600">
+                <p className="mb-3 line-clamp-2 text-sm text-slate-600">
                   {project.description}
                 </p>
                 <div className="flex items-center justify-between text-xs text-slate-500">
