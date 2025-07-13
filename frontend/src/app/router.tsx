@@ -10,6 +10,10 @@ import {
   default as AppRoot,
   ErrorBoundary as AppRootErrorBoundary,
 } from './routes/app/root';
+import {
+  default as DeveloperRoot,
+  ErrorBoundary as DeveloperRootErrorBoundary,
+} from './routes/developer/root';
 
 const convert = (queryClient: QueryClient) => (m: any) => {
   const { clientLoader, clientAction, default: Component, ...rest } = m;
@@ -70,6 +74,27 @@ export const createAppRouter = (queryClient: QueryClient) =>
           path: paths.app.dashboard.path,
           lazy: () =>
             import('./routes/app/dashboard').then(convert(queryClient)),
+        },
+      ],
+    },
+    {
+      path: paths.developer.root.path,
+      element: (
+        <ProtectedRoute>
+          <DeveloperRoot />
+        </ProtectedRoute>
+      ),
+      ErrorBoundary: DeveloperRootErrorBoundary,
+      children: [
+        {
+          path: paths.developer.dashboard.path,
+          lazy: () =>
+            import('./routes/developer/dashboard').then(convert(queryClient)),
+        },
+        {
+          path: paths.developer.projects.path,
+          lazy: () =>
+            import('./routes/developer/projects').then(convert(queryClient)),
         },
       ],
     },
