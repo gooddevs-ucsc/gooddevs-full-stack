@@ -163,7 +163,9 @@ class ProjectUpdate(SQLModel):
     project_type: ProjectType | None = Field(
         default=None, sa_column=Column(Enum(ProjectType)))
     preferred_technologies: str | None = Field(default=None, max_length=500)
-    estimated_timeline: str | None = Field(default=None, max_length=100)
+    estimated_timeline: EstimatedTimeline | None = Field(
+        default=None, sa_column=Column(Enum(EstimatedTimeline)))
+    status: ProjectStatus | None
 
 
 # Database model, database table inferred from class name
