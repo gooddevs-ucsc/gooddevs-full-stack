@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/dialog';
 import { useNotifications } from '@/components/ui/notifications';
 import { Authorization } from '@/lib/authorization';
-import { ROLES  } from '@/lib/roles';
+import { ROLES } from '@/lib/roles';
 
 import { useDeleteDiscussion } from '../api/delete-discussion';
 
