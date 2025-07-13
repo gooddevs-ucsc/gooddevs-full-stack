@@ -14,7 +14,12 @@ export interface Project {
   description: string;
   project_type: string;
   preferred_technologies: string | null;
-  estimated_timeline: string | null;
+  estimated_timeline:
+    | 'LESS_THAN_1_MONTH'
+    | 'ONE_TO_THREE_MONTHS'
+    | 'THREE_TO_SIX_MONTHS'
+    | 'MORE_THAN_SIX_MONTHS'
+    | null;
   created_at: string;
   requester_id: string;
   status: string;

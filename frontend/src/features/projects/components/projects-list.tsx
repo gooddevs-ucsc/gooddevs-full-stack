@@ -18,6 +18,16 @@ const getProjectTypeColor = (type: string) => {
   return colors[type as keyof typeof colors] || colors.OTHER;
 };
 
+const formatEstimatedTimeline = (timeline: string) => {
+  const timelineMap = {
+    LESS_THAN_1_MONTH: 'Less than 1 month',
+    ONE_TO_THREE_MONTHS: '1-3 months',
+    THREE_TO_SIX_MONTHS: '3-6 months',
+    MORE_THAN_SIX_MONTHS: 'More than 6 months',
+  };
+  return timelineMap[timeline as keyof typeof timelineMap] || timeline;
+};
+
 const ProjectCard = ({ project }: { project: Project }) => {
   return (
     <div className="group relative overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all duration-300 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/20 hover:ring-slate-200">
@@ -67,7 +77,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
               </div>
               <span className="font-medium">Timeline:</span>
               <span className="ml-2 text-slate-700">
-                {project.estimated_timeline}
+                {formatEstimatedTimeline(project.estimated_timeline)}
               </span>
             </div>
           )}
