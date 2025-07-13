@@ -9,7 +9,6 @@ import {
 
 import { ContentLayout } from '@/components/layouts';
 import { useUser } from '@/lib/auth';
-import { ROLES } from '@/lib/roles';
 
 const DashboardRoute = () => {
   const user = useUser();
@@ -102,7 +101,7 @@ const DashboardRoute = () => {
             </span>
           </p>
           <p className="mt-4 text-slate-600">
-            Here's an overview of your contributions and activities.
+            Here&apos;s an overview of your contributions and activities.
           </p>
         </div>
 

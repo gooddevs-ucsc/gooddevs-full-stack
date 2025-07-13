@@ -1,4 +1,4 @@
-import path from "path";
+import path from 'path';
 
 export const paths = {
   home: {
@@ -48,12 +48,12 @@ export const paths = {
 
   developer: {
     root: {
-      path: '/developer/dashboard',
-      getHref: () => '/developer/dashboard',
+      path: '/developer',
+      getHref: () => '/developer',
     },
     dashboard: {
       path: '',
-      getHref: () => '/developer/dashboard',
+      getHref: () => '/developer',
     },
     projects: {
       path: 'projects',
@@ -63,5 +63,5 @@ export const paths = {
       path: 'settings',
       getHref: () => '/developer/settings',
     },
-  }
+  },
 } as const;
