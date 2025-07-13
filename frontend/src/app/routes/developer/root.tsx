@@ -12,7 +12,11 @@ const DeveloperRoot = () => {
   const navigation = [
     { name: 'Dashboard', to: paths.developer.dashboard.getHref(), icon: Home },
     { name: 'Projects', to: paths.developer.projects.getHref(), icon: Folder },
-    { name: 'Settings', to: paths.developer.settings.getHref(), icon: Settings },
+    {
+      name: 'Settings',
+      to: paths.developer.settings.getHref(),
+      icon: Settings,
+    },
   ].filter(Boolean) as SideNavigationItem[];
 
   return (
