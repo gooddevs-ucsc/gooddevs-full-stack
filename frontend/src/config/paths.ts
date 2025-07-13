@@ -48,11 +48,11 @@ export const paths = {
 
   developer: {
     root: {
-      path: '/developer',
+      path: '/developer/dashboard',
       getHref: () => '/developer/dashboard',
     },
     dashboard: {
-      path: 'dashboard',
+      path: '',
       getHref: () => '/developer/dashboard',
     },
     projects: {
