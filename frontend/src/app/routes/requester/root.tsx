@@ -1,4 +1,4 @@
-import { Home, Folder, Settings } from 'lucide-react';
+import { Folder, Home, Settings } from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
@@ -12,8 +12,8 @@ export const ErrorBoundary = () => {
 
 const RequesterRoot = () => {
   const navigation = [
-    { name: 'Dashboard', to: paths.app.dashboard.getHref(), icon: Home },
-    { name: 'Projects', to: paths.app.discussions.getHref(), icon: Folder },
+    { name: 'Dashboard', to: paths.requester.dashboard.getHref(), icon: Home },
+    { name: 'Projects', to: paths.requester.projects.getHref(), icon: Folder },
     { name: 'Settings', to: paths.app.discussions.getHref(), icon: Settings },
   ] as SideNavigationItem[];
 

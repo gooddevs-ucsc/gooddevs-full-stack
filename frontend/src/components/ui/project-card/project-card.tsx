@@ -1,4 +1,4 @@
-import { Clock, MapPin, Users, ArrowRight } from 'lucide-react';
+import { ArrowRight, Clock, MapPin, Users } from 'lucide-react';
 import { FC } from 'react';
 
 import { Button } from '@/components/ui/button';

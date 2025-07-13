@@ -52,5 +52,9 @@ export const paths = {
       path: '',
       getHref: () => '/requester',
     },
+    projects: {
+      path: 'projects',
+      getHref: () => '/requester/projects',
+    },
   },
 } as const;
