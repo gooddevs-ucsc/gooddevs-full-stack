@@ -30,6 +30,13 @@ class ProjectStatus(str, enum.Enum):
     COMPLETED = "COMPLETED"
 
 
+class EstimatedTimeline(str, enum.Enum):
+    LESS_THAN_1_MONTH = "LESS_THAN_1_MONTH"
+    ONE_TO_THREE_MONTHS = "ONE_TO_THREE_MONTHS"
+    THREE_TO_SIX_MONTHS = "THREE_TO_SIX_MONTHS"
+    MORE_THAN_SIX_MONTHS = "MORE_THAN_SIX_MONTHS"
+
+
 # Shared properties
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
@@ -139,7 +146,8 @@ class ProjectBase(SQLModel):
     description: str = Field(min_length=10, max_length=2000)
     project_type: ProjectType = Field(sa_column=Column(Enum(ProjectType)))
     preferred_technologies: str | None = Field(default=None, max_length=500)
-    estimated_timeline: str | None = Field(default=None, max_length=100)
+    estimated_timeline: EstimatedTimeline | None = Field(
+        default=None, sa_column=Column(Enum(EstimatedTimeline)))
 
 
 # Properties to receive via API on creation
