@@ -1,4 +1,4 @@
-import { Home, Folder, Users, DollarSign } from 'lucide-react';
+import { Home, Folder, Users, Settings } from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
@@ -20,11 +20,6 @@ const AppRoot = () => {
       name: 'Users',
       to: paths.app.users.getHref(),
       icon: Users,
-    },
-     checkAccess({ allowedRoles: [ROLES.ADMIN] }) && {
-      name: 'Donations & Sponsorships',
-      to: paths.app.donationsSponshorships.getHref(),
-      icon: DollarSign,
     },
   ].filter(Boolean) as SideNavigationItem[];
 

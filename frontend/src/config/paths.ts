@@ -42,9 +42,28 @@ export const paths = {
       path: 'profile',
       getHref: () => '/app/profile',
     },
+  },
+
+  admin: {
+    root: {
+      path: '/admin',
+      getHref: () => '/admin',
+    },
+    dashboard: {
+      path: '',
+      getHref: () => '/admin',
+    },
+    discussions: {
+      path: 'discussions',
+      getHref: () => '/admin/discussions',
+    },
+    users: {
+      path: 'users',
+      getHref: () => '/admin/users',
+    },
     donationsSponshorships: {
       path: 'donations-sponsorships',
-      getHref: () => '/app/donations-sponsorships',
+      getHref: () => '/admin/donations-sponsorships',
     },
   },
 } as const;

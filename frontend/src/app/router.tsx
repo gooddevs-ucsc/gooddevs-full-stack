@@ -71,9 +71,15 @@ export const createAppRouter = (queryClient: QueryClient) =>
           lazy: () =>
             import('./routes/app/dashboard').then(convert(queryClient)),
         },
+      ],
+    },
+    {
+      path: paths.admin.root.path,
+      lazy: () => import('./routes/admin/root').then(convert(queryClient)),
+      children: [
         {
-          path: paths.app.donationsSponshorships.path,
-          lazy: () => import('./routes/app/donations-sponsorships').then(convert(queryClient)),
+          path: paths.admin.donationsSponshorships.path,
+          lazy: () => import('./routes/admin/donations-sponsorships').then(convert(queryClient)),
         },
       ],
     },
