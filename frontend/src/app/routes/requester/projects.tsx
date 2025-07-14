@@ -1,9 +1,11 @@
 import { Filter, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 
 import { ContentLayout } from '@/components/layouts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { paths } from '@/config/paths';
 import { ProjectCard } from '@/features/requester/components/project-card';
 
 interface RequesterProject {
@@ -90,6 +92,7 @@ const mockProjects: RequesterProject[] = [
 type ProjectStatus = 'All' | 'Active' | 'Completed' | 'Pending';
 
 const RequesterProjectsRoute = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<ProjectStatus>('All');
 
@@ -140,6 +143,7 @@ const RequesterProjectsRoute = () => {
           <Button
             className="bg-primary text-white shadow-lg hover:bg-primary/90 hover:shadow-xl"
             size="lg"
+            onClick={() => navigate(paths.requester.createProject.getHref())}
           >
             <Plus className="mr-2 size-4" />
             New Project

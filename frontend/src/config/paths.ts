@@ -56,6 +56,10 @@ export const paths = {
       path: 'projects',
       getHref: () => '/requester/projects',
     },
+    createProject: {
+      path: 'projects/create',
+      getHref: () => '/requester/projects/create',
+    },
   },
   developer: {
     root: {
