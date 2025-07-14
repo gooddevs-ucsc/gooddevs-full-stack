@@ -19,7 +19,11 @@ const RequesterRoot = () => {
   const defaultNavigation = [
     { name: 'Dashboard', to: paths.requester.dashboard.getHref(), icon: Home },
     { name: 'Projects', to: paths.requester.projects.getHref(), icon: Folder },
-    { name: 'Settings', to: paths.app.discussions.getHref(), icon: Settings },
+    {
+      name: 'Settings',
+      to: paths.requester.settings.getHref(),
+      icon: Settings,
+    },
   ] as SideNavigationItem[];
 
   const createProjectNavigation = [

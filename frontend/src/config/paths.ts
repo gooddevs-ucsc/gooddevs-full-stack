@@ -51,7 +51,7 @@ export const paths = {
   requester: {
     root: {
       path: '/requester',
-      getHerf: () => '/requester',
+      getHref: () => '/requester',
     },
     dashboard: {
       path: '',
