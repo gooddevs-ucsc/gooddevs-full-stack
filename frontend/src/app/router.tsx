@@ -107,6 +107,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
               convert(queryClient),
             ),
         },
+        {
+          path: paths.requester.settings.path,
+          lazy: () =>
+            import('./routes/requester/settings').then(convert(queryClient)),
+        },
       ],
     },
     {
@@ -127,6 +132,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
           path: paths.developer.projects.path,
           lazy: () =>
             import('./routes/developer/projects').then(convert(queryClient)),
+        },
+        {
+          path: paths.developer.settings.path,
+          lazy: () =>
+            import('./routes/developer/settings').then(convert(queryClient)),
         },
       ],
     },

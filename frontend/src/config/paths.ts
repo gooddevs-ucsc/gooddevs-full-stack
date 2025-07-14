@@ -60,6 +60,10 @@ export const paths = {
       path: 'projects/create',
       getHref: () => '/requester/projects/create',
     },
+    settings: {
+      path: 'settings',
+      getHref: () => '/requester/settings',
+    },
   },
   developer: {
     root: {
