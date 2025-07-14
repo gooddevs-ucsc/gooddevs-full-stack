@@ -17,6 +17,11 @@ export const paths = {
     },
   },
 
+  aboutUs: {
+    path: '/about-us',
+    getHref: () => '/about-us',
+  },
+
   app: {
     root: {
       path: '/app',
