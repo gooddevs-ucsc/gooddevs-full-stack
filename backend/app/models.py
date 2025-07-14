@@ -192,14 +192,22 @@ class ProjectPublic(ProjectBase):
     updated_at: datetime
 
 
+# Pagination metadata
+class Meta(SQLModel):
+    page: int
+    total: int
+    totalPages: int
+
+
 # Response wrapper for single project
 class ProjectResponse(SQLModel):
     data: ProjectPublic
 
 
+# Response wrapper for multiple projects with pagination
 class ProjectsPublic(SQLModel):
     data: list[ProjectPublic]
-    count: int
+    meta: Meta
 
 
 # Generic message

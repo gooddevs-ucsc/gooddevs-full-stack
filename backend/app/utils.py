@@ -1,4 +1,5 @@
 import logging
+import math
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -11,6 +12,7 @@ from jwt.exceptions import InvalidTokenError
 
 from app.core import security
 from app.core.config import settings
+from app.models import Meta
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -121,3 +123,20 @@ def verify_password_reset_token(token: str) -> str | None:
         return str(decoded_token["sub"])
     except InvalidTokenError:
         return None
+
+
+def calculate_pagination_meta(*, total: int, skip: int, limit: int) -> Meta:
+    """
+    Calculate pagination metadata for API responses.
+
+    Args:
+        total: Total number of items
+        skip: Number of items to skip
+        limit: Number of items per page
+
+    Returns:
+        Meta object with pagination information
+    """
+    page = (skip // limit) + 1
+    totalPages = math.ceil(total / limit) if limit > 0 else 1
+    return Meta(page=page, total=total, totalPages=totalPages)
