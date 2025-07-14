@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { z } from 'zod';
 
@@ -66,19 +66,6 @@ const SubmitNewProject = () => {
   return (
     <ContentLayout title="Submit New Project">
       <div className="mx-auto max-w-4xl space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCancel}
-            className="text-slate-600 hover:text-slate-900"
-          >
-            <ArrowLeft className="mr-2 size-4" />
-            Back to Projects
-          </Button>
-        </div>
-
         {/* Main Form Card */}
         <div className="rounded-xl border border-slate-200/60 bg-white shadow-sm">
           <div className="border-b border-slate-200/60 p-6">

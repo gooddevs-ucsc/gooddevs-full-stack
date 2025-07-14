@@ -1,5 +1,5 @@
-import { Folder, Home, Settings } from 'lucide-react';
-import { Outlet } from 'react-router';
+import { ArrowLeft, Folder, Home, Settings } from 'lucide-react';
+import { Outlet, useLocation } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
 import { paths } from '@/config/paths';
@@ -11,11 +11,28 @@ export const ErrorBoundary = () => {
 };
 
 const RequesterRoot = () => {
-  const navigation = [
+  const location = useLocation();
+
+  const isCreateProjectPage =
+    location.pathname === paths.requester.createProject.getHref();
+
+  const defaultNavigation = [
     { name: 'Dashboard', to: paths.requester.dashboard.getHref(), icon: Home },
     { name: 'Projects', to: paths.requester.projects.getHref(), icon: Folder },
     { name: 'Settings', to: paths.app.discussions.getHref(), icon: Settings },
   ] as SideNavigationItem[];
+
+  const createProjectNavigation = [
+    {
+      name: 'Back to Projects',
+      to: paths.requester.projects.getHref(),
+      icon: ArrowLeft,
+    },
+  ] as SideNavigationItem[];
+
+  const navigation = isCreateProjectPage
+    ? createProjectNavigation
+    : defaultNavigation;
 
   return (
     <Authorization
