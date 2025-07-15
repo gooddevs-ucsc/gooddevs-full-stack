@@ -2,38 +2,15 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api-client';
 import { QueryConfig } from '@/lib/react-query';
-
-/**
- * TODO:
- * - Export Project and ProjectsResponse types to src/types/api.ts
- * - Use a more generic pagination type across the project
- */
-export interface Project {
-  id: string;
-  title: string;
-  description: string;
-  project_type: string;
-  preferred_technologies: string | null;
-  estimated_timeline:
-    | 'LESS_THAN_1_MONTH'
-    | 'ONE_TO_THREE_MONTHS'
-    | 'THREE_TO_SIX_MONTHS'
-    | 'MORE_THAN_SIX_MONTHS'
-    | null;
-  created_at: string;
-  requester_id: string;
-  status: string;
-}
-
-export interface ProjectsResponse {
-  data: Project[];
-  count: number;
-}
+import { Project, Meta } from '@/types/api';
 
 export const getApprovedProjects = (
   skip = 0,
   limit = 100,
-): Promise<ProjectsResponse> => {
+): Promise<{
+  data: Project[];
+  meta: Meta;
+}> => {
   return api.get('/projects/approved', {
     params: {
       skip,

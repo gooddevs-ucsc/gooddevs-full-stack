@@ -2,9 +2,10 @@ import { Clock, MapPin, Users, ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { formatDate } from '@/utils/format';
+import { Project } from '@/types/api';
+import { formatDate, formatEstimatedTimeline } from '@/utils/format';
 
-import { useApprovedProjects, Project } from '../api/get-projects';
+import { useApprovedProjects } from '../api/get-projects';
 
 const getProjectTypeColor = (type: string) => {
   const colors = {
@@ -16,16 +17,6 @@ const getProjectTypeColor = (type: string) => {
     OTHER: 'bg-slate-50 text-slate-700 border border-slate-200',
   };
   return colors[type as keyof typeof colors] || colors.OTHER;
-};
-
-const formatEstimatedTimeline = (timeline: string) => {
-  const timelineMap = {
-    LESS_THAN_1_MONTH: 'Less than 1 month',
-    ONE_TO_THREE_MONTHS: '1-3 months',
-    THREE_TO_SIX_MONTHS: '3-6 months',
-    MORE_THAN_SIX_MONTHS: 'More than 6 months',
-  };
-  return timelineMap[timeline as keyof typeof timelineMap] || timeline;
 };
 
 const ProjectCard = ({ project }: { project: Project }) => {

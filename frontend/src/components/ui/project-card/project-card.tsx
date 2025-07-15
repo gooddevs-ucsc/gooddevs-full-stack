@@ -2,17 +2,8 @@ import { ArrowRight, Clock, MapPin, Users } from 'lucide-react';
 import { FC } from 'react';
 
 import { Button } from '@/components/ui/button';
-
-interface Project {
-  id: string;
-  title: string;
-  description: string;
-  project_type: string;
-  preferred_technologies: string | null;
-  estimated_timeline: string | null;
-  created_at: string;
-  requester_id: string;
-}
+import { Project } from '@/types/api';
+import { formatEstimatedTimeline } from '@/utils/format';
 
 interface ProjectCardProps {
   project: Project;
@@ -87,7 +78,7 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
               </div>
               <span className="font-medium">Timeline:</span>
               <span className="ml-2 text-slate-700">
-                {project.estimated_timeline}
+                {formatEstimatedTimeline(project.estimated_timeline)}
               </span>
             </div>
           )}
