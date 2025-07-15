@@ -85,6 +85,7 @@ export const DiscussionsList = ({
           totalPages: meta.totalPages,
           currentPage: meta.page,
           rootUrl: '',
+          limit: 100,
         }
       }
     />

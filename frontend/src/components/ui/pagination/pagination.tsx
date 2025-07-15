@@ -228,6 +228,7 @@ export type URLPaginationProps = {
   totalPages: number;
   currentPage: number;
   rootUrl: string;
+  limit: number;
   className?: string;
 };
 
@@ -235,9 +236,10 @@ export const URLPagination = ({
   totalPages,
   currentPage,
   rootUrl,
+  limit,
   className,
 }: URLPaginationProps) => {
-  const createHref = (page: number) => `${rootUrl}?page=${page}`;
+  const createHref = (page: number) => `${rootUrl}?page=${page}&limit=${limit}`;
 
   return (
     <Pagination className={cn('justify-end py-8', className)}>
