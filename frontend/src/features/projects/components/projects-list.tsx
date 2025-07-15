@@ -1,9 +1,8 @@
-import { Clock, MapPin, Users, ArrowRight } from 'lucide-react';
-import { useSearchParams } from 'react-router';
+import { Clock, MapPin, Users, ArrowRight, Search, Filter } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { URLPagination } from '@/components/ui/pagination';
-import { Spinner } from '@/components/ui/spinner';
 import { Project } from '@/types/api';
 import { formatDate, formatEstimatedTimeline } from '@/utils/format';
 
@@ -22,8 +21,27 @@ const getProjectTypeColor = (type: string) => {
 };
 
 const ProjectCard = ({ project }: { project: Project }) => {
+  const navigate = useNavigate();
+
+  const handleLearnMore = () => {
+    navigate(`/projects/${project.id}`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleLearnMore();
+    }
+  };
+
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all duration-300 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/20 hover:ring-slate-200">
+    <div
+      className="group relative cursor-pointer overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/20 hover:ring-slate-200"
+      onClick={handleLearnMore}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+    >
       <div className="absolute inset-0 bg-gradient-to-br from-slate-50/30 to-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
       <div className="relative p-6">
         <div className="mb-4 flex items-start justify-between">
@@ -91,12 +109,19 @@ const ProjectCard = ({ project }: { project: Project }) => {
             variant="outline"
             size="sm"
             className="border-primary text-primary shadow-sm transition-all duration-200 hover:bg-primary hover:text-white hover:shadow-lg group-hover:translate-x-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleLearnMore();
+            }}
           >
             <div className="flex items-center gap-1">
-              Learn More
+              View Details
               <ArrowRight className="ml-1 size-4 transition-transform group-hover:translate-x-1" />
             </div>
           </Button>
+          <div className="text-xs text-slate-500">
+            ID: {project.id.slice(-6)}
+          </div>
         </div>
       </div>
     </div>
@@ -112,8 +137,45 @@ export const ProjectsList = () => {
 
   if (projectsQuery.isLoading) {
     return (
-      <div className="flex h-48 w-full items-center justify-center">
-        <Spinner size="lg" />
+      <div className="space-y-6">
+        {/* Search and Filter Bar Skeleton */}
+        <div className="flex flex-col space-y-4 rounded-lg border border-slate-200/60 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div className="flex flex-1 items-center space-x-2">
+            <div className="relative max-w-md flex-1">
+              <div className="h-10 w-full animate-pulse rounded-lg bg-slate-200"></div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="h-10 w-20 animate-pulse rounded-lg bg-slate-200"></div>
+            <div className="h-10 w-32 animate-pulse rounded-lg bg-slate-200"></div>
+          </div>
+        </div>
+
+        {/* Project Cards Skeleton */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm"
+            >
+              <div className="mb-4 flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="mb-2 h-6 w-3/4 animate-pulse rounded bg-slate-200"></div>
+                  <div className="h-5 w-20 animate-pulse rounded-full bg-slate-200"></div>
+                </div>
+              </div>
+              <div className="mb-4 space-y-2">
+                <div className="h-4 w-full animate-pulse rounded bg-slate-200"></div>
+                <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200"></div>
+              </div>
+              <div className="mb-6 space-y-3">
+                <div className="h-4 w-full animate-pulse rounded bg-slate-200"></div>
+                <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200"></div>
+              </div>
+              <div className="h-9 w-full animate-pulse rounded-lg bg-slate-200"></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -147,6 +209,35 @@ export const ProjectsList = () => {
 
   return (
     <div className="space-y-6">
+      {/* Search and Filter Bar */}
+      <div className="flex flex-col space-y-4 rounded-lg border border-slate-200/60 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+        <div className="flex flex-1 items-center space-x-2">
+          <div className="relative max-w-md flex-1">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search projects..."
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <button className="flex items-center space-x-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+            <Filter className="size-4" />
+            <span>Filter</span>
+          </button>
+          <select className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <option value="">All Types</option>
+            <option value="WEBSITE">Website</option>
+            <option value="MOBILE_APP">Mobile App</option>
+            <option value="DATABASE">Database</option>
+            <option value="API">API</option>
+            <option value="DESKTOP_APP">Desktop App</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => (
           <ProjectCard key={project.id} project={project} />
