@@ -140,3 +140,35 @@ def calculate_pagination_meta(*, total: int, skip: int, limit: int) -> Meta:
     page = (skip // limit) + 1
     totalPages = math.ceil(total / limit) if limit > 0 else 1
     return Meta(page=page, total=total, totalPages=totalPages)
+
+
+def page_to_skip(page: int, limit: int) -> int:
+    """
+    Convert page-based pagination to skip-based pagination.
+
+    Args:
+        page: Page number (1-based)
+        limit: Number of items per page
+
+    Returns:
+        Number of items to skip
+    """
+    # Ensure page is at least 1
+    page = max(1, page)
+    return (page - 1) * limit
+
+
+def calculate_pagination_meta_from_page(*, total: int, page: int, limit: int) -> Meta:
+    """
+    Calculate pagination metadata for API responses using page-based pagination.
+
+    Args:
+        total: Total number of items
+        page: Current page number (1-based)
+        limit: Number of items per page
+
+    Returns:
+        Meta object with pagination information
+    """
+    totalPages = math.ceil(total / limit) if limit > 0 else 1
+    return Meta(page=page, total=total, totalPages=totalPages)

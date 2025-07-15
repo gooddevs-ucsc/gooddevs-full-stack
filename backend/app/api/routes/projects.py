@@ -12,7 +12,7 @@ from app.models import Project, ProjectCreate, ProjectPublic, ProjectsPublic, Pr
 from app.core import security
 from app.core.config import settings
 from app import crud
-from app.utils import calculate_pagination_meta
+from app.utils import calculate_pagination_meta, page_to_skip, calculate_pagination_meta_from_page
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -44,7 +44,7 @@ def create_project(
 def read_projects(
     session: SessionDep,
     current_user: CurrentUser,
-    skip: int = 0,
+    page: int = 1,
     limit: int = 100
 ) -> Any:
     """
@@ -56,11 +56,15 @@ def read_projects(
         # Admins can see all projects
         count_statement = select(func.count()).select_from(Project)
         total = session.exec(count_statement).one()
+
+        # Convert page to skip
+        skip = page_to_skip(page, limit)
         projects = crud.get_all_projects(
             session=session, skip=skip, limit=limit)
 
         # Calculate pagination metadata
-        meta = calculate_pagination_meta(total=total, skip=skip, limit=limit)
+        meta = calculate_pagination_meta_from_page(
+            total=total, page=page, limit=limit)
         return ProjectsPublic(data=projects, meta=meta)
     raise HTTPException(status_code=403, detail="Insufficient permissions")
 
@@ -68,7 +72,7 @@ def read_projects(
 @router.get("/approved", response_model=ProjectsPublic)
 def read_approved_projects(
     session: SessionDep,
-    skip: int = 0,
+    page: int = 1,
     limit: int = 100
 ) -> Any:
     """
@@ -80,12 +84,16 @@ def read_approved_projects(
         .where(Project.status == ProjectStatus.APPROVED)
     )
     total = session.exec(count_statement).one()
+
+    # Convert page to skip
+    skip = page_to_skip(page, limit)
     projects = crud.get_approved_projects(
         session=session, skip=skip, limit=limit
     )
 
     # Calculate pagination metadata
-    meta = calculate_pagination_meta(total=total, skip=skip, limit=limit)
+    meta = calculate_pagination_meta_from_page(
+        total=total, page=page, limit=limit)
     return ProjectsPublic(data=projects, meta=meta)
 
 
