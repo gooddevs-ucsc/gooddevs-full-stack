@@ -1,6 +1,8 @@
 import { Clock, MapPin, Users, ArrowRight } from 'lucide-react';
+import { useSearchParams } from 'react-router';
 
 import { Button } from '@/components/ui/button';
+import { URLPagination } from '@/components/ui/pagination';
 import { Spinner } from '@/components/ui/spinner';
 import { Project } from '@/types/api';
 import { formatDate, formatEstimatedTimeline } from '@/utils/format';
@@ -102,7 +104,11 @@ const ProjectCard = ({ project }: { project: Project }) => {
 };
 
 export const ProjectsList = () => {
-  const projectsQuery = useApprovedProjects();
+  const [searchParams] = useSearchParams();
+  const page = Number(searchParams.get('page') || 1);
+  const limit = Number(searchParams.get('limit') || 12); // Default to 12 for better grid layout
+
+  const projectsQuery = useApprovedProjects({ page, limit });
 
   if (projectsQuery.isLoading) {
     return (
@@ -124,6 +130,7 @@ export const ProjectsList = () => {
   }
 
   const projects = projectsQuery.data?.data || [];
+  const meta = projectsQuery.data?.meta;
 
   if (projects.length === 0) {
     return (
@@ -145,6 +152,14 @@ export const ProjectsList = () => {
           <ProjectCard key={project.id} project={project} />
         ))}
       </div>
+      {meta && meta.totalPages > 1 && (
+        <URLPagination
+          totalPages={meta.totalPages}
+          currentPage={meta.page}
+          rootUrl="/projects"
+          limit={limit}
+        />
+      )}
     </div>
   );
 };

@@ -5,7 +5,7 @@ import { QueryConfig } from '@/lib/react-query';
 import { Project, Meta } from '@/types/api';
 
 export const getApprovedProjects = (
-  skip = 0,
+  page = 1,
   limit = 100,
 ): Promise<{
   data: Project[];
@@ -13,35 +13,35 @@ export const getApprovedProjects = (
 }> => {
   return api.get('/projects/approved', {
     params: {
-      skip,
+      page,
       limit,
     },
   });
 };
 
 export const getApprovedProjectsQueryOptions = ({
-  skip = 0,
+  page = 1,
   limit = 100,
-}: { skip?: number; limit?: number } = {}) => {
+}: { page?: number; limit?: number } = {}) => {
   return queryOptions({
-    queryKey: ['projects', 'approved', { skip, limit }],
-    queryFn: () => getApprovedProjects(skip, limit),
+    queryKey: ['projects', 'approved', { page, limit }],
+    queryFn: () => getApprovedProjects(page, limit),
   });
 };
 
 type UseApprovedProjectsOptions = {
-  skip?: number;
+  page?: number;
   limit?: number;
   queryConfig?: QueryConfig<typeof getApprovedProjectsQueryOptions>;
 };
 
 export const useApprovedProjects = ({
-  skip = 0,
+  page = 1,
   limit = 100,
   queryConfig,
 }: UseApprovedProjectsOptions = {}) => {
   return useQuery({
-    ...getApprovedProjectsQueryOptions({ skip, limit }),
+    ...getApprovedProjectsQueryOptions({ page, limit }),
     ...queryConfig,
   });
 };
