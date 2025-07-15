@@ -66,4 +66,19 @@ export const paths = {
       getHref: () => '/admin/donations-sponsorships',
     },
   },
+
+  sponsor: {
+    root: {
+      path: '/sponsor',
+      getHref: () => '/sponsor',
+    },
+    dashboard: {
+      path: '',
+      getHref: () => '/sponsor',
+    },
+    donationsSponshorships: {
+      path: 'donations-sponsorships',
+      getHref: () => '/sponsor/donations-sponsorships',
+    },
+  },
 } as const;

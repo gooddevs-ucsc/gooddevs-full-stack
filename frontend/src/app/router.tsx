@@ -84,6 +84,16 @@ export const createAppRouter = (queryClient: QueryClient) =>
       ],
     },
     {
+      path: paths.sponsor.root.path,
+      lazy: () => import('./routes/sponsor/root').then(convert(queryClient)), // Change this line
+      children: [
+        {
+          path: paths.sponsor.donationsSponshorships.path,
+          lazy: () => import('./routes/sponsor/donations-sponsorships').then(convert(queryClient)), // Change this line
+        },
+      ],
+    },
+    {
       path: '*',
       lazy: () => import('./routes/not-found').then(convert(queryClient)),
     },
