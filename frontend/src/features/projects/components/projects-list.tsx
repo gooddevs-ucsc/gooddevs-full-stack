@@ -6,7 +6,7 @@ import { URLPagination } from '@/components/ui/pagination';
 import { Project } from '@/types/api';
 import { formatDate, formatEstimatedTimeline } from '@/utils/format';
 
-import { useApprovedProjects } from '../api/get-projects';
+import { useApprovedProjects } from '../api/get-approved-projects';
 
 const getProjectTypeColor = (type: string) => {
   const colors = {

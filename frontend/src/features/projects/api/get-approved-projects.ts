@@ -29,17 +29,6 @@ export const getApprovedProjectsQueryOptions = ({
   });
 };
 
-export const getProjectById = (id: string): Promise<{ data: Project }> => {
-  return api.get(`/projects/${id}`);
-};
-
-export const getProjectByIdQueryOptions = (id: string) => {
-  return queryOptions({
-    queryKey: ['projects', id],
-    queryFn: () => getProjectById(id),
-  });
-};
-
 type UseApprovedProjectsOptions = {
   page?: number;
   limit?: number;
@@ -53,18 +42,6 @@ export const useApprovedProjects = ({
 }: UseApprovedProjectsOptions = {}) => {
   return useQuery({
     ...getApprovedProjectsQueryOptions({ page, limit }),
-    ...queryConfig,
-  });
-};
-
-type UseProjectByIdOptions = {
-  id: string;
-  queryConfig?: QueryConfig<typeof getProjectByIdQueryOptions>;
-};
-
-export const useProjectById = ({ id, queryConfig }: UseProjectByIdOptions) => {
-  return useQuery({
-    ...getProjectByIdQueryOptions(id),
     ...queryConfig,
   });
 };

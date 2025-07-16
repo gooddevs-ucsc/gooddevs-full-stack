@@ -4,7 +4,7 @@ import { LoaderFunctionArgs } from 'react-router';
 import { Head } from '@/components/seo';
 import { Footer } from '@/components/ui/footer/footer';
 import { Navbar } from '@/components/ui/navbar/navbar';
-import { getApprovedProjectsQueryOptions } from '@/features/projects/api/get-projects';
+import { getApprovedProjectsQueryOptions } from '@/features/projects/api/get-approved-projects';
 import { ProjectsList } from '@/features/projects/components/projects-list';
 
 export const clientLoader =
