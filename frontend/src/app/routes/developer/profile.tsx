@@ -2,30 +2,23 @@
 
 import React from 'react';
 import { ContentLayout } from '@/components/layouts';
-import { Mail, Phone, MapPin, User, Briefcase, Link, Linkedin, UserCircle } from 'lucide-react';
-
-// ⛔️ This line should remain commented out or removed
-// import userProfileImage from '/img/profile1.png';
+import { Mail, Phone, MapPin, User, Briefcase, Link, Linkedin, UserCircle, FolderKanban } from 'lucide-react'; // Added FolderKanban icon
 
 /**
  * Developer Profile Page Component
  */
 const DeveloperProfilePage = () => {
   const profileData = {
-    name: 'Jane Doe',
+    name: 'Samuel Winskey',
     title: 'Senior Frontend Developer',
     bio: 'Passionate about crafting intuitive and performant user interfaces. Experienced in React, TypeScript, and modern web development practices, committed to delivering high-quality, user-centric applications.',
-    email: 'jane.doe@example.com',
+    email: 'samuelwinskey@gmail.com',
     phone: '+94 77 123 4567', // Sri Lankan number example
     location: 'Colombo, Sri Lanka',
 
     // 🌟 CORRECT PATH FOR IMAGE DIRECTLY IN 'public' FOLDER 🌟
     // If your image is at C:/Users/Dell/gooddevs-full-stack/frontend/public/profile1.png
     profilePhoto: '/profile1.png', // <--- UPDATED PATH HERE
-
-    // ⛔️ Keep these commented out:
-    // profilePhoto: 'https://via.placeholder.com/180/E0F2F7/2196F3?text=JD',
-    // profilePhoto: '',
 
     skills: [
       'React', 'TypeScript', 'JavaScript', 'Next.js', 'Tailwind CSS',
@@ -45,8 +38,28 @@ const DeveloperProfilePage = () => {
         description: 'Developed responsive user interfaces from design mockups, integrated with various RESTful APIs, and contributed to component library development.',
       },
     ],
-    portfolioLink: 'https://www.example.com/jane-portfolio',
-    linkedinLink: 'https://www.linkedin.com/in/janedoe',
+    // Removed portfolioLink and linkedinLink from here
+
+    // 🆕 Added a section for done projects
+    projects: [
+      {
+        title: 'E-commerce Platform Redesign',
+        description: 'Led the frontend redesign of a high-traffic e-commerce site, resulting in a 15% increase in conversion rates through improved UX and performance optimizations.',
+        link: 'https://www.example.com/project-ecommerce' // Replace with actual project link
+      },
+      {
+        title: 'Real-time Chat Application',
+        description: 'Developed a real-time chat application using WebSockets and React, featuring group chats, private messaging, and notification systems.',
+        link: 'https://www.example.com/project-chat' // Replace with actual project link
+      },
+      {
+        title: 'Dashboard Analytics Tool',
+        description: 'Built an interactive data visualization dashboard for business intelligence, allowing users to filter, sort, and analyze complex datasets.',
+        link: 'https://www.example.com/project-dashboard' // Replace with actual project link
+      }
+    ],
+    // 🆕 Added a dedicated LinkedIn profile URL for a simple icon link
+    linkedinProfileUrl: 'https://www.linkedin.com/in/janedoe', // Keep this if you want a subtle LinkedIn link
   };
 
   return (
@@ -82,14 +95,27 @@ const DeveloperProfilePage = () => {
               {profileData.bio}
             </p>
 
-            {/* Contact & Social Links */}
+            {/* Contact & Social Links (Modified) */}
             <div className="flex flex-wrap justify-center md:justify-start items-center gap-x-6 gap-y-3 mt-5 text-gray-600 text-base">
               <span className="flex items-center gap-2"><Mail size={18} className="text-blue-500" /> {profileData.email}</span>
               <span className="flex items-center gap-2"><Phone size={18} className="text-blue-500" /> {profileData.phone}</span>
               <span className="flex items-center gap-2"><MapPin size={18} className="text-blue-500" /> {profileData.location}</span>
+              {/* LinkedIn icon link added here */}
+              {profileData.linkedinProfileUrl && (
+                <a
+                  href={profileData.linkedinProfileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+                  title="View LinkedIn Profile"
+                >
+                  <Linkedin size={18} className="text-blue-500" /> https://www.linkedin.com/in/samuel-winskey-a79394567/
+                </a>
+              )}
             </div>
 
-            <div className="flex justify-center md:justify-start gap-4 mt-6">
+            {/* Removed the large portfolio and linkedin buttons here */}
+            {/* <div className="flex justify-center md:justify-start gap-4 mt-6">
               <a
                 href={profileData.portfolioLink}
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ease-in-out transform hover:-translate-y-0.5"
@@ -106,7 +132,7 @@ const DeveloperProfilePage = () => {
               >
                 <Linkedin size={20} className="mr-2" /> LinkedIn Profile
               </a>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -139,6 +165,31 @@ const DeveloperProfilePage = () => {
                 <p className="text-blue-600 text-lg font-medium">{job.company}</p>
                 <p className="text-gray-500 text-sm italic mb-2">{job.years}</p>
                 <p className="text-gray-700 leading-relaxed">{job.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 🆕 Projects Section */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-5 flex items-center gap-3">
+            <FolderKanban size={26} className="text-blue-600" />Projects
+          </h2>
+          <div className="space-y-6">
+            {profileData.projects.map((project, index) => (
+              <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-md">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{project.title}</h3>
+                <p className="text-gray-700 mb-3">{project.description}</p>
+                {project.link && (
+                  <a
+                    href={project.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                  >
+                    <Link size={16} className="mr-1" /> View Project
+                  </a>
+                )}
               </div>
             ))}
           </div>
