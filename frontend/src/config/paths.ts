@@ -132,10 +132,6 @@ export const paths = {
       path: 'projects',
       getHref: () => '/developer/projects',
     },
-     profile: {
-      path: 'profile',
-      getHref: () => '/developer/profile',
-    },
     settings: {
       path: 'settings',
       getHref: () => '/developer/settings',
