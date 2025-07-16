@@ -19,14 +19,18 @@ const AdminRoot = () => {
 
   const navigation = [
     { name: 'Dashboard', to: paths.admin.dashboard.getHref(), icon: Home },
-    { name: 'Discussions', to: paths.admin.discussions.getHref(), icon: Folder },
-    { name: 'Users', to: paths.admin.users.getHref(), icon: Users },
-    { 
-      name: 'Donations & Sponsorships', 
-      to: paths.admin.donationsSponshorships.getHref(),
-      icon: DollarSign 
+    {
+      name: 'Discussions',
+      to: paths.admin.discussions.getHref(),
+      icon: Folder,
     },
-  ] as SideNavigationItem[];
+    { name: 'Users', to: paths.admin.users.getHref(), icon: Users },
+    {
+      name: 'Donations & Sponsorships',
+      to: paths.admin.donationsSponshorships.getHref(),
+      icon: DollarSign,
+    },
+  ].filter(Boolean) as SideNavigationItem[];
 
   return (
     <DashboardLayout navigation={navigation}>
