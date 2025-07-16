@@ -5,4 +5,13 @@
     "eslint.workingDirectories": [
     "./frontend"
     ],
+
+    "editor.formatOnSave": true,
+  "editor.formatOnPaste": true, // Add this
+  "editor.formatOnType": true,  // Add this
+"editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit",
+    "source.addMissingImports": "explicit" // Add this
+}
 }
