@@ -1,4 +1,4 @@
-import { Home, Folder, Settings } from 'lucide-react';
+import { Home, Folder, Settings,User } from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
@@ -12,11 +12,14 @@ const DeveloperRoot = () => {
   const navigation = [
     { name: 'Dashboard', to: paths.developer.dashboard.getHref(), icon: Home },
     { name: 'Projects', to: paths.developer.projects.getHref(), icon: Folder },
+    { name: 'Profile', to: paths.developer.profile.getHref(), icon: User },
     {
       name: 'Settings',
       to: paths.developer.settings.getHref(),
       icon: Settings,
+      
     },
+    
   ].filter(Boolean) as SideNavigationItem[];
 
   return (
