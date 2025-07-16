@@ -1,5 +1,5 @@
 import { Clock, MapPin, Users, ArrowRight } from 'lucide-react';
-import { useSearchParams } from 'react-router';
+import { useSearchParams, useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { URLPagination } from '@/components/ui/pagination';
@@ -7,7 +7,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Project } from '@/types/api';
 import { formatDate, formatEstimatedTimeline } from '@/utils/format';
 
-import { useApprovedProjects } from '../api/get-projects';
+import { useApprovedProjects } from '../api/get-approved-projects';
 
 const getProjectTypeColor = (type: string) => {
   const colors = {
@@ -22,8 +22,27 @@ const getProjectTypeColor = (type: string) => {
 };
 
 const ProjectCard = ({ project }: { project: Project }) => {
+  const navigate = useNavigate();
+
+  const handleLearnMore = () => {
+    navigate(`/projects/${project.id}`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleLearnMore();
+    }
+  };
+
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all duration-300 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/20 hover:ring-slate-200">
+    <div
+      className="group relative cursor-pointer overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/20 hover:ring-slate-200"
+      onClick={handleLearnMore}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+    >
       <div className="absolute inset-0 bg-gradient-to-br from-slate-50/30 to-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
       <div className="relative p-6">
         <div className="mb-4 flex items-start justify-between">
@@ -91,12 +110,19 @@ const ProjectCard = ({ project }: { project: Project }) => {
             variant="outline"
             size="sm"
             className="border-primary text-primary shadow-sm transition-all duration-200 hover:bg-primary hover:text-white hover:shadow-lg group-hover:translate-x-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleLearnMore();
+            }}
           >
             <div className="flex items-center gap-1">
-              Learn More
+              View Details
               <ArrowRight className="ml-1 size-4 transition-transform group-hover:translate-x-1" />
             </div>
           </Button>
+          <div className="text-xs text-slate-500">
+            ID: {project.id.slice(-6)}
+          </div>
         </div>
       </div>
     </div>

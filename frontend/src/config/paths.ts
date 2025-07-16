@@ -9,6 +9,11 @@ export const paths = {
     getHref: () => '/projects',
   },
 
+  projectDetail: {
+    path: '/projects/:id',
+    getHref: (id: string) => `/projects/${id}`,
+  },
+
   auth: {
     register: {
       path: '/auth/register',
