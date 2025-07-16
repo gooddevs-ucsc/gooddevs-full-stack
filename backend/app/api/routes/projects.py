@@ -8,15 +8,16 @@ from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 
 from app.api.deps import CurrentUser, SessionDep, OptionalCurrentUser
-from app.models import Project, ProjectCreate, ProjectPublic, ProjectsPublic, ProjectUpdate, Message, UserRole, ProjectStatus, User, TokenPayload
+from app.models import Project, ProjectCreate, ProjectPublic, ProjectsPublic, ProjectUpdate, Message, UserRole, ProjectStatus, User, TokenPayload, Meta, ProjectResponse
 from app.core import security
 from app.core.config import settings
 from app import crud
+from app.utils import calculate_pagination_meta, page_to_skip, calculate_pagination_meta_from_page
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 
-@router.post("/", response_model=ProjectPublic)
+@router.post("/", response_model=ProjectResponse)
 def create_project(
     *,
     session: SessionDep,
@@ -36,14 +37,14 @@ def create_project(
     project = crud.create_project(
         session=session, project_in=project_in, requester_id=current_user.id
     )
-    return project
+    return ProjectResponse(data=project)
 
 
 @router.get("/", response_model=ProjectsPublic)
 def read_projects(
     session: SessionDep,
     current_user: CurrentUser,
-    skip: int = 0,
+    page: int = 1,
     limit: int = 100
 ) -> Any:
     """
@@ -54,17 +55,24 @@ def read_projects(
     if current_user.role == UserRole.ADMIN:
         # Admins can see all projects
         count_statement = select(func.count()).select_from(Project)
-        count = session.exec(count_statement).one()
+        total = session.exec(count_statement).one()
+
+        # Convert page to skip
+        skip = page_to_skip(page, limit)
         projects = crud.get_all_projects(
             session=session, skip=skip, limit=limit)
-        return ProjectsPublic(data=projects, count=count)
+
+        # Calculate pagination metadata
+        meta = calculate_pagination_meta_from_page(
+            total=total, page=page, limit=limit)
+        return ProjectsPublic(data=projects, meta=meta)
     raise HTTPException(status_code=403, detail="Insufficient permissions")
 
 
 @router.get("/approved", response_model=ProjectsPublic)
 def read_approved_projects(
     session: SessionDep,
-    skip: int = 0,
+    page: int = 1,
     limit: int = 100
 ) -> Any:
     """
@@ -75,14 +83,21 @@ def read_approved_projects(
         .select_from(Project)
         .where(Project.status == ProjectStatus.APPROVED)
     )
-    count = session.exec(count_statement).one()
+    total = session.exec(count_statement).one()
+
+    # Convert page to skip
+    skip = page_to_skip(page, limit)
     projects = crud.get_approved_projects(
         session=session, skip=skip, limit=limit
     )
-    return ProjectsPublic(data=projects, count=count)
+
+    # Calculate pagination metadata
+    meta = calculate_pagination_meta_from_page(
+        total=total, page=page, limit=limit)
+    return ProjectsPublic(data=projects, meta=meta)
 
 
-@router.get("/{id}", response_model=ProjectPublic)
+@router.get("/{id}", response_model=ProjectResponse)
 def read_project(
     session: SessionDep,
     optional_current_user: OptionalCurrentUser,
@@ -102,7 +117,7 @@ def read_project(
 
     # If project is approved, anyone can view it
     if project.status == ProjectStatus.APPROVED:
-        return project
+        return ProjectResponse(data=project)
 
     # For non-approved projects, check authentication and permissions
     if not optional_current_user:
@@ -114,20 +129,20 @@ def read_project(
     # Check permissions for authenticated users
     if optional_current_user.role == UserRole.ADMIN:
         # Admins can view any project
-        return project
+        return ProjectResponse(data=project)
     elif optional_current_user.role == UserRole.REQUESTER:
         # Requesters can only view their own projects
         if project.requester_id != optional_current_user.id:
             raise HTTPException(
                 status_code=403, detail="Not enough permissions")
-        return project
+        return ProjectResponse(data=project)
     else:
         # Other roles (VOLUNTEER, SPONSOR) can only view approved projects
         raise HTTPException(
             status_code=403, detail="Project not available")
 
 
-@router.put("/{id}", response_model=ProjectPublic)
+@router.put("/{id}", response_model=ProjectResponse)
 def update_project(
     *,
     session: SessionDep,
@@ -163,7 +178,7 @@ def update_project(
 
     project = crud.update_project(
         session=session, db_project=project, project_in=project_in)
-    return project
+    return ProjectResponse(data=project)
 
 
 @router.delete("/{id}")
@@ -199,7 +214,7 @@ def delete_project(
     return Message(message="Project deleted successfully")
 
 
-@router.put("/{id}/approve", response_model=ProjectPublic)
+@router.put("/{id}/approve", response_model=ProjectResponse)
 def approve_project(
     *,
     session: SessionDep,
@@ -223,10 +238,10 @@ def approve_project(
     project_update = ProjectUpdate(status=ProjectStatus.APPROVED)
     project = crud.update_project(
         session=session, db_project=project, project_in=project_update)
-    return project
+    return ProjectResponse(data=project)
 
 
-@router.put("/{id}/reject", response_model=ProjectPublic)
+@router.put("/{id}/reject", response_model=ProjectResponse)
 def reject_project(
     *,
     session: SessionDep,
@@ -250,4 +265,4 @@ def reject_project(
     project_update = ProjectUpdate(status=ProjectStatus.REJECTED)
     project = crud.update_project(
         session=session, db_project=project, project_in=project_update)
-    return project
+    return ProjectResponse(data=project)

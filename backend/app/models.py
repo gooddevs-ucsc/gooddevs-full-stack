@@ -30,6 +30,13 @@ class ProjectStatus(str, enum.Enum):
     COMPLETED = "COMPLETED"
 
 
+class EstimatedTimeline(str, enum.Enum):
+    LESS_THAN_1_MONTH = "LESS_THAN_1_MONTH"
+    ONE_TO_THREE_MONTHS = "ONE_TO_THREE_MONTHS"
+    THREE_TO_SIX_MONTHS = "THREE_TO_SIX_MONTHS"
+    MORE_THAN_SIX_MONTHS = "MORE_THAN_SIX_MONTHS"
+
+
 # Shared properties
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
@@ -139,7 +146,8 @@ class ProjectBase(SQLModel):
     description: str = Field(min_length=10, max_length=2000)
     project_type: ProjectType = Field(sa_column=Column(Enum(ProjectType)))
     preferred_technologies: str | None = Field(default=None, max_length=500)
-    estimated_timeline: str | None = Field(default=None, max_length=100)
+    estimated_timeline: EstimatedTimeline | None = Field(
+        default=None, sa_column=Column(Enum(EstimatedTimeline)))
 
 
 # Properties to receive via API on creation
@@ -155,7 +163,9 @@ class ProjectUpdate(SQLModel):
     project_type: ProjectType | None = Field(
         default=None, sa_column=Column(Enum(ProjectType)))
     preferred_technologies: str | None = Field(default=None, max_length=500)
-    estimated_timeline: str | None = Field(default=None, max_length=100)
+    estimated_timeline: EstimatedTimeline | None = Field(
+        default=None, sa_column=Column(Enum(EstimatedTimeline)))
+    status: ProjectStatus | None
 
 
 # Database model, database table inferred from class name
@@ -182,14 +192,22 @@ class ProjectPublic(ProjectBase):
     updated_at: datetime
 
 
+# Pagination metadata
+class Meta(SQLModel):
+    page: int
+    total: int
+    totalPages: int
+
+
 # Response wrapper for single project
 class ProjectResponse(SQLModel):
     data: ProjectPublic
 
 
+# Response wrapper for multiple projects with pagination
 class ProjectsPublic(SQLModel):
     data: list[ProjectPublic]
-    count: int
+    meta: Meta
 
 
 # Generic message
