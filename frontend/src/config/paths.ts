@@ -4,6 +4,16 @@ export const paths = {
     getHref: () => '/',
   },
 
+  projects: {
+    path: '/projects',
+    getHref: () => '/projects',
+  },
+
+  projectDetail: {
+    path: '/projects/:id',
+    getHref: (id: string) => `/projects/${id}`,
+  },
+
   auth: {
     register: {
       path: '/auth/register',
