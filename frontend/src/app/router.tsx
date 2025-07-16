@@ -10,6 +10,14 @@ import {
   default as AppRoot,
   ErrorBoundary as AppRootErrorBoundary,
 } from './routes/app/root';
+import {
+  default as DeveloperRoot,
+  ErrorBoundary as DeveloperRootErrorBoundary,
+} from './routes/developer/root';
+import {
+  default as RequesterRoot,
+  ErrorBoundary as RequestorRootErrorBoundary,
+} from './routes/requester/root';
 
 const convert = (queryClient: QueryClient) => (m: any) => {
   const { clientLoader, clientAction, default: Component, ...rest } = m;
@@ -26,6 +34,18 @@ export const createAppRouter = (queryClient: QueryClient) =>
     {
       path: paths.home.path,
       lazy: () => import('./routes/home').then(convert(queryClient)),
+    },
+    {
+      path: paths.projects.path,
+      lazy: () => import('./routes/projects').then(convert(queryClient)),
+    },
+    {
+      path: paths.projectDetail.path,
+      lazy: () => import('./routes/project-detail').then(convert(queryClient)),
+    },
+    {
+      path: paths.aboutUs.path,
+      lazy: () => import('./routes/about-us').then(convert(queryClient)),
     },
     {
       path: paths.auth.register.path,
@@ -80,6 +100,65 @@ export const createAppRouter = (queryClient: QueryClient) =>
         {
           path: paths.admin.donationsSponshorships.path,
           lazy: () => import('./routes/admin/donations-sponsorships').then(convert(queryClient)),
+        },
+      ],
+    },
+    {
+      path: paths.requester.root.path,
+      element: (
+        <ProtectedRoute>
+          <RequesterRoot />
+        </ProtectedRoute>
+      ),
+      ErrorBoundary: RequestorRootErrorBoundary,
+      children: [
+        {
+          path: paths.requester.dashboard.path,
+          lazy: () =>
+            import('./routes/requester/dashboard').then(convert(queryClient)),
+        },
+        {
+          path: paths.requester.projects.path,
+          lazy: () =>
+            import('./routes/requester/projects').then(convert(queryClient)),
+        },
+        {
+          path: paths.requester.createProject.path,
+          lazy: () =>
+            import('./routes/requester/submitnewproject').then(
+              convert(queryClient),
+            ),
+        },
+        {
+          path: paths.requester.settings.path,
+          lazy: () =>
+            import('./routes/requester/settings').then(convert(queryClient)),
+        },
+      ],
+    },
+    {
+      path: paths.developer.root.path,
+      element: (
+        <ProtectedRoute>
+          <DeveloperRoot />
+        </ProtectedRoute>
+      ),
+      ErrorBoundary: DeveloperRootErrorBoundary,
+      children: [
+        {
+          path: paths.developer.dashboard.path,
+          lazy: () =>
+            import('./routes/developer/dashboard').then(convert(queryClient)),
+        },
+        {
+          path: paths.developer.projects.path,
+          lazy: () =>
+            import('./routes/developer/projects').then(convert(queryClient)),
+        },
+        {
+          path: paths.developer.settings.path,
+          lazy: () =>
+            import('./routes/developer/settings').then(convert(queryClient)),
         },
       ],
     },

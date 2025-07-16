@@ -10,7 +10,7 @@ export default meta;
 
 type User = {
   id: string;
-  createdAt: number;
+  created_at: number;
   name: string;
   title: string;
   role: string;
@@ -22,7 +22,7 @@ type Story = StoryObj<typeof Table<User>>;
 const data: User[] = [
   {
     id: '1',
-    createdAt: Date.now(),
+    created_at: Date.now(),
     name: 'Jane Cooper',
     title: 'Regional Paradigm Technician',
     role: 'Admin',
@@ -30,7 +30,7 @@ const data: User[] = [
   },
   {
     id: '2',
-    createdAt: Date.now(),
+    created_at: Date.now(),
     name: 'Cody Fisher',
     title: 'Product Directives Officer',
     role: 'Owner',

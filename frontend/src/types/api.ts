@@ -4,7 +4,7 @@
 
 export type BaseEntity = {
   id: string;
-  createdAt: number;
+  created_at: number;
 };
 
 export type Entity<T> = {
@@ -46,4 +46,25 @@ export type Comment = Entity<{
   body: string;
   discussionId: string;
   author: User;
+}>;
+
+/**
+ * Project-related types that match the backend models
+ */
+export type Project = Entity<{
+  id: string;
+  title: string;
+  description: string;
+  project_type: string;
+  preferred_technologies: string | null;
+  estimated_timeline:
+    | 'LESS_THAN_1_MONTH'
+    | 'ONE_TO_THREE_MONTHS'
+    | 'THREE_TO_SIX_MONTHS'
+    | 'MORE_THAN_SIX_MONTHS'
+    | null;
+  created_at: string;
+  updated_at: string;
+  requester_id: string;
+  status: string;
 }>;
