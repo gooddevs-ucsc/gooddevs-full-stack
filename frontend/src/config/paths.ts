@@ -58,6 +58,29 @@ export const paths = {
       getHref: () => '/app/profile',
     },
   },
+
+  admin: {
+    root: {
+      path: '/admin',
+      getHref: () => '/admin',
+    },
+    dashboard: {
+      path: '',
+      getHref: () => '/admin',
+    },
+    discussions: {
+      path: 'discussions',
+      getHref: () => '/admin/discussions',
+    },
+    users: {
+      path: 'users',
+      getHref: () => '/admin/users',
+    },
+    donationsSponshorships: {
+      path: 'donations-sponsorships',
+      getHref: () => '/admin/donations-sponsorships',
+    },
+  },
   requester: {
     root: {
       path: '/requester',

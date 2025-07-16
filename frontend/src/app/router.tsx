@@ -94,6 +94,16 @@ export const createAppRouter = (queryClient: QueryClient) =>
       ],
     },
     {
+      path: paths.admin.root.path,
+      lazy: () => import('./routes/admin/root').then(convert(queryClient)),
+      children: [
+        {
+          path: paths.admin.donationsSponshorships.path,
+          lazy: () => import('./routes/admin/donations-sponsorships').then(convert(queryClient)),
+        },
+      ],
+    },
+    {
       path: paths.requester.root.path,
       element: (
         <ProtectedRoute>

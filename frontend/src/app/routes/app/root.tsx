@@ -1,4 +1,4 @@
-import { Home, Folder, Users } from 'lucide-react';
+import { Home, Folder, Users, Settings } from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
