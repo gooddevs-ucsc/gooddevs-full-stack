@@ -2,10 +2,10 @@ import uuid
 from typing import Any
 from datetime import datetime, timezone
 
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus
+from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -99,3 +99,41 @@ def delete_project(*, session: Session, project_id: uuid.UUID) -> bool:
         session.commit()
         return True
     return False
+
+# Task CRUD operations
+def create_task(*, session: Session, task_in: TaskCreate, project_id: uuid.UUID)-> Task:
+    db_task = Task.model_validate(task_in, update={"project_id": project_id})
+    session.add(db_task)
+    session.commit()
+    session.refresh(db_task)
+    return db_task
+
+def update_task(*, session: Session, db_task: Task, task_in: TaskUpdate) -> Task:
+    task_data = task_in.model_dump(exclude_unset=True)
+    task_data["updated_at"] = datetime.now(timezone.utc)
+    
+    db_task.sqlmodel_update(task_data)
+    session.add(db_task)
+    session.commit()
+    session.refresh(db_task)
+    return db_task
+
+def delete_task(*, session: Session, task_id: uuid.UUID)-> bool:
+    task = session.get(Task, task_id)
+    
+    if task:
+        session.delete(task)
+        session.commit()
+        return True
+    return False
+
+def get_task_by_id(*, session: Session, task_id: uuid.UUID)-> Task | None:
+    return session.get(Task, task_id)
+
+def get_tasks_by_project_id(*, session: Session, project_id: uuid.UUID, skip: int = 0, limit: int = 100)-> list[Task]:
+    statement = select(Task).where(Task.project_id == project_id).offset(skip).limit(limit)
+    return session.exec(statement).all()
+
+def count_tasks_by_project(*, session: Session, project_id: uuid.UUID)-> int:
+    statement = select(func.count(Task.id)).where(Task.project_id == project_id)
+    return session.exec(statement).one() or 0
