@@ -2,9 +2,8 @@ import { QueryClient } from '@tanstack/react-query';
 
 import { ContentLayout } from '@/components/layouts';
 import { DonationsSponsorshipsList } from '@/features/donations/components/donations-sponsorships-list';
-import { Authorization } from '@/lib/authorization';
-import { ROLES } from '@/lib/roles';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const clientLoader = (queryClient: QueryClient) => async () => {
   return {};
 };
@@ -12,12 +11,7 @@ export const clientLoader = (queryClient: QueryClient) => async () => {
 const DonationsSponsorshipsRoute = () => {
   return (
     <ContentLayout title="Donations & Sponsorships">
-      <Authorization
-        forbiddenFallback={<div>Only admin can view this.</div>}
-        allowedRoles={[ROLES.ADMIN]}
-      >
-        <DonationsSponsorshipsList />
-      </Authorization>
+      <DonationsSponsorshipsList />
     </ContentLayout>
   );
 };
