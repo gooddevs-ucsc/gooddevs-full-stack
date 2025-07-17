@@ -180,7 +180,8 @@ class Project(ProjectBase, table=True):
 
     # Relationships
     requester: User | None = Relationship(back_populates="projects")
-
+    tasks: list["Task"] = Relationship(back_populates="project", cascade_delete=True)
+ 
 
 # Properties to return via API, id is always required
 class ProjectPublic(ProjectBase):
@@ -235,3 +236,67 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
+
+# Task status enum
+class TaskStatus(str, enum.Enum):
+    TODO = "TODO"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+
+# Task priority enum
+class TaskPriority(str, enum.Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    URGENT = "URGENT"
+    
+# Base Task model
+class TaskBase(SQLModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=1000)
+    status: TaskStatus = Field(default= TaskStatus.TODO, sa_column=Column(Enum(TaskStatus)))
+    priority: TaskPriority = Field(default= TaskPriority.MEDIUM, sa_column=Column(Enum(TaskPriority)))
+    estimated_hours: int | None = Field(default=None, ge=1)
+    actual_hours: int | None = Field(default=None, ge=0)
+    due_date: datetime | None = Field(default=None)
+    
+# Api models
+class TaskCreate(TaskBase):
+    pass
+
+class TaskUpdate(SQLModel):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=1000)
+    status: TaskStatus | None = Field(default=None)
+    priority: TaskPriority | None = Field(default=None)
+    estimated_hours: int | None = Field(default=None, ge=1)
+    actual_hours: int | None = Field(default=None, ge=0)
+    due_date: datetime | None = Field(default=None)
+    
+# Database models
+class Task(TaskBase, table=True):
+    id:uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    project_id: uuid.UUID = Field(foreign_key="project.id", nullable=False, ondelete="CASCADE")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    project: Project | None = Relationship(back_populates="tasks")
+    
+# Public Api models
+class TaskPublic(TaskBase):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    
+class TasksPublic(SQLModel):
+    data: list[TaskPublic]
+    meta: Meta
+    
+# Response wrapper for single task
+class TaskResponse(SQLModel):   
+    data: TaskPublic
+    
+    
