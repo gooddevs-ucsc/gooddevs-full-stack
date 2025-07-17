@@ -10,8 +10,7 @@ import {
   default as AppRoot,
   ErrorBoundary as AppRootErrorBoundary,
 } from './routes/app/root';
-import {
-  default as DeveloperRoot,
+import DeveloperRoot, {
   ErrorBoundary as DeveloperRootErrorBoundary,
 } from './routes/developer/root';
 import {
@@ -170,6 +169,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
           path: paths.developer.projects.path,
           lazy: () =>
             import('./routes/developer/projects').then(convert(queryClient)),
+        },
+        {
+          path: paths.developer.profile.path,
+          lazy: () =>
+            import('./routes/developer/profile').then(convert(queryClient)),
         },
         {
           path: paths.developer.settings.path,
