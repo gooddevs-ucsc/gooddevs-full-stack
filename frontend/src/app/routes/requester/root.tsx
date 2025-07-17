@@ -2,6 +2,7 @@ import { ArrowLeft, Folder, Home, Settings } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
+import { ForbiddenFallback } from '@/components/ui/forbidden-fallback';
 import { paths } from '@/config/paths';
 import { Authorization } from '@/lib/authorization';
 import { ROLES } from '@/lib/roles';
@@ -41,24 +42,7 @@ const RequesterRoot = () => {
   return (
     <Authorization
       allowedRoles={[ROLES.REQUESTER]}
-      forbiddenFallback={
-        <div className="flex h-screen items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900">Access Denied</h1>
-            <p className="mt-2 text-gray-600">
-              This area is only accessible to requesters.
-            </p>
-            <p className="mt-4">
-              <a
-                href="/app"
-                className="text-blue-600 underline hover:text-blue-800"
-              >
-                Go back to main dashboard
-              </a>
-            </p>
-          </div>
-        </div>
-      }
+      forbiddenFallback={<ForbiddenFallback roles={[ROLES.REQUESTER]} />}
     >
       <DashboardLayout navigation={navigation}>
         <Outlet />
