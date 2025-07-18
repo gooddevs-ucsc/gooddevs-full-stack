@@ -7,7 +7,7 @@ import { Project } from '@/types/api';
 export const rejectProject = (
   projectId: string,
 ): Promise<{ data: Project }> => {
-  return api.post(`/projects/${projectId}/reject`);
+  return api.put(`/projects/${projectId}/reject`);
 };
 
 type UseRejectProjectOptions = {

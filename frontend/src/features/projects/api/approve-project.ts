@@ -7,7 +7,7 @@ import { Project } from '@/types/api';
 export const approveProject = (
   projectId: string,
 ): Promise<{ data: Project }> => {
-  return api.post(`/projects/${projectId}/approve`);
+  return api.put(`/projects/${projectId}/approve`);
 };
 
 type UseApproveProjectOptions = {
