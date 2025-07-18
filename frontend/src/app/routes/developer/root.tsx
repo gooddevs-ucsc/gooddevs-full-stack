@@ -13,6 +13,11 @@ const DeveloperRoot = () => {
     { name: 'Dashboard', to: paths.developer.dashboard.getHref(), icon: Home },
     { name: 'Projects', to: paths.developer.projects.getHref(), icon: Folder },
     {
+      name: 'Donations & Sponsorships',
+      to: paths.developer.donationsSponsorships.getHref(),
+      icon: Folder,
+    },
+    {
       name: 'Profile',
       to: paths.developer.profile.getHref(),
       icon: User,
