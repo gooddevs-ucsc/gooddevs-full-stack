@@ -123,7 +123,7 @@ export {
   TableCaption,
 };
 
-type TableColumn<Entry> = {
+export type TableColumn<Entry> = {
   title: string;
   field: keyof Entry;
   Cell?({ entry }: { entry: Entry }): React.ReactElement;
