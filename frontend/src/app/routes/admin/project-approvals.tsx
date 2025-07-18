@@ -2,10 +2,15 @@ import { QueryClient } from '@tanstack/react-query';
 
 import { ContentLayout } from '@/components/layouts';
 import { ProjectApprovalsList } from '@/features/projects';
+import { getPendingProjectsQueryOptions } from '@/features/projects/api/get-pending-projects';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const clientLoader = (queryClient: QueryClient) => async () => {
-  return {};
+  const query = getPendingProjectsQueryOptions();
+
+  return (
+    queryClient.getQueryData(query.queryKey) ??
+    (await queryClient.fetchQuery(query))
+  );
 };
 
 const ProjectApprovalsRoute = () => {
