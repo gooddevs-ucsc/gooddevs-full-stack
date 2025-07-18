@@ -47,3 +47,31 @@ export const useProjectThread = ({ projectId, queryConfig }: UseProjectThreadOpt
     ...queryConfig,
   });
 };
+
+export const createProjectComment = ({ 
+  projectId, 
+  data 
+}: { 
+  projectId: string; 
+  data: { content: string } 
+}): Promise<{ data: ProjectThreadComment }> => {
+  return api.post(`/projects/${projectId}/thread/comments`, data);
+};
+
+export const updateProjectComment = ({ 
+  commentId, 
+  data 
+}: { 
+  commentId: string; 
+  data: { content: string } 
+}): Promise<{ data: ProjectThreadComment }> => {
+  return api.patch(`/projects/comments/${commentId}`, data);
+};
+
+export const deleteProjectComment = ({ 
+  commentId 
+}: { 
+  commentId: string 
+}): Promise<{ message: string }> => {
+  return api.delete(`/projects/comments/${commentId}`);
+};
