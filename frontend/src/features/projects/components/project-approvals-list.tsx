@@ -1,21 +1,14 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { Check, X, Clock, AlertCircle } from 'lucide-react';
-import { useState } from 'react';
+import { AlertCircle } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 
-import { Button } from '@/components/ui/button';
-import { useNotifications } from '@/components/ui/notifications';
-import { URLPagination } from '@/components/ui/pagination';
 import { Spinner } from '@/components/ui/spinner';
+import { Table, type TableColumn } from '@/components/ui/table';
 import { Project } from '@/types/api';
 import { formatDate, formatEstimatedTimeline } from '@/utils/format';
 
-import { useApproveProject } from '../api/approve-project';
-import {
-  usePendingProjects,
-  getPendingProjectsQueryOptions,
-} from '../api/get-pending-projects';
-import { useRejectProject } from '../api/reject-project';
+import { usePendingProjects } from '../api/get-pending-projects';
+
+import { ProjectActionButtons } from './project-action-buttons';
 
 const getProjectTypeColor = (type: string) => {
   const colors = {
@@ -29,210 +22,15 @@ const getProjectTypeColor = (type: string) => {
   return colors[type as keyof typeof colors] || colors.OTHER;
 };
 
-const ProjectApprovalCard = ({
-  project,
-  onApprove,
-  onReject,
-  isApproving,
-  isRejecting,
-}: {
-  project: Project;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
-  isApproving: boolean;
-  isRejecting: boolean;
-}) => {
-  return (
-    <div className="overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100">
-      <div className="p-6">
-        <div className="mb-4 flex items-start justify-between">
-          <div className="flex-1">
-            <h3 className="mb-2 text-xl font-semibold text-slate-900">
-              {project.title}
-            </h3>
-            <div className="mb-3 flex items-center gap-4 text-sm text-slate-600">
-              <span className="flex items-center gap-1">
-                <Clock className="size-4" />
-                {formatDate(project.created_at)}
-              </span>
-              {project.estimated_timeline && (
-                <span className="flex items-center gap-1">
-                  <Clock className="size-4" />
-                  {formatEstimatedTimeline(project.estimated_timeline)}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getProjectTypeColor(project.project_type)}`}
-            >
-              {project.project_type.replace(/_/g, ' ')}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-800">
-              <AlertCircle className="size-3" />
-              Pending
-            </span>
-          </div>
-        </div>
-
-        <p className="mb-4 line-clamp-3 text-slate-600">
-          {project.description}
-        </p>
-
-        {project.preferred_technologies && (
-          <div className="mb-4">
-            <h4 className="mb-2 text-sm font-medium text-slate-900">
-              Preferred Technologies:
-            </h4>
-            <p className="text-sm text-slate-600">
-              {project.preferred_technologies}
-            </p>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-slate-500">Project ID: {project.id}</div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onReject(project.id)}
-              disabled={isApproving || isRejecting}
-              className="border-red-200 text-red-700 hover:border-red-300 hover:bg-red-50"
-            >
-              {isRejecting ? (
-                <>
-                  <Spinner className="mr-2 size-4" />
-                  Rejecting...
-                </>
-              ) : (
-                <>
-                  <X className="mr-2 size-4" />
-                  Reject
-                </>
-              )}
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => onApprove(project.id)}
-              disabled={isApproving || isRejecting}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {isApproving ? (
-                <>
-                  <Spinner className="mr-2 size-4" />
-                  Approving...
-                </>
-              ) : (
-                <>
-                  <Check className="mr-2 size-4" />
-                  Approve
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export const ProjectApprovalsList = () => {
   const [searchParams] = useSearchParams();
   const page = Number(searchParams.get('page') || 1);
   const limit = Number(searchParams.get('limit') || 10);
-  const [loadingStates, setLoadingStates] = useState<{
-    [key: string]: { approving: boolean; rejecting: boolean };
-  }>({});
-
-  const queryClient = useQueryClient();
-  const { addNotification } = useNotifications();
 
   const { data, isLoading, error } = usePendingProjects({
     page,
     limit,
   });
-
-  const approveProjectMutation = useApproveProject({
-    mutationConfig: {
-      onMutate: async (projectId) => {
-        setLoadingStates((prev) => ({
-          ...prev,
-          [projectId]: { ...prev[projectId], approving: true },
-        }));
-      },
-      onSuccess: (data, projectId) => {
-        queryClient.invalidateQueries({
-          queryKey: getPendingProjectsQueryOptions({ page }).queryKey,
-        });
-        addNotification({
-          type: 'success',
-          title: 'Project Approved',
-          message: `Project "${data.data.title}" has been approved successfully.`,
-        });
-        setLoadingStates((prev) => ({
-          ...prev,
-          [projectId]: { ...prev[projectId], approving: false },
-        }));
-      },
-      onError: (error, projectId) => {
-        addNotification({
-          type: 'error',
-          title: 'Approval Failed',
-          message: 'Failed to approve project. Please try again.',
-        });
-        setLoadingStates((prev) => ({
-          ...prev,
-          [projectId]: { ...prev[projectId], approving: false },
-        }));
-      },
-    },
-  });
-
-  const rejectProjectMutation = useRejectProject({
-    mutationConfig: {
-      onMutate: async (projectId) => {
-        setLoadingStates((prev) => ({
-          ...prev,
-          [projectId]: { ...prev[projectId], rejecting: true },
-        }));
-      },
-      onSuccess: (data, projectId) => {
-        queryClient.invalidateQueries({
-          queryKey: getPendingProjectsQueryOptions({ page }).queryKey,
-        });
-        addNotification({
-          type: 'success',
-          title: 'Project Rejected',
-          message: `Project "${data.data.title}" has been rejected.`,
-        });
-        setLoadingStates((prev) => ({
-          ...prev,
-          [projectId]: { ...prev[projectId], rejecting: false },
-        }));
-      },
-      onError: (error, projectId) => {
-        addNotification({
-          type: 'error',
-          title: 'Rejection Failed',
-          message: 'Failed to reject project. Please try again.',
-        });
-        setLoadingStates((prev) => ({
-          ...prev,
-          [projectId]: { ...prev[projectId], rejecting: false },
-        }));
-      },
-    },
-  });
-
-  const handleApprove = (projectId: string) => {
-    approveProjectMutation.mutate(projectId);
-  };
-
-  const handleReject = (projectId: string) => {
-    rejectProjectMutation.mutate(projectId);
-  };
 
   if (isLoading) {
     return (
@@ -274,36 +72,102 @@ export const ProjectApprovalsList = () => {
     );
   }
 
+  const columns: TableColumn<Project>[] = [
+    {
+      title: 'Project',
+      field: 'title',
+      Cell: ({ entry: project }: { entry: Project }) => (
+        <div className="min-w-0">
+          <div className="truncate font-medium text-slate-900">
+            {project.title}
+          </div>
+          <div className="truncate text-sm text-slate-500">
+            {project.description}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Type',
+      field: 'project_type',
+      Cell: ({ entry: project }: { entry: Project }) => (
+        <span
+          className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getProjectTypeColor(project.project_type)}`}
+        >
+          {project.project_type.replace(/_/g, ' ')}
+        </span>
+      ),
+    },
+    {
+      title: 'Technologies',
+      field: 'preferred_technologies',
+      Cell: ({ entry: project }: { entry: Project }) => (
+        <div className="max-w-xs truncate text-sm text-slate-600">
+          {project.preferred_technologies || '-'}
+        </div>
+      ),
+    },
+    {
+      title: 'Timeline',
+      field: 'estimated_timeline',
+      Cell: ({ entry: project }: { entry: Project }) => (
+        <div className="text-sm text-slate-600">
+          {project.estimated_timeline
+            ? formatEstimatedTimeline(project.estimated_timeline)
+            : '-'}
+        </div>
+      ),
+    },
+    {
+      title: 'Created',
+      field: 'created_at',
+      Cell: ({ entry: project }: { entry: Project }) => (
+        <div className="text-sm text-slate-600">
+          {formatDate(project.created_at)}
+        </div>
+      ),
+    },
+    {
+      title: 'Status',
+      field: 'status',
+      Cell: () => (
+        <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-medium text-orange-800">
+          <AlertCircle className="size-3" />
+          Pending
+        </span>
+      ),
+    },
+    {
+      title: 'Actions',
+      field: 'id',
+      Cell: ({ entry: project }: { entry: Project }) => {
+        return (
+          <ProjectActionButtons
+            projectId={project.id}
+            projectTitle={project.title}
+            page={page}
+          />
+        );
+      },
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        {projects.map((project) => {
-          const projectLoadingState = loadingStates[project.id] || {
-            approving: false,
-            rejecting: false,
-          };
-
-          return (
-            <ProjectApprovalCard
-              key={project.id}
-              project={project}
-              onApprove={handleApprove}
-              onReject={handleReject}
-              isApproving={projectLoadingState.approving}
-              isRejecting={projectLoadingState.rejecting}
-            />
-          );
-        })}
-      </div>
-
-      {meta && meta.totalPages > 1 && (
-        <URLPagination
-          totalPages={meta.totalPages}
-          currentPage={meta.page}
-          rootUrl="/admin/project-approvals"
-          limit={limit}
-        />
-      )}
+    <div className="space-y-4">
+      <Table
+        data={projects}
+        columns={columns}
+        pagination={
+          meta && meta.totalPages > 1
+            ? {
+                totalPages: meta.totalPages,
+                currentPage: meta.page,
+                rootUrl: '',
+                limit,
+              }
+            : undefined
+        }
+      />
     </div>
   );
 };
