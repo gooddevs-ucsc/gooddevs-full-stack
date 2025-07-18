@@ -1,4 +1,21 @@
-import { Clock, MapPin, Users, Eye, ArrowLeft } from 'lucide-react';
+import {
+  Clock,
+  MapPin,
+  Users,
+  Eye,
+  ArrowLeft,
+  Code,
+  Calendar,
+  Target,
+  Lightbulb,
+  CheckCircle,
+  Star,
+  Heart,
+  MessageCircle,
+  GitBranch,
+  Award,
+  Zap,
+} from 'lucide-react';
 import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
@@ -14,77 +31,461 @@ export const ProjectDescriptionTab = ({
   const navigate = useNavigate();
 
   return (
-    <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
       {/* Main Content */}
-      <div className="space-y-8 lg:col-span-2">
-        {/* Project Description */}
-        <div className="rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm">
-          <h2 className="mb-6 text-2xl font-semibold text-slate-900">
-            Project Description
-          </h2>
+      <div className="space-y-6 lg:col-span-2">
+        {/* Project Overview */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-2xl font-semibold text-slate-900">
+              Project Overview
+            </h2>
+            <div className="flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
+              <CheckCircle className="size-4" />
+              Approved
+            </div>
+          </div>
           <div className="prose prose-slate max-w-none">
-            <p className="leading-relaxed text-slate-700">
-              {project.description}
+            <p className="text-lg leading-relaxed text-slate-700">
+              {project.description ||
+                'This project aims to create a meaningful solution that addresses real community needs while providing volunteer developers with valuable learning opportunities and portfolio contributions.'}
             </p>
           </div>
         </div>
 
-        {/* What You'll Work On */}
-        <div className="rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm">
-          <h2 className="mb-6 text-2xl font-semibold text-slate-900">
-            What You&apos;ll Work On
-          </h2>
+        {/* About the Organization */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-full bg-emerald-100 p-2">
+              <Users className="size-5 text-emerald-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              About the Organization
+            </h2>
+          </div>
           <div className="space-y-4">
-            <div className="flex items-start">
-              <div className="mr-3 mt-1 size-2 rounded-full bg-primary"></div>
-              <p className="text-slate-700">
-                Collaborate with a team of passionate developers
-              </p>
+            <div>
+              <h4 className="mb-2 font-medium text-slate-900">
+                Organization Details
+              </h4>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-blue-500"></div>
+                  <span className="text-sm text-slate-600">
+                    <strong>Type:</strong>{' '}
+                    {project.organization_type || 'Non-profit Organization'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-green-500"></div>
+                  <span className="text-sm text-slate-600">
+                    <strong>Founded:</strong>{' '}
+                    {project.organization_founded || '2018'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-purple-500"></div>
+                  <span className="text-sm text-slate-600">
+                    <strong>Location:</strong>{' '}
+                    {project.organization_location || 'California, USA'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-orange-500"></div>
+                  <span className="text-sm text-slate-600">
+                    <strong>Size:</strong>{' '}
+                    {project.organization_size || '50-100 staff members'}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-start">
-              <div className="mr-3 mt-1 size-2 rounded-full bg-primary"></div>
-              <p className="text-slate-700">
-                Build meaningful solutions that make a real impact
-              </p>
-            </div>
-            <div className="flex items-start">
-              <div className="mr-3 mt-1 size-2 rounded-full bg-primary"></div>
-              <p className="text-slate-700">
-                Gain experience with modern technologies and best practices
-              </p>
-            </div>
-            <div className="flex items-start">
-              <div className="mr-3 mt-1 size-2 rounded-full bg-primary"></div>
-              <p className="text-slate-700">
-                Contribute to open-source projects and build your portfolio
+            <div>
+              <h4 className="mb-2 font-medium text-slate-900">
+                Mission & Impact
+              </h4>
+              <p className="text-sm leading-relaxed text-slate-600">
+                {project.organization_mission ||
+                  'Dedicated to creating positive social impact through technology solutions. Our organization has helped over 10,000 individuals access essential services and resources through digital platforms.'}
               </p>
             </div>
           </div>
         </div>
 
         {/* Project Goals & Impact */}
-        <div className="rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm">
-          <h2 className="mb-6 text-2xl font-semibold text-slate-900">
-            Project Goals & Impact
-          </h2>
-          <div className="space-y-4">
-            <div className="flex items-start">
-              <div className="mr-3 mt-1 size-2 rounded-full bg-green-500"></div>
-              <p className="text-slate-700">
-                Create a solution that addresses real community needs
-              </p>
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-full bg-blue-100 p-2">
+              <Target className="size-5 text-blue-600" />
             </div>
-            <div className="flex items-start">
-              <div className="mr-3 mt-1 size-2 rounded-full bg-blue-500"></div>
-              <p className="text-slate-700">
-                Provide learning opportunities for volunteer developers
-              </p>
+            <h2 className="text-xl font-semibold text-slate-900">
+              Goals & Expected Impact
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 rounded-full bg-green-100 p-1">
+                  <CheckCircle className="size-3 text-green-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-slate-900">
+                    Community Impact
+                  </h4>
+                  <p className="text-sm text-slate-600">
+                    Address real needs of nonprofit organizations and their
+                    beneficiaries
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 rounded-full bg-blue-100 p-1">
+                  <Lightbulb className="size-3 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-slate-900">Innovation</h4>
+                  <p className="text-sm text-slate-600">
+                    Implement modern solutions using cutting-edge technologies
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="flex items-start">
-              <div className="mr-3 mt-1 size-2 rounded-full bg-purple-500"></div>
-              <p className="text-slate-700">
-                Build sustainable, maintainable code for long-term use
-              </p>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 rounded-full bg-purple-100 p-1">
+                  <Users className="size-3 text-purple-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-slate-900">Team Growth</h4>
+                  <p className="text-sm text-slate-600">
+                    Provide learning opportunities and skill development for
+                    volunteers
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 rounded-full bg-orange-100 p-1">
+                  <Award className="size-3 text-orange-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-slate-900">Sustainability</h4>
+                  <p className="text-sm text-slate-600">
+                    Create maintainable solutions for long-term community
+                    benefit
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Roles We Need */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-full bg-indigo-100 p-2">
+              <Users className="size-5 text-indigo-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              Open Positions & Roles Needed
+            </h2>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* UI/UX Designer */}
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="rounded-full bg-blue-600 p-1.5">
+                  <Target className="size-4 text-white" />
+                </div>
+                <h4 className="font-semibold text-slate-900">UI/UX Designer</h4>
+                <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
+                  2 spots open
+                </span>
+              </div>
+              <ul className="space-y-1 text-sm text-slate-700">
+                <li>• User research and persona development</li>
+                <li>• Wireframing and prototyping</li>
+                <li>• Visual design and branding</li>
+                <li>• Accessibility and usability testing</li>
+                <li>• Design system creation</li>
+              </ul>
+              <div className="mt-3 flex flex-wrap gap-1">
+                <span className="rounded bg-blue-200 px-2 py-1 text-xs text-blue-800">
+                  Figma
+                </span>
+                <span className="rounded bg-blue-200 px-2 py-1 text-xs text-blue-800">
+                  Adobe XD
+                </span>
+                <span className="rounded bg-blue-200 px-2 py-1 text-xs text-blue-800">
+                  Sketch
+                </span>
+              </div>
+            </div>
+
+            {/* Frontend Developer */}
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="rounded-full bg-green-600 p-1.5">
+                  <Code className="size-4 text-white" />
+                </div>
+                <h4 className="font-semibold text-slate-900">
+                  Frontend Developer
+                </h4>
+                <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
+                  3 spots open
+                </span>
+              </div>
+              <ul className="space-y-1 text-sm text-slate-700">
+                <li>• React component development</li>
+                <li>• Responsive UI implementation</li>
+                <li>• State management (Redux/Zustand)</li>
+                <li>• API integration and data fetching</li>
+                <li>• Performance optimization</li>
+              </ul>
+              <div className="mt-3 flex flex-wrap gap-1">
+                <span className="rounded bg-green-200 px-2 py-1 text-xs text-green-800">
+                  React
+                </span>
+                <span className="rounded bg-green-200 px-2 py-1 text-xs text-green-800">
+                  TypeScript
+                </span>
+                <span className="rounded bg-green-200 px-2 py-1 text-xs text-green-800">
+                  Tailwind
+                </span>
+              </div>
+            </div>
+
+            {/* Backend Developer */}
+            <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="rounded-full bg-purple-600 p-1.5">
+                  <GitBranch className="size-4 text-white" />
+                </div>
+                <h4 className="font-semibold text-slate-900">
+                  Backend Developer
+                </h4>
+                <span className="rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">
+                  2 spots open
+                </span>
+              </div>
+              <ul className="space-y-1 text-sm text-slate-700">
+                <li>• REST API design and development</li>
+                <li>• Database design and optimization</li>
+                <li>• Authentication and authorization</li>
+                <li>• Data validation and security</li>
+                <li>• Performance monitoring</li>
+              </ul>
+              <div className="mt-3 flex flex-wrap gap-1">
+                <span className="rounded bg-purple-200 px-2 py-1 text-xs text-purple-800">
+                  FastAPI
+                </span>
+                <span className="rounded bg-purple-200 px-2 py-1 text-xs text-purple-800">
+                  Python
+                </span>
+                <span className="rounded bg-purple-200 px-2 py-1 text-xs text-purple-800">
+                  PostgreSQL
+                </span>
+              </div>
+            </div>
+
+            {/* Full-Stack Developer */}
+            <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="rounded-full bg-orange-600 p-1.5">
+                  <Zap className="size-4 text-white" />
+                </div>
+                <h4 className="font-semibold text-slate-900">
+                  Full-Stack Developer
+                </h4>
+                <span className="rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800">
+                  1 spot open
+                </span>
+              </div>
+              <ul className="space-y-1 text-sm text-slate-700">
+                <li>• End-to-end feature development</li>
+                <li>• Frontend-backend integration</li>
+                <li>• DevOps and deployment</li>
+                <li>• Code review and mentoring</li>
+                <li>• Architecture decisions</li>
+              </ul>
+              <div className="mt-3 flex flex-wrap gap-1">
+                <span className="rounded bg-orange-200 px-2 py-1 text-xs text-orange-800">
+                  React
+                </span>
+                <span className="rounded bg-orange-200 px-2 py-1 text-xs text-orange-800">
+                  FastAPI
+                </span>
+                <span className="rounded bg-orange-200 px-2 py-1 text-xs text-orange-800">
+                  Docker
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Project Scope & Features */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-full bg-emerald-100 p-2">
+              <Lightbulb className="size-5 text-emerald-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              Project Scope & Key Features
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <h4 className="mb-3 font-medium text-slate-900">Core Features</h4>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="mt-0.5 size-3 text-green-500" />
+                  <span>User authentication and profile management</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="mt-0.5 size-3 text-green-500" />
+                  <span>Interactive dashboard with real-time data</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="mt-0.5 size-3 text-green-500" />
+                  <span>Document upload and management system</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="mt-0.5 size-3 text-green-500" />
+                  <span>Notification and alert system</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="mt-0.5 size-3 text-green-500" />
+                  <span>Reporting and analytics module</span>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="mb-3 font-medium text-slate-900">
+                Technical Requirements
+              </h4>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="mt-0.5 size-3 text-blue-500" />
+                  <span>Responsive design for mobile and desktop</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="mt-0.5 size-3 text-blue-500" />
+                  <span>WCAG accessibility compliance</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="mt-0.5 size-3 text-blue-500" />
+                  <span>Data security and privacy protection</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="mt-0.5 size-3 text-blue-500" />
+                  <span>Performance optimization (&lt; 3s load time)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="mt-0.5 size-3 text-blue-500" />
+                  <span>Cross-browser compatibility</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Requirements & Skills */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-full bg-green-100 p-2">
+              <Zap className="size-5 text-green-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              Skills & Requirements
+            </h2>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <div>
+              <h4 className="mb-3 font-medium text-slate-900">
+                Required Skills
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {project.preferred_technologies
+                  ?.split(',')
+                  .map((tech: string, index: number) => (
+                    <span
+                      key={index}
+                      className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800"
+                    >
+                      {tech.trim()}
+                    </span>
+                  )) || (
+                  <>
+                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+                      React
+                    </span>
+                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+                      TypeScript
+                    </span>
+                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
+                      FastAPI
+                    </span>
+                    <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800">
+                      PostgreSQL
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+            <div>
+              <h4 className="mb-3 font-medium text-slate-900">
+                Experience Level
+              </h4>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-green-500"></div>
+                  <span className="text-sm text-slate-600">
+                    Beginner friendly - mentorship available
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-blue-500"></div>
+                  <span className="text-sm text-slate-600">
+                    Collaborative learning environment
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-purple-500"></div>
+                  <span className="text-sm text-slate-600">
+                    Portfolio building opportunity
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Project Timeline & Commitment */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-full bg-orange-100 p-2">
+              <Calendar className="size-5 text-orange-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              Timeline & Commitment
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="text-center">
+              <div className="mb-2 text-2xl font-bold text-blue-600">
+                {project.estimated_timeline
+                  ? formatEstimatedTimeline(project.estimated_timeline)
+                  : '12-16 weeks'}
+              </div>
+              <div className="text-sm text-slate-600">Project Duration</div>
+            </div>
+            <div className="text-center">
+              <div className="mb-2 text-2xl font-bold text-green-600">5-10</div>
+              <div className="text-sm text-slate-600">Hours per week</div>
+            </div>
+            <div className="text-center">
+              <div className="mb-2 text-2xl font-bold text-purple-600">
+                Remote
+              </div>
+              <div className="text-sm text-slate-600">Work Style</div>
             </div>
           </div>
         </div>
@@ -92,152 +493,299 @@ export const ProjectDescriptionTab = ({
 
       {/* Sidebar */}
       <div className="space-y-6">
+        {/* Apply to Project */}
+        <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 shadow-sm">
+          <div className="mb-4 text-center">
+            <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-blue-600 text-white">
+              <Heart className="size-6" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              Ready to Make an Impact?
+            </h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Join this meaningful project and help create positive change
+            </p>
+          </div>
+          <div className="space-y-3">
+            <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
+              Apply to Join Project
+            </Button>
+            <Button variant="outline" className="w-full">
+              <Heart className="mr-2 size-4" />
+              Save for Later
+            </Button>
+          </div>
+        </div>
+
         {/* Project Details */}
-        <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-xl font-semibold text-slate-900">
-            Project Details
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 text-lg font-semibold text-slate-900">
+            Project Information
           </h3>
           <div className="space-y-4">
-            {project.preferred_technologies && (
-              <div className="flex items-start">
-                <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-blue-100">
-                  <Users className="size-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900">Tech Stack</p>
-                  <p className="text-sm text-slate-600">
-                    {project.preferred_technologies}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {project.estimated_timeline && (
-              <div className="flex items-start">
-                <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-amber-100">
-                  <Clock className="size-4 text-amber-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900">Timeline</p>
-                  <p className="text-sm text-slate-600">
-                    {formatEstimatedTimeline(project.estimated_timeline)}
-                  </p>
-                </div>
-              </div>
-            )}
-
             <div className="flex items-start">
-              <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-emerald-100">
-                <MapPin className="size-4 text-emerald-600" />
+              <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-blue-100">
+                <Users className="size-4 text-blue-600" />
               </div>
               <div>
-                <p className="font-medium text-slate-900">Status</p>
+                <p className="font-medium text-slate-900">Organization</p>
                 <p className="text-sm text-slate-600">
-                  {project.status.charAt(0).toUpperCase() +
-                    project.status.slice(1).toLowerCase()}
+                  {project.organization || 'GoodDevs Community'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start">
+              <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-green-100">
+                <Clock className="size-4 text-green-600" />
+              </div>
+              <div>
+                <p className="font-medium text-slate-900">Timeline</p>
+                <p className="text-sm text-slate-600">
+                  {project.estimated_timeline
+                    ? formatEstimatedTimeline(project.estimated_timeline)
+                    : '12-16 weeks'}
                 </p>
               </div>
             </div>
 
             <div className="flex items-start">
               <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-purple-100">
-                <Eye className="size-4 text-purple-600" />
+                <MapPin className="size-4 text-purple-600" />
+              </div>
+              <div>
+                <p className="font-medium text-slate-900">Status</p>
+                <p className="text-sm text-slate-600">
+                  {project.status?.charAt(0).toUpperCase() +
+                    project.status?.slice(1).toLowerCase() || 'Active'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start">
+              <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-orange-100">
+                <Calendar className="size-4 text-orange-600" />
+              </div>
+              <div>
+                <p className="font-medium text-slate-900">Posted</p>
+                <p className="text-sm text-slate-600">
+                  {project.created_at
+                    ? formatDate(new Date(project.created_at).getTime())
+                    : 'Recently'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start">
+              <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-red-100">
+                <Eye className="size-4 text-red-600" />
               </div>
               <div>
                 <p className="font-medium text-slate-900">Last Updated</p>
                 <p className="text-sm text-slate-600">
-                  {formatDate(new Date(project.updated_at).getTime())}
+                  {project.updated_at
+                    ? formatDate(new Date(project.updated_at).getTime())
+                    : 'Recently'}
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Call to Action */}
-        <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-xl font-semibold text-slate-900">
-            Get Involved
+        {/* Team & Progress */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 text-lg font-semibold text-slate-900">
+            Team & Open Positions
           </h3>
-          <p className="mb-4 text-sm text-slate-600">
-            Ready to make a difference? Join this project and help create
-            something meaningful.
-          </p>
-          <Button className="w-full">Express Interest</Button>
+          <div className="space-y-4">
+            {/* Current Team */}
+            <div>
+              <h4 className="mb-2 text-sm font-medium text-slate-700">
+                Current Team
+              </h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-center">
+                  <div className="mb-1 text-lg font-bold text-blue-600">1</div>
+                  <div className="text-xs text-slate-600">Project Lead</div>
+                </div>
+                <div className="text-center">
+                  <div className="mb-1 text-lg font-bold text-green-600">2</div>
+                  <div className="text-xs text-slate-600">Developers</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Open Positions */}
+            <div>
+              <h4 className="mb-2 text-sm font-medium text-slate-700">
+                Positions Needed
+              </h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between rounded bg-blue-50 px-3 py-2">
+                  <span className="text-sm font-medium text-blue-900">
+                    UI/UX Designer
+                  </span>
+                  <span className="rounded-full bg-blue-200 px-2 py-1 text-xs font-bold text-blue-800">
+                    2
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded bg-green-50 px-3 py-2">
+                  <span className="text-sm font-medium text-green-900">
+                    Frontend Dev
+                  </span>
+                  <span className="rounded-full bg-green-200 px-2 py-1 text-xs font-bold text-green-800">
+                    3
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded bg-purple-50 px-3 py-2">
+                  <span className="text-sm font-medium text-purple-900">
+                    Backend Dev
+                  </span>
+                  <span className="rounded-full bg-purple-200 px-2 py-1 text-xs font-bold text-purple-800">
+                    2
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded bg-orange-50 px-3 py-2">
+                  <span className="text-sm font-medium text-orange-900">
+                    Full-Stack Dev
+                  </span>
+                  <span className="rounded-full bg-orange-200 px-2 py-1 text-xs font-bold text-orange-800">
+                    1
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Progress Stats */}
+            <div>
+              <h4 className="mb-2 text-sm font-medium text-slate-700">
+                Project Progress
+              </h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-center">
+                  <div className="mb-1 text-lg font-bold text-emerald-600">
+                    25%
+                  </div>
+                  <div className="text-xs text-slate-600">Complete</div>
+                </div>
+                <div className="text-center">
+                  <div className="mb-1 text-lg font-bold text-amber-600">
+                    18
+                  </div>
+                  <div className="text-xs text-slate-600">Applications</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Project Metrics */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 text-lg font-semibold text-slate-900">
+            Project Engagement
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Eye className="size-4 text-slate-500" />
+                <span className="text-sm text-slate-600">Views</span>
+              </div>
+              <span className="font-medium text-slate-900">247</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Heart className="size-4 text-red-500" />
+                <span className="text-sm text-slate-600">Interested</span>
+              </div>
+              <span className="font-medium text-slate-900">18</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="size-4 text-blue-500" />
+                <span className="text-sm text-slate-600">Discussions</span>
+              </div>
+              <span className="font-medium text-slate-900">7</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Star className="size-4 text-yellow-500" />
+                <span className="text-sm text-slate-600">Rating</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="font-medium text-slate-900">4.8</span>
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`size-3 ${
+                        star <= 5
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-slate-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 text-lg font-semibold text-slate-900">
+            Recent Updates
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="mt-1 flex size-6 items-center justify-center rounded-full bg-green-100">
+                <CheckCircle className="size-3 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-slate-900">
+                  Project approved
+                </p>
+                <p className="text-xs text-slate-500">Ready for development</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="mt-1 flex size-6 items-center justify-center rounded-full bg-blue-100">
+                <GitBranch className="size-3 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-slate-900">
+                  Repository created
+                </p>
+                <p className="text-xs text-slate-500">
+                  Development environment ready
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="mt-1 flex size-6 items-center justify-center rounded-full bg-purple-100">
+                <Users className="size-3 text-purple-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-slate-900">
+                  Team lead assigned
+                </p>
+                <p className="text-xs text-slate-500">
+                  Project mentor available
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <Button
             variant="outline"
-            className="mt-2 w-full"
+            className="w-full"
             onClick={() => navigate('/projects')}
           >
             <ArrowLeft className="mr-2 size-4" />
-            Back to Projects
+            Back to All Projects
           </Button>
-        </div>
-
-        {/* Project Analytics */}
-        <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-xl font-semibold text-slate-900">
-            Project Analytics
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600">Total Views</span>
-              <span className="font-medium text-slate-900">
-                {Math.floor(Math.random() * 500) + 50}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600">
-                Developers Interested
-              </span>
-              <span className="font-medium text-slate-900">
-                {Math.floor(Math.random() * 20) + 3}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600">Project Saves</span>
-              <span className="font-medium text-slate-900">
-                {Math.floor(Math.random() * 30) + 8}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600">Completion Rate</span>
-              <span className="font-medium text-green-600">
-                {Math.floor(Math.random() * 30) + 70}%
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Project Activity */}
-        <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-xl font-semibold text-slate-900">
-            Recent Activity
-          </h3>
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3">
-              <div className="size-2 rounded-full bg-green-500"></div>
-              <div className="flex-1">
-                <p className="text-sm text-slate-700">
-                  Project approved for development
-                </p>
-                <p className="text-xs text-slate-500">2 days ago</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="size-2 rounded-full bg-blue-500"></div>
-              <div className="flex-1">
-                <p className="text-sm text-slate-700">Requirements updated</p>
-                <p className="text-xs text-slate-500">5 days ago</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="size-2 rounded-full bg-purple-500"></div>
-              <div className="flex-1">
-                <p className="text-sm text-slate-700">Project created</p>
-                <p className="text-xs text-slate-500">1 week ago</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
