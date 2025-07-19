@@ -26,8 +26,8 @@ const mockSponsorSponsorships = [
   },
   {
     id: '2',
-    sponsorName: 'Mike Johnson',
-    sponsorEmail: 'mike@example.com',
+    sponsorName: 'Jane Smith',
+    sponsorEmail: 'jane@example.com',
     amount: 1500,
     currency: 'USD',
     projectId: null,
