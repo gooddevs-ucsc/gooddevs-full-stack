@@ -103,6 +103,13 @@ export const createAppRouter = (queryClient: QueryClient) =>
               convert(queryClient),
             ),
         },
+        {
+          path: paths.admin.projectApprovals.path,
+          lazy: () =>
+            import('./routes/admin/project-approvals').then(
+              convert(queryClient),
+            ),
+        },
       ],
     },
     {
