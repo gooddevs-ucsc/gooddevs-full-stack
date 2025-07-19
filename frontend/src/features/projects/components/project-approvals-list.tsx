@@ -145,7 +145,6 @@ export const ProjectApprovalsList = () => {
           <ProjectActionButtons
             projectId={project.id}
             projectTitle={project.title}
-            page={page}
           />
         );
       },
