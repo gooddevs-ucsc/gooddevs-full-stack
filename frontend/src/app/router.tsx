@@ -145,13 +145,6 @@ export const createAppRouter = (queryClient: QueryClient) =>
             ),
         },
         {
-          path: paths.requester.donationsSponsorships.path,
-          lazy: () =>
-            import('./routes/requester/donations-sponsorships').then(
-              convert(queryClient),
-            ),
-        },
-        {
           path: paths.requester.settings.path,
           lazy: () =>
             import('./routes/requester/settings').then(convert(queryClient)),
@@ -178,9 +171,9 @@ export const createAppRouter = (queryClient: QueryClient) =>
             import('./routes/developer/projects').then(convert(queryClient)),
         },
         {
-          path: paths.developer.donationsSponsorships.path,
+          path: paths.developer.sponsorships.path,
           lazy: () =>
-            import('./routes/developer/donations-sponsorships').then(
+            import('./routes/developer/sponsorships').then(
               convert(queryClient),
             ),
         },
