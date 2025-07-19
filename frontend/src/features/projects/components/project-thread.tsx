@@ -1,4 +1,14 @@
-import { MessageCircle, Send, User, Clock, ThumbsUp, Reply, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import {
+  MessageCircle,
+  Send,
+  User,
+  Clock,
+  ThumbsUp,
+  Reply,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { z } from 'zod';
 
@@ -22,7 +32,10 @@ type ProjectThreadProps = {
 };
 
 const commentSchema = z.object({
-  content: z.string().min(1, 'Comment content is required').max(2000, 'Comment is too long'),
+  content: z
+    .string()
+    .min(1, 'Comment content is required')
+    .max(2000, 'Comment is too long'),
 });
 
 export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
@@ -30,11 +43,7 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
   const [isCommentFormOpen, setIsCommentFormOpen] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
 
-  const {
-    data: thread,
-    isLoading,
-    error
-  } = useProjectThread({ projectId });
+  const { data: thread, isLoading, error } = useProjectThread({ projectId });
 
   const createCommentMutation = useCreateProjectComment();
   const updateCommentMutation = useUpdateProjectComment();
@@ -48,9 +57,9 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
     try {
       await createCommentMutation.mutateAsync({
         projectId,
-        data: { content: values.content }
+        data: { content: values.content },
       });
-    
+
       setIsCommentFormOpen(false);
       addNotification({
         type: 'success',
@@ -65,14 +74,17 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
     }
   };
 
-  const handleUpdateComment = async (commentId: string, values: { content: string }) => {
+  const handleUpdateComment = async (
+    commentId: string,
+    values: { content: string },
+  ) => {
     try {
       await updateCommentMutation.mutateAsync({
         projectId,
         commentId,
-        data: { content: values.content }
+        data: { content: values.content },
       });
-      
+
       setEditingCommentId(null);
       addNotification({
         type: 'success',
@@ -89,13 +101,13 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
 
   const handleDeleteComment = async (commentId: string) => {
     if (!confirm('Are you sure you want to delete this comment?')) return;
-    
+
     try {
       await deleteCommentMutation.mutateAsync({
         projectId,
-        commentId
+        commentId,
       });
-      
+
       addNotification({
         type: 'success',
         title: 'Comment deleted successfully',
@@ -127,7 +139,8 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
             Unable to load discussion
           </h3>
           <p className="text-red-700">
-            There was an error loading the project discussion. Please try again later.
+            There was an error loading the project discussion. Please try again
+            later.
           </p>
         </div>
       </div>
@@ -148,8 +161,11 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
                 Project Discussion
               </h3>
               <p className="text-sm text-slate-600">
-                {comments.length} {comments.length === 1 ? 'comment' : 'comments'} • 
-                <span className="ml-1 text-green-600">Active collaboration</span>
+                {comments.length}{' '}
+                {comments.length === 1 ? 'comment' : 'comments'} •
+                <span className="ml-1 text-green-600">
+                  Active collaboration
+                </span>
               </p>
             </div>
           </div>
@@ -159,8 +175,10 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
             className="bg-green-600 text-white hover:bg-green-700"
             disabled={createCommentMutation.isPending}
           >
-            <MessageCircle className="mr-2 size-4" />
-            {isCommentFormOpen ? 'Cancel' : 'Join Discussion'}
+            <div className="flex items-center gap-2">
+              <MessageCircle className="mr-2 size-4" />
+              {isCommentFormOpen ? 'Cancel' : 'Join Discussion'}
+            </div>
           </Button>
         </div>
       </div>
@@ -201,10 +219,7 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
       {/* Add Comment Form */}
       {isCommentFormOpen && (
         <div className="border-t border-slate-200/60 bg-gradient-to-br from-slate-50/30 to-white p-6">
-          <Form
-            onSubmit={handleAddComment}
-            schema={commentSchema}
-          >
+          <Form onSubmit={handleAddComment} schema={commentSchema}>
             {({ register, formState, reset }) => (
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -226,7 +241,8 @@ You can use **markdown** formatting:
                       className="resize-none border-slate-300 focus:border-green-500 focus:ring-green-500"
                     />
                     <div className="mt-2 text-xs text-slate-500">
-                      💡 <strong>Tip:</strong> Introduce yourself, share your skills, ask questions, or propose ideas
+                      💡 <strong>Tip:</strong> Introduce yourself, share your
+                      skills, ask questions, or propose ideas
                     </div>
                   </div>
                 </div>
@@ -254,7 +270,9 @@ You can use **markdown** formatting:
                       className="bg-green-600 text-white hover:bg-green-700"
                     >
                       <Send className="mr-2 size-4" />
-                      {createCommentMutation.isPending ? 'Posting...' : 'Post Comment'}
+                      {createCommentMutation.isPending
+                        ? 'Posting...'
+                        : 'Post Comment'}
                     </Button>
                   </div>
                 </div>
@@ -271,16 +289,29 @@ You can use **markdown** formatting:
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-1">
                 <Clock className="size-4" />
-                <span>Last activity: {formatDate(new Date(comments[comments.length - 1]?.updated_at || Date.now()).getTime())}</span>
+                <span>
+                  Last activity:{' '}
+                  {formatDate(
+                    new Date(
+                      comments[comments.length - 1]?.updated_at || Date.now(),
+                    ).getTime(),
+                  )}
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
                 <User className="size-4" />
-                <span>{new Set(comments.map(c => `${c.author.firstname} ${c.author.lastname}`)).size} participants</span>
-              </div>
-              <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
-                💬 Live Discussion
+                <span>
+                  {
+                    new Set(
+                      comments.map(
+                        (c) => `${c.author.firstname} ${c.author.lastname}`,
+                      ),
+                    ).size
+                  }{' '}
+                  participants
+                </span>
               </div>
             </div>
           </div>
@@ -304,20 +335,21 @@ type CommentItemProps = {
   isDeleting: boolean;
 };
 
-const CommentItem = ({ 
+const CommentItem = ({
   comment,
   currentUser,
-  isFirst, 
-  isEditing, 
-  onEdit, 
-  onCancelEdit, 
-  onUpdate, 
+  isFirst,
+  isEditing,
+  onEdit,
+  onCancelEdit,
+  onUpdate,
   onDelete,
   isUpdating,
-  isDeleting 
+  isDeleting,
 }: CommentItemProps) => {
-  const canModify = currentUser?.id === comment.author.id || currentUser?.is_superuser;
-  
+  const canModify =
+    currentUser?.id === comment.author.id || currentUser?.is_superuser;
+
   if (isEditing) {
     return (
       <div className="p-6 bg-slate-50/50">
@@ -332,11 +364,7 @@ const CommentItem = ({
                 className="resize-none"
               />
               <div className="flex items-center gap-3">
-                <Button
-                  type="submit"
-                  size="sm"
-                  isLoading={isUpdating}
-                >
+                <Button type="submit" size="sm" isLoading={isUpdating}>
                   Save Changes
                 </Button>
                 <Button
@@ -362,7 +390,7 @@ const CommentItem = ({
         <div className="flex size-12 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex-shrink-0">
           <User className="size-6 text-slate-600" />
         </div>
-        
+
         <div className="flex-1 min-w-0">
           {/* Comment Header */}
           <div className="mb-3 flex items-center gap-2 flex-wrap">
@@ -385,14 +413,14 @@ const CommentItem = ({
 
           {/* Comment Content */}
           <div className="prose prose-sm max-w-none text-slate-700 mb-4">
-            <div 
+            <div
               className="whitespace-pre-wrap leading-relaxed"
               style={{ wordBreak: 'break-word' }}
             >
               {comment.content}
             </div>
           </div>
-          
+
           {/* Comment Actions */}
           <div className="flex items-center gap-4 text-sm">
             <button className="flex items-center gap-1 text-slate-500 hover:text-slate-700 transition-colors">
@@ -400,7 +428,7 @@ const CommentItem = ({
               Reply
             </button>
             <div className="relative">
-              <button 
+              <button
                 className="text-slate-500 hover:text-slate-700 transition-colors"
                 onClick={() => {
                   // Show context menu with Edit/Delete options
@@ -414,13 +442,13 @@ const CommentItem = ({
               </button>
             </div>
             {/* Add Edit/Delete buttons for comment owner */}
-            <button 
+            <button
               onClick={onEdit}
               className="text-slate-500 hover:text-blue-600 transition-colors"
             >
               <Edit className="size-4" />
             </button>
-            <button 
+            <button
               onClick={onDelete}
               disabled={isDeleting}
               className="text-slate-500 hover:text-red-600 transition-colors disabled:opacity-50"
