@@ -1,4 +1,11 @@
-import { Building, Calendar, Clock, Mail, User, FolderOpen } from 'lucide-react';
+import {
+  Building,
+  Calendar,
+  Clock,
+  Mail,
+  User,
+  FolderOpen,
+} from 'lucide-react';
 import { FC } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +23,7 @@ interface Sponsorship {
   duration: string;
   createdAt: string;
   status: 'active' | 'pending' | 'completed' | 'cancelled';
-  sponsorshipType: 'project' | 'volunteer';
+  sponsorshipType: 'volunteer';
 }
 
 interface SponsorshipCardProps {
@@ -43,18 +50,11 @@ const getStatusColor = (status: string) => {
   return colors[status as keyof typeof colors] || colors.pending;
 };
 
-const getTypeColor = (type: string) => {
-  return type === 'project' 
-    ? 'bg-purple-100 text-purple-800' 
-    : 'bg-indigo-100 text-indigo-800';
-};
-
 export const SponsorshipCard: FC<SponsorshipCardProps> = ({ sponsorship }) => {
   return (
     <div className="group relative overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all duration-300 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-200/20 hover:ring-blue-200">
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
       <div className="relative p-6">
-        
         <div className="mb-4 flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-full bg-blue-100">
@@ -68,8 +68,8 @@ export const SponsorshipCard: FC<SponsorshipCardProps> = ({ sponsorship }) => {
                 <Badge className={getStatusColor(sponsorship.status)}>
                   {sponsorship.status}
                 </Badge>
-                <span className={`text-xs px-2 py-1 rounded-full font-medium ${getTypeColor(sponsorship.sponsorshipType)}`}>
-                  {sponsorship.sponsorshipType === 'project' ? 'Project Sponsor' : 'Volunteer Sponsor'}
+                <span className="text-xs px-2 py-1 rounded-full font-medium bg-indigo-100 text-indigo-800">
+                  Volunteer Sponsor
                 </span>
               </div>
             </div>
@@ -88,7 +88,9 @@ export const SponsorshipCard: FC<SponsorshipCardProps> = ({ sponsorship }) => {
               <Mail className="size-3 text-blue-600" />
             </div>
             <span className="font-medium">Email:</span>
-            <span className="ml-2 text-slate-700">{sponsorship.sponsorEmail}</span>
+            <span className="ml-2 text-slate-700">
+              {sponsorship.sponsorEmail}
+            </span>
           </div>
 
           {sponsorship.projectName && (
@@ -97,7 +99,9 @@ export const SponsorshipCard: FC<SponsorshipCardProps> = ({ sponsorship }) => {
                 <FolderOpen className="size-3 text-purple-600" />
               </div>
               <span className="font-medium">Project:</span>
-              <span className="ml-2 text-slate-700">{sponsorship.projectName}</span>
+              <span className="ml-2 text-slate-700">
+                {sponsorship.projectName}
+              </span>
             </div>
           )}
 
@@ -106,7 +110,9 @@ export const SponsorshipCard: FC<SponsorshipCardProps> = ({ sponsorship }) => {
               <User className="size-3 text-green-600" />
             </div>
             <span className="font-medium">Volunteer:</span>
-            <span className="ml-2 text-slate-700">{sponsorship.volunteerName}</span>
+            <span className="ml-2 text-slate-700">
+              {sponsorship.volunteerName}
+            </span>
           </div>
 
           <div className="flex items-center text-sm text-slate-500">
@@ -122,7 +128,9 @@ export const SponsorshipCard: FC<SponsorshipCardProps> = ({ sponsorship }) => {
               <Calendar className="size-3 text-emerald-600" />
             </div>
             <span className="font-medium">Started:</span>
-            <span className="ml-2 text-slate-700">{formatDate(sponsorship.createdAt)}</span>
+            <span className="ml-2 text-slate-700">
+              {formatDate(sponsorship.createdAt)}
+            </span>
           </div>
         </div>
       </div>
