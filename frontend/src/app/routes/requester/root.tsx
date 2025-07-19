@@ -21,11 +21,6 @@ const RequesterRoot = () => {
     { name: 'Dashboard', to: paths.requester.dashboard.getHref(), icon: Home },
     { name: 'Projects', to: paths.requester.projects.getHref(), icon: Folder },
     {
-      name: 'Donations & Sponsorships',
-      to: paths.requester.donationsSponsorships.getHref(),
-      icon: Folder,
-    },
-    {
       name: 'Settings',
       to: paths.requester.settings.getHref(),
       icon: Settings,
