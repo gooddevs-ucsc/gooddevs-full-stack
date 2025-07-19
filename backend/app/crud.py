@@ -77,6 +77,12 @@ def get_approved_projects(*, session: Session, skip: int = 0, limit: int = 100) 
     return session.exec(statement).all()
 
 
+def get_pending_projects(*, session: Session, skip: int = 0, limit: int = 100) -> list[Project]:
+    statement = select(Project).where(
+        Project.status == ProjectStatus.PENDING).offset(skip).limit(limit)
+    return session.exec(statement).all()
+
+
 def get_all_projects(*, session: Session, skip: int = 0, limit: int = 100) -> list[Project]:
     statement = select(Project).offset(skip).limit(limit)
     return session.exec(statement).all()
