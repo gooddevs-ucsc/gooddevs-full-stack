@@ -114,10 +114,6 @@ export const paths = {
       path: 'projects/create',
       getHref: () => '/requester/projects/create',
     },
-    donationsSponsorships: {
-      path: 'donations-sponsorships',
-      getHref: () => '/requester/donations-sponsorships',
-    },
     settings: {
       path: 'settings',
       getHref: () => '/requester/settings',
@@ -136,9 +132,9 @@ export const paths = {
       path: 'projects',
       getHref: () => '/developer/projects',
     },
-    donationsSponsorships: {
-      path: 'donations-sponsorships',
-      getHref: () => '/developer/donations-sponsorships',
+    sponsorships: {
+      path: 'sponsorships',
+      getHref: () => '/developer/sponsorships',
     },
     profile: {
       path: 'profile',
