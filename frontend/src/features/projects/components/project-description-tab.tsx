@@ -87,7 +87,7 @@ export const ProjectDescriptionTab = ({
                   <div className="size-2 rounded-full bg-purple-500"></div>
                   <span className="text-sm text-slate-600">
                     <strong>Location:</strong>{' '}
-                    {project.organization_location || 'California, USA'}
+                    {project.organization_location || 'Sri Lanka, Colombo'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -510,9 +510,14 @@ export const ProjectDescriptionTab = ({
             <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
               Apply to Join Project
             </Button>
-            <Button variant="outline" className="w-full">
-              <Heart className="mr-2 size-4" />
-              Save for Later
+            <Button
+              variant="outline"
+              className="flex w-full items-center justify-center"
+            >
+              <div className="flex items-center gap-2">
+                <Heart className="size-4" />
+                <span>Save for Later</span>
+              </div>
             </Button>
           </div>
         </div>
