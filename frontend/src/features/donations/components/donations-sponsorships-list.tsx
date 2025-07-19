@@ -15,7 +15,7 @@ const mockDonations = [
     message: 'Keep up the great work supporting the community!',
     createdAt: '2024-01-15T10:30:00Z',
     status: 'completed' as const,
-    paymentMethod: 'Credit Card'
+    paymentMethod: 'Credit Card',
   },
   {
     id: '2',
@@ -26,7 +26,7 @@ const mockDonations = [
     message: 'Supporting the developer community',
     createdAt: '2024-01-10T14:20:00Z',
     status: 'completed' as const,
-    paymentMethod: 'PayPal'
+    paymentMethod: 'PayPal',
   },
   {
     id: '3',
@@ -37,8 +37,8 @@ const mockDonations = [
     message: null,
     createdAt: '2024-01-08T09:15:00Z',
     status: 'pending' as const,
-    paymentMethod: 'Bank Transfer'
-  }
+    paymentMethod: 'Bank Transfer',
+  },
 ];
 
 const mockSponsorships = [
@@ -48,14 +48,14 @@ const mockSponsorships = [
     sponsorEmail: 'sponsor@techcorp.com',
     amount: 2000,
     currency: 'USD',
-    projectId: 'proj-1',
-    projectName: 'Community Website Redesign',
+    projectId: null,
+    projectName: null,
     volunteerId: 'vol-1',
     volunteerName: 'Jane Smith',
     duration: '3 months',
     createdAt: '2024-01-12T09:15:00Z',
     status: 'active' as const,
-    sponsorshipType: 'project' as const
+    sponsorshipType: 'volunteer' as const,
   },
   {
     id: '2',
@@ -70,57 +70,74 @@ const mockSponsorships = [
     duration: '6 months',
     createdAt: '2024-01-08T16:30:00Z',
     status: 'active' as const,
-    sponsorshipType: 'volunteer' as const
-  }
+    sponsorshipType: 'volunteer' as const,
+  },
 ];
 
 export const DonationsSponsorshipsList = () => {
-  const [activeView, setActiveView] = useState<'donations' | 'sponsorships'>('donations');
+  const [activeView, setActiveView] = useState<'donations' | 'sponsorships'>(
+    'donations',
+  );
 
-  const totalDonations = mockDonations.reduce((sum, donation) => sum + donation.amount, 0);
-  const totalSponsorships = mockSponsorships.reduce((sum, sponsorship) => sum + sponsorship.amount, 0);
-  const activeSponsorships = mockSponsorships.filter(s => s.status === 'active').length;
+  const totalDonations = mockDonations.reduce(
+    (sum, donation) => sum + donation.amount,
+    0,
+  );
+  const totalSponsorships = mockSponsorships.reduce(
+    (sum, sponsorship) => sum + sponsorship.amount,
+    0,
+  );
+  const activeSponsorships = mockSponsorships.filter(
+    (s) => s.status === 'active',
+  ).length;
 
   return (
     <div className="space-y-6">
-    
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Donations</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Donations
+            </CardTitle>
             <DollarSign className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">${totalDonations.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-green-600">
+              ${totalDonations.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">
               {mockDonations.length} donations received
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sponsorships</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Sponsorships
+            </CardTitle>
             <Users className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">${totalSponsorships.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              ${totalSponsorships.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">
               {activeSponsorships} active sponsors
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <TrendingUp className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">${(totalDonations + totalSponsorships).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Combined income
-            </p>
+            <div className="text-2xl font-bold text-purple-600">
+              ${(totalDonations + totalSponsorships).toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">Combined income</p>
           </CardContent>
         </Card>
       </div>
