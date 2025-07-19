@@ -1,11 +1,4 @@
-import {
-  Code,
-  GitBranch,
-  Star,
-  TrendingUp,
-  Activity,
-  Calendar,
-} from 'lucide-react';
+import { Code, GitBranch, TrendingUp, Activity, Calendar } from 'lucide-react';
 
 import { ContentLayout } from '@/components/layouts';
 import { useUser } from '@/lib/auth';
@@ -16,15 +9,23 @@ const DashboardRoute = () => {
   const stats = [
     {
       title: 'Total Projects',
-      value: '10',
+      value: '18',
       change: '+15%',
       icon: GitBranch,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
     },
     {
+      title: 'Applied Projects',
+      value: '3',
+      change: '+5%',
+      icon: Activity,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+    },
+    {
       title: 'Active Projects',
-      value: '1',
+      value: '3',
       change: '+5%',
       icon: TrendingUp,
       color: 'text-purple-600',
@@ -37,22 +38,6 @@ const DashboardRoute = () => {
       icon: Code,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
-    },
-    {
-      title: 'Pending Projects',
-      value: '2',
-      change: '+5%',
-      icon: Activity,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-    },
-    {
-      title: 'Stars Earned',
-      value: '4,567',
-      change: '+8%',
-      icon: Star,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50',
     },
   ];
 
@@ -140,7 +125,9 @@ const DashboardRoute = () => {
             </h2>
             <div className="space-y-4">
               <div className="rounded-lg bg-gradient-to-r from-green-50 to-green-100/50 p-4">
-                <h3 className="font-semibold text-slate-900">Project Alpha</h3>
+                <h3 className="font-semibold text-slate-900">
+                  Project Management Tool
+                </h3>
                 <p className="mt-2 text-sm text-slate-600">
                   Progress:{' '}
                   <span className="font-semibold text-green-600">75%</span>
@@ -150,13 +137,27 @@ const DashboardRoute = () => {
                 </div>
               </div>
               <div className="rounded-lg bg-gradient-to-r from-blue-50 to-blue-100/50 p-4">
-                <h3 className="font-semibold text-slate-900">Project Beta</h3>
+                <h3 className="font-semibold text-slate-900">
+                  Fitness Tracker App
+                </h3>
                 <p className="mt-2 text-sm text-slate-600">
                   Progress:{' '}
                   <span className="font-semibold text-blue-600">50%</span>
                 </p>
                 <div className="mt-2 h-2 w-full rounded-full bg-blue-200">
                   <div className="h-full w-1/2 rounded-full bg-blue-600"></div>
+                </div>
+              </div>
+              <div className="rounded-lg bg-gradient-to-r from-yellow-50 to-yellow-100/50 p-4">
+                <h3 className="font-semibold text-slate-900">
+                  Inventory Management System
+                </h3>
+                <p className="mt-2 text-sm text-slate-600">
+                  Progress:{' '}
+                  <span className="font-semibold text-yellow-600">30%</span>
+                </p>
+                <div className="mt-2 h-2 w-full rounded-full bg-yellow-200">
+                  <div className="h-full w-1/4 rounded-full bg-yellow-600"></div>
                 </div>
               </div>
             </div>
