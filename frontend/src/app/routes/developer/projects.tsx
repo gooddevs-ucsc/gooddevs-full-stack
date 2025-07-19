@@ -1,7 +1,8 @@
-import { GitBranch, TrendingUp, Code } from 'lucide-react';
+import { GitBranch, TrendingUp, Code, Search } from 'lucide-react';
 import { useState } from 'react';
 
 import { ContentLayout } from '@/components/layouts';
+import { Input } from '@/components/ui/input';
 
 type BaseProject = {
   id: number;
@@ -20,12 +21,7 @@ type WorkspaceProject = BaseProject & {
 
 const ProjectsRoute = () => {
   const [activeTab, setActiveTab] = useState('available');
-
-  const tabs = [
-    { id: 'available', label: 'Available Projects' },
-    { id: 'applied', label: 'Applied Projects' },
-    { id: 'workspace', label: 'Project Workspace' },
-  ];
+  const [searchTerm, setSearchTerm] = useState('');
 
   const availableProjects: BaseProject[] = [
     {
@@ -52,6 +48,30 @@ const ProjectsRoute = () => {
       color: 'text-green-600',
       bgColor: 'bg-green-50',
     },
+    {
+      id: 4,
+      title: 'Online Learning Platform',
+      description: 'Create an interactive platform for online education.',
+      icon: TrendingUp,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+    },
+    {
+      id: 5,
+      title: 'Smart Home Automation',
+      description: 'Develop IoT solutions for home automation.',
+      icon: GitBranch,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
+    },
+    {
+      id: 6,
+      title: 'Digital Marketing Dashboard',
+      description: 'Analyze and optimize marketing campaigns.',
+      icon: Code,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50',
+    },
   ];
 
   const appliedProjects: BaseProject[] = [
@@ -71,6 +91,15 @@ const ProjectsRoute = () => {
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
     },
+    {
+      id: 3,
+      title: 'Healthcare Management System',
+      description:
+        'Build a system for managing patient records and appointments.',
+      icon: Code,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+    },
   ];
 
   const workspaceProjects: WorkspaceProject[] = [
@@ -82,7 +111,7 @@ const ProjectsRoute = () => {
       color: 'text-red-600',
       bgColor: 'bg-red-50',
       progress: '75%',
-      team: ['Alice', 'Bob', 'Charlie'],
+      team: ['Mahima', 'Oshada', 'Peshani', 'Januli', 'Hashini', 'Chathuri'],
       tasks: [
         { id: 1, title: 'Setup environment', status: 'Completed' },
         { id: 2, title: 'Design UI', status: 'In Progress' },
@@ -97,31 +126,91 @@ const ProjectsRoute = () => {
       color: 'text-teal-600',
       bgColor: 'bg-teal-50',
       progress: '50%',
-      team: ['David', 'Emma', 'Frank'],
+      team: ['Mahima', 'Oshada', 'Peshani', 'Januli', 'Hashini', 'Chathuri'],
       tasks: [
         { id: 1, title: 'Create wireframes', status: 'Completed' },
         { id: 2, title: 'Develop backend', status: 'In Progress' },
         { id: 3, title: 'Integrate frontend', status: 'Pending' },
       ],
     },
+    {
+      id: 3,
+      title: 'Inventory Management System',
+      description: 'Manage stock levels and track inventory.',
+      icon: GitBranch,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50',
+      progress: '30%',
+      team: ['Mahima', 'Oshada', 'Peshani', 'Januli', 'Hashini', 'Chathuri'],
+      tasks: [
+        { id: 1, title: 'Database setup', status: 'Completed' },
+        { id: 2, title: 'API development', status: 'In Progress' },
+        { id: 3, title: 'Frontend integration', status: 'Pending' },
+      ],
+    },
+  ];
+
+  const tabs = [
+    {
+      id: 'available',
+      label: 'Available Projects',
+      count: availableProjects.length,
+    },
+    { id: 'applied', label: 'Applied Projects', count: appliedProjects.length },
+    {
+      id: 'workspace',
+      label: 'Project Workspace',
+      count: workspaceProjects.length,
+    },
   ];
 
   const getProjectsForTab = () => {
+    let projects: (BaseProject | WorkspaceProject)[] = [];
     switch (activeTab) {
       case 'available':
-        return availableProjects;
+        projects = availableProjects;
+        break;
       case 'applied':
-        return appliedProjects;
+        projects = appliedProjects;
+        break;
       case 'workspace':
-        return workspaceProjects;
+        projects = workspaceProjects;
+        break;
       default:
-        return [];
+        projects = [];
     }
+
+    // Filter projects based on the search term
+    if (searchTerm.trim()) {
+      projects = projects.filter(
+        (project) =>
+          project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          project.description.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+    }
+
+    return projects;
   };
 
   return (
     <ContentLayout title="Projects">
       <div className="space-y-8">
+        {/* Short Description */}
+        <p className="text-sm text-slate-600">
+          Browse and manage your projects across different categories.
+        </p>
+
+        {/* Search Bar */}
+        <div className="relative max-w-md flex-1">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            placeholder="Search projects by name or description..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)} // Update searchTerm
+            className="pl-10"
+          />
+        </div>
+
         {/* Tabs */}
         <div className="flex border-b border-slate-200">
           {tabs.map((tab) => (
@@ -134,7 +223,8 @@ const ProjectsRoute = () => {
               }`}
               onClick={() => setActiveTab(tab.id)}
             >
-              {tab.label}
+              {tab.label}{' '}
+              <span className="text-xs text-slate-400">({tab.count})</span>
             </button>
           ))}
         </div>
