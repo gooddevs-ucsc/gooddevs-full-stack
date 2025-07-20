@@ -53,14 +53,6 @@ const AdminDashboardRoute = () => {
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
     },
-    {
-      title: 'System Health',
-      value: '99.8%',
-      change: 'All systems operational',
-      icon: Activity,
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50',
-    },
   ];
 
   const recentActivities = [
@@ -77,20 +69,6 @@ const AdminDashboardRoute = () => {
       time: '15 minutes ago',
       type: 'approval',
       status: 'warning',
-    },
-    {
-      title: 'User reported content',
-      description: 'Inappropriate comment reported in project discussion',
-      time: '30 minutes ago',
-      type: 'report',
-      status: 'error',
-    },
-    {
-      title: 'System backup completed',
-      description: 'Daily database backup completed successfully',
-      time: '2 hours ago',
-      type: 'system',
-      status: 'success',
     },
     {
       title: 'New project submitted',
@@ -181,23 +159,25 @@ const AdminDashboardRoute = () => {
         </div>
 
         {/* Key Metrics Cards */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 w-full">
           {stats.map((stat, index) => (
             <div
               key={index}
               className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-all hover:shadow-md"
             >
-              <div className="flex items-center justify-between">
-                <div className={`rounded-lg p-3 ${stat.bgColor}`}>
-                  <stat.icon className={`size-6 ${stat.color}`} />
+              <div className="flex flex-row items-center gap-8">
+                <div className="flex items-center justify-between">
+                  <div className={`rounded-lg p-3 ${stat.bgColor}`}>
+                    <stat.icon className={`size-6 ${stat.color}`} />
+                  </div>
                 </div>
-              </div>
-              <div className="mt-4">
-                <h3 className="text-2xl font-bold text-slate-900">
-                  {stat.value}
-                </h3>
-                <p className="text-sm text-slate-600">{stat.title}</p>
-                <p className="mt-1 text-xs text-slate-500">{stat.change}</p>
+                <div className="mt-4">
+                  <h3 className="text-2xl font-bold text-slate-900">
+                    {stat.value}
+                  </h3>
+                  <p className="text-sm text-slate-600">{stat.title}</p>
+                  <p className="mt-1 text-xs text-slate-500">{stat.change}</p>
+                </div>
               </div>
             </div>
           ))}
@@ -220,31 +200,11 @@ const AdminDashboardRoute = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start border-primary/20 text-primary hover:bg-primary hover:text-white"
+                    className="w-full justify-start border-primary/20 text-primary h-10"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-6">
                       <Users className="size-4" />
                       <span>Manage Users</span>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start"
-                  >
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="size-4" />
-                      <span>Review User Reports</span>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Ban className="size-4" />
-                      <span>Suspended Accounts</span>
                     </div>
                   </Button>
                 </div>
@@ -254,13 +214,13 @@ const AdminDashboardRoute = () => {
                 <h3 className="font-semibold text-slate-900">
                   Project Oversight
                 </h3>
-                <div className="mt-3 space-y-2">
+                <div className="mt-3 space-y-4">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start"
+                    className="w-full justify-start h-10"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-6">
                       <FolderPlus className="size-4" />
                       <span>Review Pending Projects</span>
                     </div>
@@ -268,59 +228,11 @@ const AdminDashboardRoute = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start"
+                    className="w-full justify-start h-10"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-6">
                       <Eye className="size-4" />
                       <span>Monitor Active Projects</span>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start"
-                  >
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="size-4" />
-                      <span>Analytics & Reports</span>
-                    </div>
-                  </Button>
-                </div>
-              </div>
-
-              <div className="rounded-lg bg-gradient-to-r from-orange-50 to-orange-100/50 p-4">
-                <h3 className="font-semibold text-slate-900">
-                  System Management
-                </h3>
-                <div className="mt-3 space-y-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Settings className="size-4" />
-                      <span>Platform Settings</span>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Database className="size-4" />
-                      <span>Database Management</span>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Mail className="size-4" />
-                      <span>Send Announcements</span>
                     </div>
                   </Button>
                 </div>
@@ -441,59 +353,6 @@ const AdminDashboardRoute = () => {
                 </span>
                 <span className="font-semibold text-slate-900">342</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Success Rate</span>
-                <span className="font-semibold text-green-600">94.2%</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
-              <FileText className="size-5 text-primary" />
-              Quick Reports
-            </h2>
-            <div className="space-y-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start"
-              >
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="size-4" />
-                  <span>Monthly Activity Report</span>
-                </div>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start"
-              >
-                <div className="flex items-center gap-2">
-                  <Users className="size-4" />
-                  <span>User Demographics</span>
-                </div>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start"
-              >
-                <div className="flex items-center gap-2">
-                  <FolderPlus className="size-4" />
-                  <span>Project Success Metrics</span>
-                </div>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start"
-              >
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="size-4" />
-                  <span>Issues & Resolutions</span>
-                </div>
-              </Button>
             </div>
           </div>
         </div>
