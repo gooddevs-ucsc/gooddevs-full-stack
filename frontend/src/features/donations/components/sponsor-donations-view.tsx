@@ -1,10 +1,10 @@
 import { DollarSign, Users, TrendingUp, Plus, ArrowLeft } from 'lucide-react';
+import { DonationCard } from '@/features/donations/components/donation-card';
+import { SponsorshipCard } from '@/features/donations/components/sponsorship-card';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DonationCard } from '@/components/ui/donation-card';
-import { SponsorshipCard } from '@/components/ui/sponsorship-card';
 
 import { DonationForm } from './donation-form';
 import { SponsorshipForm } from './sponsorship-form';
@@ -42,14 +42,14 @@ const mockSponsorSponsorships = [
     sponsorEmail: 'sponsor@example.com',
     amount: 2000,
     currency: 'USD',
-    projectId: 'proj-1',
-    projectName: 'Community Website Redesign',
+    projectId: null,
+    projectName: null,
     volunteerId: 'vol-1',
     volunteerName: 'Jane Smith',
     duration: '3 months',
     createdAt: '2024-01-12T09:15:00Z',
     status: 'active' as const,
-    sponsorshipType: 'project' as const,
+    sponsorshipType: 'volunteer' as const,
   },
   {
     id: '2',
@@ -102,8 +102,10 @@ export const SponsorDonationsView = () => {
           onClick={() => setActiveView('list')}
           className="mb-4"
         >
-          <ArrowLeft className="mr-2 size-4" />
-          Back to My Donations & Sponsorships
+          <div className="flex items-center">
+            <ArrowLeft className="mr-2 size-4" />
+            Back to My Donations & Sponsorships
+          </div>
         </Button>
         <DonationForm
           onSuccess={handleFormSuccess}
@@ -122,8 +124,10 @@ export const SponsorDonationsView = () => {
           onClick={() => setActiveView('list')}
           className="mb-4"
         >
-          <ArrowLeft className="mr-2 size-4" />
-          Back to My Donations & Sponsorships
+          <div className="flex items-center">
+            <ArrowLeft className="mr-2 size-4" />
+            Back to My Donations & Sponsorships
+          </div>
         </Button>
         <SponsorshipForm
           onSuccess={handleFormSuccess}
