@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { DollarSign, Users, TrendingUp, Plus, ArrowLeft } from 'lucide-react';
 import { DonationCard } from '@/features/donations/components/donation-card';
 import { SponsorshipCard } from '@/features/donations/components/sponsorship-card';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { DonationForm } from './donation-form';
 import { SponsorshipForm } from './sponsorship-form';
 
@@ -194,18 +196,21 @@ export const SponsorDonationsView = () => {
       <div className="flex gap-4">
         <Button
           onClick={() => setActiveView('donate')}
-          className="bg-green-600 hover:bg-green-700"
+          className="h-14 bg-green-600 hover:bg-green-700"
         >
-          <Plus className="mr-2 size-4" />
-          Make Donation
+          <span className="flex items-center">
+            <Plus className="mr-4 size-4" />
+            Make Donation
+          </span>
         </Button>
         <Button
           onClick={() => setActiveView('sponsor')}
-          variant="outline"
-          className="border-blue-600 text-blue-600 hover:bg-blue-50"
+          className="h-14 bg-blue-600 hover:bg-blue-700"
         >
-          <Plus className="mr-2 size-4" />
-          Create Sponsorship
+          <span className="flex items-center">
+            <Plus className="mr-4 size-4" />
+            Create Sponsorship
+          </span>
         </Button>
       </div>
 
