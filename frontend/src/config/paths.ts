@@ -80,6 +80,10 @@ export const paths = {
       path: 'donations-sponsorships',
       getHref: () => '/admin/donations-sponsorships',
     },
+    projectApprovals: {
+      path: 'project-approvals',
+      getHref: () => '/admin/project-approvals',
+    },
   },
 
   sponsor: {
