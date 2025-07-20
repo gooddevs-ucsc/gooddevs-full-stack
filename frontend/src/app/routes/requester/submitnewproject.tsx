@@ -1,62 +1,52 @@
 import { FileText } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { z } from 'zod';
 
 import { ContentLayout } from '@/components/layouts';
 import { Button } from '@/components/ui/button';
 import { Form, Input, Select, Textarea } from '@/components/ui/form';
+import { useNotifications } from '@/components/ui/notifications';
 import { paths } from '@/config/paths';
-
-// Form validation schema
-const submitProjectSchema = z.object({
-  title: z.string().min(3, 'Project title must be at least 3 characters'),
-  category: z.string().min(1, 'Please select a category'),
-  timeline: z.string().min(1, 'Please select a timeline'),
-  description: z.string().min(20, 'Description must be at least 20 characters'),
-});
-
-type SubmitProjectFormData = z.infer<typeof submitProjectSchema>;
+import { useCreateProject } from '@/features/projects/api/create-project';
+import {
+  createProjectInputSchema,
+  type CreateProjectInput,
+} from '@/features/projects/api/create-project';
+import { ESTIMATED_TIMELINE_OPTIONS, PROJECT_TYPE_OPTIONS } from '@/types/api';
 
 const SubmitNewProject = () => {
   const navigate = useNavigate();
+  const { addNotification } = useNotifications();
 
-  // Category options with placeholder
-  const categoryOptions = [
-    { label: 'Select a category...', value: '' },
-    { label: 'Website Development', value: 'website' },
-    { label: 'Mobile App', value: 'mobile' },
-    { label: 'Data Analysis', value: 'data' },
-    { label: 'UI/UX Design', value: 'uiux' },
-    { label: 'API Development', value: 'api' },
-    { label: 'Database Design', value: 'database' },
-    { label: 'Desktop Application', value: 'desktop' },
-    { label: 'Other', value: 'other' },
-  ];
+  const createProjectMutation = useCreateProject({
+    mutationConfig: {
+      onSuccess: () => {
+        addNotification({
+          type: 'success',
+          title: 'Project Submitted',
+          message: 'Your project request has been submitted successfully.',
+        });
+        navigate(paths.requester.projects.getHref());
+      },
+      onError: () => {
+        addNotification({
+          type: 'error',
+          title: 'Submission Failed',
+          message: 'Failed to submit project. Please try again.',
+        });
+      },
+    },
+  });
 
-  // Timeline options with placeholder
-  const timelineOptions = [
-    { label: 'Select timeline...', value: '' },
-    { label: '1-2 Weeks', value: '1-2weeks' },
-    { label: '1 Month', value: '1month' },
-    { label: '3 Months', value: '3months' },
-    { label: '6 Months', value: '6months' },
-    { label: 'Flexible', value: 'flexible' },
-  ];
+  const handleSubmit = async (data: CreateProjectInput) => {
+    const projectData = {
+      title: data.title,
+      description: data.description,
+      project_type: data.project_type,
+      estimated_timeline: data.estimated_timeline,
+      preferred_technologies: data.preferred_technologies || undefined,
+    };
 
-  const handleSubmit = async (data: SubmitProjectFormData) => {
-    try {
-      // Simulate API call
-      console.log('Submitting project:', data);
-
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Navigate back to projects page on success
-      navigate(paths.requester.projects.getHref());
-    } catch (error) {
-      console.error('Error submitting project:', error);
-      // Handle error (show toast, etc.)
-    }
+    createProjectMutation.mutate({ data: projectData });
   };
 
   const handleCancel = () => {
@@ -86,7 +76,7 @@ const SubmitNewProject = () => {
           </div>
 
           <div className="p-6">
-            <Form onSubmit={handleSubmit} schema={submitProjectSchema}>
+            <Form onSubmit={handleSubmit} schema={createProjectInputSchema}>
               {({ register, formState }) => (
                 <div className="space-y-6">
                   {/* Project Title */}
@@ -102,18 +92,18 @@ const SubmitNewProject = () => {
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     {/* Category */}
                     <Select
-                      label="Category *"
-                      options={categoryOptions}
-                      registration={register('category')}
-                      error={formState.errors.category}
+                      label="Project Type *"
+                      options={PROJECT_TYPE_OPTIONS}
+                      registration={register('project_type')}
+                      error={formState.errors.project_type}
                     />
 
                     {/* Timeline */}
                     <Select
-                      label="Timeline *"
-                      options={timelineOptions}
-                      registration={register('timeline')}
-                      error={formState.errors.timeline}
+                      label="Timeline"
+                      options={ESTIMATED_TIMELINE_OPTIONS}
+                      registration={register('estimated_timeline')}
+                      error={formState.errors.estimated_timeline}
                     />
                   </div>
 
@@ -124,6 +114,15 @@ const SubmitNewProject = () => {
                     placeholder="Describe your project requirements..."
                     registration={register('description')}
                     error={formState.errors.description}
+                  />
+
+                  {/* Preferred Technologies */}
+                  <Input
+                    type="text"
+                    label="Preferred Technologies (Optional)"
+                    placeholder="e.g., React, Python, Node.js, PostgreSQL"
+                    registration={register('preferred_technologies')}
+                    error={formState.errors.preferred_technologies}
                   />
 
                   {/* Help Text */}
@@ -163,9 +162,13 @@ const SubmitNewProject = () => {
                     <Button
                       type="submit"
                       className="w-full bg-primary text-white hover:bg-primary/90 sm:w-auto"
-                      disabled={formState.isSubmitting}
+                      disabled={
+                        formState.isSubmitting ||
+                        createProjectMutation.isPending
+                      }
                     >
-                      {formState.isSubmitting ? (
+                      {formState.isSubmitting ||
+                      createProjectMutation.isPending ? (
                         <>
                           <div className="mr-2 size-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                           Submitting...
