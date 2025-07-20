@@ -18,14 +18,14 @@ const Label = ({ ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
 );
 
 // Create a simple Select using native HTML select
-const Select = ({ 
-  value, 
-  onValueChange, 
-  children, 
-  placeholder 
-}: { 
-  value: string; 
-  onValueChange: (value: string) => void; 
+const Select = ({
+  value,
+  onValueChange,
+  children,
+  placeholder,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
   children: React.ReactNode;
   placeholder?: string;
 }) => (
@@ -43,15 +43,13 @@ const Select = ({
   </select>
 );
 
-const SelectItem = ({ 
-  value, 
-  children 
-}: { 
-  value: string; 
-  children: React.ReactNode; 
-}) => (
-  <option value={value}>{children}</option>
-);
+const SelectItem = ({
+  value,
+  children,
+}: {
+  value: string;
+  children: React.ReactNode;
+}) => <option value={value}>{children}</option>;
 
 interface SponsorshipFormProps {
   onSuccess?: () => void;
@@ -61,35 +59,47 @@ interface SponsorshipFormProps {
 const mockProjects = [
   { id: 'proj-1', name: 'Community Website Redesign' },
   { id: 'proj-2', name: 'Mobile App Development' },
-  { id: 'proj-3', name: 'Open Source Library' }
+  { id: 'proj-3', name: 'Open Source Library' },
 ];
 
 const mockVolunteers = [
   { id: 'vol-1', name: 'Jane Smith' },
   { id: 'vol-2', name: 'Mike Johnson' },
-  { id: 'vol-3', name: 'Sarah Wilson' }
+  { id: 'vol-3', name: 'Sarah Wilson' },
 ];
 
-export const SponsorshipForm = ({ onSuccess, onCancel }: SponsorshipFormProps) => {
+export const SponsorshipForm = ({
+  onSuccess,
+  onCancel,
+}: SponsorshipFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     sponsorName: '',
     sponsorEmail: '',
     amount: '',
     currency: 'USD',
-    sponsorshipType: '',
-    projectId: '',
     volunteerId: '',
-    duration: ''
+    duration: '',
   });
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Sponsorship submitted:', formData);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const sponsorshipData = {
+        ...formData,
+        sponsorshipType: 'volunteer' as const,
+        projectId: null,
+        projectName: null,
+      };
+
+      console.log('Sponsorship submitted:', sponsorshipData);
       onSuccess?.();
     } catch (error) {
       console.error('Failed to submit sponsorship:', error);
@@ -98,16 +108,12 @@ export const SponsorshipForm = ({ onSuccess, onCancel }: SponsorshipFormProps) =
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="size-5 text-blue-600" />
-          Create Sponsorship
+          Create Volunteer Sponsorship
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -118,7 +124,9 @@ export const SponsorshipForm = ({ onSuccess, onCancel }: SponsorshipFormProps) =
               <Input
                 id="sponsorName"
                 value={formData.sponsorName}
-                onChange={(e) => handleInputChange('sponsorName', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange('sponsorName', e.target.value)
+                }
                 placeholder="Enter name or company"
                 required
               />
@@ -129,7 +137,9 @@ export const SponsorshipForm = ({ onSuccess, onCancel }: SponsorshipFormProps) =
                 id="sponsorEmail"
                 type="email"
                 value={formData.sponsorEmail}
-                onChange={(e) => handleInputChange('sponsorEmail', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange('sponsorEmail', e.target.value)
+                }
                 placeholder="your@email.com"
                 required
               />
@@ -137,38 +147,9 @@ export const SponsorshipForm = ({ onSuccess, onCancel }: SponsorshipFormProps) =
           </div>
 
           <div>
-            <Label htmlFor="sponsorshipType">Sponsorship Type</Label>
-            <Select 
-              value={formData.sponsorshipType} 
-              onValueChange={(value) => handleInputChange('sponsorshipType', value)}
-              placeholder="Select sponsorship type"
-            >
-              <SelectItem value="project">Project Sponsorship</SelectItem>
-              <SelectItem value="volunteer">Volunteer Sponsorship</SelectItem>
-            </Select>
-          </div>
-
-          {formData.sponsorshipType === 'project' && (
-            <div>
-              <Label htmlFor="projectId">Select Project</Label>
-              <Select 
-                value={formData.projectId} 
-                onValueChange={(value) => handleInputChange('projectId', value)}
-                placeholder="Select a project"
-              >
-                {mockProjects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </Select>
-            </div>
-          )}
-
-          <div>
             <Label htmlFor="volunteerId">Select Volunteer</Label>
-            <Select 
-              value={formData.volunteerId} 
+            <Select
+              value={formData.volunteerId}
               onValueChange={(value) => handleInputChange('volunteerId', value)}
               placeholder="Select a volunteer"
             >
@@ -195,8 +176,8 @@ export const SponsorshipForm = ({ onSuccess, onCancel }: SponsorshipFormProps) =
             </div>
             <div>
               <Label htmlFor="duration">Duration</Label>
-              <Select 
-                value={formData.duration} 
+              <Select
+                value={formData.duration}
                 onValueChange={(value) => handleInputChange('duration', value)}
                 placeholder="Select duration"
               >

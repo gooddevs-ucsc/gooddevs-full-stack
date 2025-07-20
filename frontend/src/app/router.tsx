@@ -103,6 +103,13 @@ export const createAppRouter = (queryClient: QueryClient) =>
               convert(queryClient),
             ),
         },
+        {
+          path: paths.admin.projectApprovals.path,
+          lazy: () =>
+            import('./routes/admin/project-approvals').then(
+              convert(queryClient),
+            ),
+        },
       ],
     },
     {
@@ -169,6 +176,13 @@ export const createAppRouter = (queryClient: QueryClient) =>
           path: paths.developer.projects.path,
           lazy: () =>
             import('./routes/developer/projects').then(convert(queryClient)),
+        },
+        {
+          path: paths.developer.sponsorships.path,
+          lazy: () =>
+            import('./routes/developer/sponsorships').then(
+              convert(queryClient),
+            ),
         },
         {
           path: paths.developer.settings.path,

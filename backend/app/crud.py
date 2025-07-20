@@ -6,6 +6,7 @@ from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
 from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus
+from app.models import ProjectThread, ProjectComment, ProjectCommentCreate, ProjectCommentUpdate
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -76,6 +77,12 @@ def get_approved_projects(*, session: Session, skip: int = 0, limit: int = 100) 
     return session.exec(statement).all()
 
 
+def get_pending_projects(*, session: Session, skip: int = 0, limit: int = 100) -> list[Project]:
+    statement = select(Project).where(
+        Project.status == ProjectStatus.PENDING).offset(skip).limit(limit)
+    return session.exec(statement).all()
+
+
 def get_all_projects(*, session: Session, skip: int = 0, limit: int = 100) -> list[Project]:
     statement = select(Project).offset(skip).limit(limit)
     return session.exec(statement).all()
@@ -99,3 +106,54 @@ def delete_project(*, session: Session, project_id: uuid.UUID) -> bool:
         session.commit()
         return True
     return False
+
+def get_user_by_id(*, session: Session, user_id: uuid.UUID) -> User | None:
+    return session.get(User, user_id)
+
+# Project Thread CRUD operations
+def get_project_thread(*, session: Session, project_id: uuid.UUID) -> ProjectThread | None:
+    statement = select(ProjectThread).where(ProjectThread.project_id == project_id)
+    return session.exec(statement).first()
+
+def create_project_thread(*, session: Session, project_id: uuid.UUID) -> ProjectThread:
+    db_thread = ProjectThread(project_id=project_id)
+    session.add(db_thread)
+    session.commit()
+    session.refresh(db_thread)
+    return db_thread
+
+def get_project_comments(*, session: Session, project_id: uuid.UUID, skip: int = 0, limit: int = 100) -> list[ProjectComment]:
+    statement = select(ProjectComment).where(
+        ProjectComment.project_id == project_id
+    ).offset(skip).limit(limit).order_by(ProjectComment.created_at)
+    return session.exec(statement).all()
+
+def create_project_comment(*, session: Session, comment_in: ProjectCommentCreate, project_id: uuid.UUID, author_id: uuid.UUID) -> ProjectComment:
+    db_comment = ProjectComment.model_validate(
+        comment_in, update={"project_id": project_id, "author_id": author_id}
+    )
+    session.add(db_comment)
+    session.commit()
+    session.refresh(db_comment)
+    return db_comment
+
+def update_project_comment(*, session: Session, db_comment: ProjectComment, comment_in: ProjectCommentUpdate) -> ProjectComment:
+    comment_data = comment_in.model_dump(exclude_unset=True)
+    comment_data["updated_at"] = datetime.now(timezone.utc)
+    
+    db_comment.sqlmodel_update(comment_data)
+    session.add(db_comment)
+    session.commit()
+    session.refresh(db_comment)
+    return db_comment
+
+def delete_project_comment(*, session: Session, comment_id: uuid.UUID) -> bool:
+    comment = session.get(ProjectComment, comment_id)
+    if comment:
+        session.delete(comment)
+        session.commit()
+        return True
+    return False
+
+def get_project_comment_by_id(*, session: Session, comment_id: uuid.UUID) -> ProjectComment | None:
+    return session.get(ProjectComment, comment_id)

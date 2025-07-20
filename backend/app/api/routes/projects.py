@@ -97,6 +97,39 @@ def read_approved_projects(
     return ProjectsPublic(data=projects, meta=meta)
 
 
+@router.get("/pending", response_model=ProjectsPublic)
+def read_pending_projects(
+    session: SessionDep,
+    current_user: CurrentUser,
+    page: int = 1,
+    limit: int = 100
+) -> Any:
+    """
+    Retrieve pending projects.
+    - Only ADMIN users can see pending projects
+    """
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+    count_statement = (
+        select(func.count())
+        .select_from(Project)
+        .where(Project.status == ProjectStatus.PENDING)
+    )
+    total = session.exec(count_statement).one()
+
+    # Convert page to skip
+    skip = page_to_skip(page, limit)
+    projects = crud.get_pending_projects(
+        session=session, skip=skip, limit=limit
+    )
+
+    # Calculate pagination metadata
+    meta = calculate_pagination_meta_from_page(
+        total=total, page=page, limit=limit)
+    return ProjectsPublic(data=projects, meta=meta)
+
+
 @router.get("/{id}", response_model=ProjectResponse)
 def read_project(
     session: SessionDep,

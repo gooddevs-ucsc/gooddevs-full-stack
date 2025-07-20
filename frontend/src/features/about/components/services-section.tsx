@@ -41,12 +41,7 @@ const services = [
     title: 'Sponsor Integration',
     description:
       'Dedicated sponsor role for individuals and organizations who want to financially support projects.',
-    benefits: [
-      'Project sponsorship',
-      'Developer support',
-      'Impact tracking',
-      'Tax documentation',
-    ],
+    benefits: ['Developer support', 'Impact tracking', 'Tax documentation'],
   },
   {
     icon: Shield,

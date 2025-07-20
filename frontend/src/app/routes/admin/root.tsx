@@ -1,4 +1,4 @@
-import { Home, Users, Folder, DollarSign } from 'lucide-react';
+import { Home, Users, Folder, DollarSign, ClipboardCheck } from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
@@ -20,6 +20,11 @@ const AdminRoot = () => {
       icon: Folder,
     },
     { name: 'Users', to: paths.admin.users.getHref(), icon: Users },
+    {
+      name: 'Project Approvals',
+      to: paths.admin.projectApprovals.getHref(),
+      icon: ClipboardCheck,
+    },
     {
       name: 'Donations & Sponsorships',
       to: paths.admin.donationsSponshorships.getHref(),
