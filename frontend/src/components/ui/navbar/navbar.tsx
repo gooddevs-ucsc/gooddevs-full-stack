@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { paths } from '@/config/paths';
 import { useUser } from '@/lib/auth';
+import { ROLES } from '@/lib/roles';
 import { cn } from '@/utils/cn';
 
 type NavItem = {
@@ -15,14 +16,31 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const user = useUser();
 
+  const getDashboardPath = () => {
+    if (!user.data) return paths.app.dashboard.getHref();
+
+    switch (user.data.role) {
+      case ROLES.ADMIN:
+        return paths.admin.dashboard.getHref();
+      case ROLES.SPONSOR:
+        return paths.sponsor.dashboard.getHref();
+      case ROLES.REQUESTER:
+        return paths.requester.dashboard.getHref();
+      case ROLES.VOLUNTEER:
+        return paths.developer.dashboard.getHref();
+      default:
+        return paths.home.getHref();
+    }
+  };
+
   const handleAuthClick = (path: string) => {
     navigate(path);
   };
 
   const navigation: NavItem[] = [
-    { name: 'Home', to: '/' },
-    { name: 'Projects', to: '/projects' },
-    { name: 'About Us', to: '/about-us' },
+    { name: 'Home', to: paths.home.getHref() },
+    { name: 'Projects', to: paths.projects.getHref() },
+    { name: 'About Us', to: paths.aboutUs.getHref() },
   ];
 
   return (
@@ -62,7 +80,7 @@ export const Navbar = () => {
           <div className="flex items-center space-x-4">
             {user.data ? (
               <Button
-                onClick={() => navigate(paths.app.dashboard.getHref())}
+                onClick={() => navigate(getDashboardPath())}
                 variant="default"
                 className="bg-gradient-to-r from-primary to-primary/90 shadow-lg hover:from-primary/90 hover:to-primary/80 hover:shadow-xl"
               >

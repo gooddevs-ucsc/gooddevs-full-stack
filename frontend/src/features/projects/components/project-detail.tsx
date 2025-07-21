@@ -1,21 +1,27 @@
 import {
   ArrowLeft,
   Clock,
-  MapPin,
   Users,
   Calendar,
   Tag,
   ChevronRight,
   Heart,
   Share2,
-  Eye,
+  MessageCircle,
+  FileText,
+  CheckCircle,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useProject } from '@/features/projects/api/get-project';
 import { formatDate, formatEstimatedTimeline } from '@/utils/format';
+
+import { ProjectDescriptionTab } from './project-description-tab';
+import { ProjectThread } from './project-thread';
 
 const getProjectTypeColor = (type: string) => {
   const colors = {
@@ -32,6 +38,7 @@ const getProjectTypeColor = (type: string) => {
 export const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('description');
 
   const projectQuery = useProject({ projectId: id! });
 
@@ -151,238 +158,217 @@ export const ProjectDetail = () => {
         </div>
       </div>
 
-      {/* Project Content */}
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
-        {/* Main Content */}
-        <div className="lg:col-span-2">
-          <div className="rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm">
-            <h2 className="mb-6 text-2xl font-semibold text-slate-900">
-              Project Description
-            </h2>
-            <div className="prose prose-slate max-w-none">
-              <p className="leading-relaxed text-slate-700">
-                {project.description}
-              </p>
-            </div>
-          </div>
+      {/* Project Content with Tabs */}
+      <div className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-6 grid w-full grid-cols-3">
+            <TabsTrigger
+              value="description"
+              className="flex items-center gap-2"
+            >
+              <FileText className="size-4" />
+              Description
+            </TabsTrigger>
+            <TabsTrigger value="tasks" className="flex items-center gap-2">
+              <CheckCircle className="size-4" />
+              Tasks & Requirements
+            </TabsTrigger>
+            <TabsTrigger value="discussion" className="flex items-center gap-2">
+              <MessageCircle className="size-4" />
+              Discussion
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Additional Project Information */}
-          <div className="mt-8 rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm">
-            <h2 className="mb-6 text-2xl font-semibold text-slate-900">
-              What You&apos;ll Work On
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <div className="mr-3 mt-1 size-2 rounded-full bg-primary"></div>
-                <p className="text-slate-700">
-                  Collaborate with a team of passionate developers
-                </p>
-              </div>
-              <div className="flex items-start">
-                <div className="mr-3 mt-1 size-2 rounded-full bg-primary"></div>
-                <p className="text-slate-700">
-                  Build meaningful solutions that make a real impact
-                </p>
-              </div>
-              <div className="flex items-start">
-                <div className="mr-3 mt-1 size-2 rounded-full bg-primary"></div>
-                <p className="text-slate-700">
-                  Gain experience with modern technologies and best practices
-                </p>
-              </div>
-              <div className="flex items-start">
-                <div className="mr-3 mt-1 size-2 rounded-full bg-primary"></div>
-                <p className="text-slate-700">
-                  Contribute to open-source projects and build your portfolio
-                </p>
-              </div>
-            </div>
-          </div>
+          {/* Description Tab */}
+          <TabsContent value="description" className="space-y-8">
+            <ProjectDescriptionTab project={project} />
+          </TabsContent>
 
-          {/* Project Requirements */}
-          <div className="mt-8 rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm">
-            <h2 className="mb-6 text-2xl font-semibold text-slate-900">
-              Requirements & Skills
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <div className="mr-3 mt-1 size-2 rounded-full bg-green-500"></div>
-                <p className="text-slate-700">
-                  Strong understanding of web development fundamentals
-                </p>
-              </div>
-              <div className="flex items-start">
-                <div className="mr-3 mt-1 size-2 rounded-full bg-green-500"></div>
-                <p className="text-slate-700">
-                  Experience with modern JavaScript frameworks
-                </p>
-              </div>
-              <div className="flex items-start">
-                <div className="mr-3 mt-1 size-2 rounded-full bg-green-500"></div>
-                <p className="text-slate-700">
-                  Passion for learning and contributing to open source
-                </p>
-              </div>
-              <div className="flex items-start">
-                <div className="mr-3 mt-1 size-2 rounded-full bg-amber-500"></div>
-                <p className="text-slate-700">
-                  Version control experience (Git) - preferred
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Project Details */}
-          <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-xl font-semibold text-slate-900">
-              Project Details
-            </h3>
-            <div className="space-y-4">
-              {project.preferred_technologies && (
+          {/* Tasks & Requirements Tab */}
+          <TabsContent value="tasks" className="space-y-8">
+            {/* Project Information */}
+            <div className="rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm">
+              <h2 className="mb-6 text-2xl font-semibold text-slate-900">
+                Project Information
+              </h2>
+              <div className="space-y-4">
                 <div className="flex items-start">
                   <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-blue-100">
                     <Users className="size-4 text-blue-600" />
                   </div>
                   <div>
-                    <p className="font-medium text-slate-900">Tech Stack</p>
+                    <p className="font-medium text-slate-900">Team Size</p>
                     <p className="text-sm text-slate-600">
+                      Looking for 2-4 developers
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-green-100">
+                    <Clock className="size-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-900">Duration</p>
+                    <p className="text-sm text-slate-600">
+                      {project.estimated_timeline
+                        ? formatEstimatedTimeline(project.estimated_timeline)
+                        : 'TBD'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-purple-100">
+                    <Tag className="size-4 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-900">Status</p>
+                    <p className="text-sm text-slate-600">
+                      {project.status.charAt(0).toUpperCase() +
+                        project.status.slice(1).toLowerCase()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Requirements & Skills */}
+            <div className="rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm">
+              <h2 className="mb-6 text-2xl font-semibold text-slate-900">
+                Requirements & Skills
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <div className="mr-3 mt-1 size-2 rounded-full bg-green-500"></div>
+                  <p className="text-slate-700">
+                    Strong understanding of web development fundamentals
+                  </p>
+                </div>
+                <div className="flex items-start">
+                  <div className="mr-3 mt-1 size-2 rounded-full bg-green-500"></div>
+                  <p className="text-slate-700">
+                    Experience with modern JavaScript frameworks
+                  </p>
+                </div>
+                <div className="flex items-start">
+                  <div className="mr-3 mt-1 size-2 rounded-full bg-green-500"></div>
+                  <p className="text-slate-700">
+                    Passion for learning and contributing to open source
+                  </p>
+                </div>
+                <div className="flex items-start">
+                  <div className="mr-3 mt-1 size-2 rounded-full bg-amber-500"></div>
+                  <p className="text-slate-700">
+                    Version control experience (Git) - preferred
+                  </p>
+                </div>
+                {project.preferred_technologies && (
+                  <div className="mt-6">
+                    <h3 className="mb-2 font-medium text-slate-900">
+                      Tech Stack
+                    </h3>
+                    <p className="text-slate-700">
                       {project.preferred_technologies}
                     </p>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+            </div>
 
-              {project.estimated_timeline && (
-                <div className="flex items-start">
-                  <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-amber-100">
-                    <Clock className="size-4 text-amber-600" />
+            {/* Task Breakdown */}
+            <div className="rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm">
+              <h2 className="mb-6 text-2xl font-semibold text-slate-900">
+                Proposed Task Breakdown
+              </h2>
+              <div className="space-y-6">
+                {/* Phase 1 */}
+                <div className="border-l-4 border-blue-500 pl-6">
+                  <h3 className="mb-3 text-lg font-semibold text-slate-900">
+                    Phase 1: Planning & Setup
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="size-2 rounded-full bg-blue-500"></div>
+                      <span className="text-slate-700">
+                        Project architecture planning
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="size-2 rounded-full bg-blue-500"></div>
+                      <span className="text-slate-700">
+                        Development environment setup
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="size-2 rounded-full bg-blue-500"></div>
+                      <span className="text-slate-700">
+                        Team communication channels
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-slate-900">Timeline</p>
-                    <p className="text-sm text-slate-600">
-                      {formatEstimatedTimeline(project.estimated_timeline)}
-                    </p>
+                </div>
+
+                {/* Phase 2 */}
+                <div className="border-l-4 border-green-500 pl-6">
+                  <h3 className="mb-3 text-lg font-semibold text-slate-900">
+                    Phase 2: Core Development
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="size-2 rounded-full bg-green-500"></div>
+                      <span className="text-slate-700">
+                        Backend API development
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="size-2 rounded-full bg-green-500"></div>
+                      <span className="text-slate-700">
+                        Frontend user interface
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="size-2 rounded-full bg-green-500"></div>
+                      <span className="text-slate-700">
+                        Database design & implementation
+                      </span>
+                    </div>
                   </div>
                 </div>
-              )}
 
-              <div className="flex items-start">
-                <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-emerald-100">
-                  <MapPin className="size-4 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900">Status</p>
-                  <p className="text-sm text-slate-600">
-                    {project.status.charAt(0).toUpperCase() +
-                      project.status.slice(1).toLowerCase()}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-purple-100">
-                  <Eye className="size-4 text-purple-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900">Last Updated</p>
-                  <p className="text-sm text-slate-600">
-                    {formatDate(new Date(project.updated_at).getTime())}
-                  </p>
+                {/* Phase 3 */}
+                <div className="border-l-4 border-purple-500 pl-6">
+                  <h3 className="mb-3 text-lg font-semibold text-slate-900">
+                    Phase 3: Testing & Deployment
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="size-2 rounded-full bg-purple-500"></div>
+                      <span className="text-slate-700">
+                        Unit and integration testing
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="size-2 rounded-full bg-purple-500"></div>
+                      <span className="text-slate-700">
+                        User acceptance testing
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="size-2 rounded-full bg-purple-500"></div>
+                      <span className="text-slate-700">
+                        Production deployment
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </TabsContent>
 
-          {/* Call to Action */}
-          <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-xl font-semibold text-slate-900">
-              Get Involved
-            </h3>
-            <p className="mb-4 text-sm text-slate-600">
-              Ready to make a difference? Join this project and help create
-              something meaningful.
-            </p>
-            <Button className="w-full">Express Interest</Button>
-            <Button
-              variant="outline"
-              className="mt-2 w-full"
-              onClick={() => navigate('/projects')}
-            >
-              <ArrowLeft className="mr-2 size-4" />
-              Back to Projects
-            </Button>
-          </div>
-
-          {/* Project Analytics */}
-          <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-xl font-semibold text-slate-900">
-              Project Analytics
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Total Views</span>
-                <span className="font-medium text-slate-900">
-                  {Math.floor(Math.random() * 500) + 50}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">
-                  Developers Interested
-                </span>
-                <span className="font-medium text-slate-900">
-                  {Math.floor(Math.random() * 20) + 3}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Project Saves</span>
-                <span className="font-medium text-slate-900">
-                  {Math.floor(Math.random() * 30) + 8}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Completion Rate</span>
-                <span className="font-medium text-green-600">
-                  {Math.floor(Math.random() * 30) + 70}%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Project Activity */}
-          <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-xl font-semibold text-slate-900">
-              Recent Activity
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <div className="size-2 rounded-full bg-green-500"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-slate-700">
-                    Project approved for development
-                  </p>
-                  <p className="text-xs text-slate-500">2 days ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="size-2 rounded-full bg-blue-500"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-slate-700">Requirements updated</p>
-                  <p className="text-xs text-slate-500">5 days ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="size-2 rounded-full bg-purple-500"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-slate-700">Project created</p>
-                  <p className="text-xs text-slate-500">1 week ago</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+          {/* Discussion Tab */}
+          <TabsContent value="discussion" className="mt-6">
+            <ProjectThread projectId={id!} />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Floating Action Button for Mobile */}

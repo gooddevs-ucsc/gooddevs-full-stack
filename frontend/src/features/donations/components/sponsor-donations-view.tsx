@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { DollarSign, Users, TrendingUp, Plus, ArrowLeft } from 'lucide-react';
-import { DonationCard } from '@/components/ui/donation-card';
-import { SponsorshipCard } from '@/components/ui/sponsorship-card';
+import { DonationCard } from '@/features/donations/components/donation-card';
+import { SponsorshipCard } from '@/features/donations/components/sponsorship-card';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { DonationForm } from './donation-form';
 import { SponsorshipForm } from './sponsorship-form';
 
@@ -18,7 +20,7 @@ const mockSponsorDonations = [
     message: 'Supporting the developer community',
     createdAt: '2024-01-15T10:30:00Z',
     status: 'completed' as const,
-    paymentMethod: 'Credit Card'
+    paymentMethod: 'Credit Card',
   },
   {
     id: '2',
@@ -29,8 +31,8 @@ const mockSponsorDonations = [
     message: 'Keep up the great work!',
     createdAt: '2024-01-10T14:20:00Z',
     status: 'completed' as const,
-    paymentMethod: 'PayPal'
-  }
+    paymentMethod: 'PayPal',
+  },
 ];
 
 const mockSponsorSponsorships = [
@@ -40,14 +42,14 @@ const mockSponsorSponsorships = [
     sponsorEmail: 'sponsor@example.com',
     amount: 2000,
     currency: 'USD',
-    projectId: 'proj-1',
-    projectName: 'Community Website Redesign',
+    projectId: null,
+    projectName: null,
     volunteerId: 'vol-1',
     volunteerName: 'Jane Smith',
     duration: '3 months',
     createdAt: '2024-01-12T09:15:00Z',
     status: 'active' as const,
-    sponsorshipType: 'project' as const
+    sponsorshipType: 'volunteer' as const,
   },
   {
     id: '2',
@@ -62,17 +64,29 @@ const mockSponsorSponsorships = [
     duration: '6 months',
     createdAt: '2024-01-08T16:30:00Z',
     status: 'active' as const,
-    sponsorshipType: 'volunteer' as const
-  }
+    sponsorshipType: 'volunteer' as const,
+  },
 ];
 
 export const SponsorDonationsView = () => {
-  const [activeView, setActiveView] = useState<'list' | 'donate' | 'sponsor'>('list');
-  const [donationsView, setDonationsView] = useState<'donations' | 'sponsorships'>('donations');
+  const [activeView, setActiveView] = useState<'list' | 'donate' | 'sponsor'>(
+    'list',
+  );
+  const [donationsView, setDonationsView] = useState<
+    'donations' | 'sponsorships'
+  >('donations');
 
-  const totalDonations = mockSponsorDonations.reduce((sum, donation) => sum + donation.amount, 0);
-  const totalSponsorships = mockSponsorSponsorships.reduce((sum, sponsorship) => sum + sponsorship.amount, 0);
-  const activeSponsorships = mockSponsorSponsorships.filter(s => s.status === 'active').length;
+  const totalDonations = mockSponsorDonations.reduce(
+    (sum, donation) => sum + donation.amount,
+    0,
+  );
+  const totalSponsorships = mockSponsorSponsorships.reduce(
+    (sum, sponsorship) => sum + sponsorship.amount,
+    0,
+  );
+  const activeSponsorships = mockSponsorSponsorships.filter(
+    (s) => s.status === 'active',
+  ).length;
 
   const handleFormSuccess = () => {
     setActiveView('list');
@@ -83,15 +97,17 @@ export const SponsorDonationsView = () => {
   if (activeView === 'donate') {
     return (
       <div className="space-y-4">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           onClick={() => setActiveView('list')}
           className="mb-4"
         >
-          <ArrowLeft className="mr-2 size-4" />
-          Back to My Donations & Sponsorships
+          <div className="flex items-center">
+            <ArrowLeft className="mr-2 size-4" />
+            Back to My Donations & Sponsorships
+          </div>
         </Button>
-        <DonationForm 
+        <DonationForm
           onSuccess={handleFormSuccess}
           onCancel={() => setActiveView('list')}
         />
@@ -103,15 +119,17 @@ export const SponsorDonationsView = () => {
   if (activeView === 'sponsor') {
     return (
       <div className="space-y-4">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           onClick={() => setActiveView('list')}
           className="mb-4"
         >
-          <ArrowLeft className="mr-2 size-4" />
-          Back to My Donations & Sponsorships
+          <div className="flex items-center">
+            <ArrowLeft className="mr-2 size-4" />
+            Back to My Donations & Sponsorships
+          </div>
         </Button>
-        <SponsorshipForm 
+        <SponsorshipForm
           onSuccess={handleFormSuccess}
           onCancel={() => setActiveView('list')}
         />
@@ -126,60 +144,73 @@ export const SponsorDonationsView = () => {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">My Total Donations</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              My Total Donations
+            </CardTitle>
             <DollarSign className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">${totalDonations.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-green-600">
+              ${totalDonations.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">
               {mockSponsorDonations.length} donations made
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">My Active Sponsorships</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              My Active Sponsorships
+            </CardTitle>
             <Users className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">${totalSponsorships.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              ${totalSponsorships.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">
               {activeSponsorships} active sponsorships
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Contribution</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Contribution
+            </CardTitle>
             <TrendingUp className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">${(totalDonations + totalSponsorships).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Overall impact
-            </p>
+            <div className="text-2xl font-bold text-purple-600">
+              ${(totalDonations + totalSponsorships).toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">Overall impact</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Action Buttons */}
       <div className="flex gap-4">
-        <Button 
+        <Button
           onClick={() => setActiveView('donate')}
-          className="bg-green-600 hover:bg-green-700"
+          className="h-14 bg-green-600 hover:bg-green-700"
         >
-          <Plus className="mr-2 size-4" />
-          Make Donation
+          <span className="flex items-center">
+            <Plus className="mr-4 size-4" />
+            Make Donation
+          </span>
         </Button>
-        <Button 
+        <Button
           onClick={() => setActiveView('sponsor')}
-          variant="outline"
-          className="border-blue-600 text-blue-600 hover:bg-blue-50"
+          className="h-14 bg-blue-600 hover:bg-blue-700"
         >
-          <Plus className="mr-2 size-4" />
-          Create Sponsorship
+          <span className="flex items-center">
+            <Plus className="mr-4 size-4" />
+            Create Sponsorship
+          </span>
         </Button>
       </div>
 

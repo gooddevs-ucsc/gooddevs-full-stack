@@ -237,6 +237,42 @@ class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
 
+class ProjectThread(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    project_id: uuid.UUID = Field(foreign_key="project.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ProjectComment(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    content: str
+    project_id: uuid.UUID = Field(foreign_key="project.id")
+    author_id: uuid.UUID = Field(foreign_key="user.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+# Request/Response models
+class ProjectCommentCreate(SQLModel):
+    content: str
+
+class ProjectCommentUpdate(SQLModel):
+    content: str | None = None
+
+class ProjectCommentPublic(SQLModel):
+    id: uuid.UUID
+    content: str
+    project_id: uuid.UUID
+    author: UserPublic
+    created_at: datetime
+    updated_at: datetime
+
+class ProjectThreadPublic(SQLModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    comments: list[ProjectCommentPublic]
+    created_at: datetime
+    updated_at: datetime
+    
 # Task status enum
 class TaskStatus(str, enum.Enum):
     TODO = "TODO"

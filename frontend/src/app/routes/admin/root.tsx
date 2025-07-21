@@ -1,9 +1,10 @@
-import { Home, Users, Folder, DollarSign } from 'lucide-react';
+import { Home, Users, Folder, DollarSign, ClipboardCheck } from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
+import { ForbiddenFallback } from '@/components/ui/forbidden-fallback';
 import { paths } from '@/config/paths';
-import { useAuthorization } from '@/lib/authorization';
+import { Authorization } from '@/lib/authorization';
 import { ROLES } from '@/lib/roles';
 
 export const ErrorBoundary = () => {
@@ -11,27 +12,35 @@ export const ErrorBoundary = () => {
 };
 
 const AdminRoot = () => {
-  const { checkAccess } = useAuthorization();
-
-  if (!checkAccess({ allowedRoles: [ROLES.ADMIN] })) {
-    return <div>Access denied. Admin privileges required.</div>;
-  }
-
   const navigation = [
     { name: 'Dashboard', to: paths.admin.dashboard.getHref(), icon: Home },
-    { name: 'Discussions', to: paths.admin.discussions.getHref(), icon: Folder },
-    { name: 'Users', to: paths.admin.users.getHref(), icon: Users },
-    { 
-      name: 'Donations & Sponsorships', 
-      to: paths.admin.donationsSponshorships.getHref(),
-      icon: DollarSign 
+    {
+      name: 'Discussions',
+      to: paths.admin.discussions.getHref(),
+      icon: Folder,
     },
-  ] as SideNavigationItem[];
+    { name: 'Users', to: paths.admin.users.getHref(), icon: Users },
+    {
+      name: 'Project Approvals',
+      to: paths.admin.projectApprovals.getHref(),
+      icon: ClipboardCheck,
+    },
+    {
+      name: 'Donations & Sponsorships',
+      to: paths.admin.donationsSponshorships.getHref(),
+      icon: DollarSign,
+    },
+  ].filter(Boolean) as SideNavigationItem[];
 
   return (
-    <DashboardLayout navigation={navigation}>
-      <Outlet />
-    </DashboardLayout>
+    <Authorization
+      forbiddenFallback={<ForbiddenFallback roles={[ROLES.ADMIN]} />}
+      allowedRoles={[ROLES.ADMIN]}
+    >
+      <DashboardLayout navigation={navigation}>
+        <Outlet />
+      </DashboardLayout>
+    </Authorization>
   );
 };
 
