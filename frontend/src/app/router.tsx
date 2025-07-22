@@ -152,7 +152,7 @@ export const createAppRouter = (queryClient: QueryClient) =>
         {
           path: paths.requester.createProject.path,
           lazy: () =>
-            import('./routes/requester/submitnewproject').then(
+            import('./routes/requester/project-create').then(
               convert(queryClient),
             ),
         },
