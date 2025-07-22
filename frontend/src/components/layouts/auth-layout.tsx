@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
-import logo from '@/assets/logo.svg';
 import { Head } from '@/components/seo';
 import { Link } from '@/components/ui/link';
 import { paths } from '@/config/paths';
@@ -38,7 +37,13 @@ export const AuthLayout = ({ children, title }: LayoutProps) => {
               className="flex items-center text-white"
               to={paths.home.getHref()}
             >
-              <img className="h-24 w-auto" src={logo} alt="Workflow" />
+              <div className="flex items-center">
+                <div className="shrink-0">
+                  <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-6xl font-bold text-transparent">
+                    GoodDevs
+                  </span>
+                </div>
+              </div>
             </Link>
           </div>
 
