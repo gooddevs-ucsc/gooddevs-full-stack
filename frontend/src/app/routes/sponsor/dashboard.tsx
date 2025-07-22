@@ -172,20 +172,20 @@ const SponsorDashboardRoute = () => {
   ];
 
   return (
-    <ContentLayout title="Sponsor Dashboard">
+    <ContentLayout title="Dashboard">
       <div className="space-y-8">
         {/* Welcome Section */}
         <div className="rounded-2xl bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 p-8 shadow-sm">
           <h1 className="text-3xl font-bold text-slate-900">
             Welcome back,{' '}
-            <span className="text-green-600">
+            <span className="text-primary">
               {user.data?.firstname} {user.data?.lastname}
             </span>
           </h1>
           <p className="mt-2 text-lg text-slate-600">
-            Your impact:{' '}
-            <span className="font-semibold text-green-600">
-              Community Champion
+            Your role:{' '}
+            <span className="font-semibold text-primary">
+              {user.data?.role}
             </span>
           </p>
           <p className="mt-4 text-slate-600">
