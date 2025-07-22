@@ -1,4 +1,3 @@
-import { X } from 'lucide-react';
 import { FC } from 'react';
 import { z } from 'zod';
 
@@ -63,6 +62,11 @@ export const TaskModal: FC<TaskModalProps> = ({
 }) => {
   const isEditing = !!task;
 
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
   // Transform the form data before submitting
   const handleSubmit = (formData: z.infer<typeof taskFormInputSchema>) => {
     const transformedData: TaskFormData = {
@@ -118,14 +122,14 @@ export const TaskModal: FC<TaskModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             {isEditing ? 'Edit Task' : 'Create New Task'}
-            <Button
+            {/* <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
               className="size-8 p-0"
             >
               <X className="size-4" />
-            </Button>
+            </Button> */}
           </DialogTitle>
         </DialogHeader>
 
@@ -181,9 +185,9 @@ export const TaskModal: FC<TaskModalProps> = ({
                   <Input
                     type="number"
                     label="Estimated Hours"
-                    placeholder="0"
-                    min="0"
-                    step="0.5"
+                    placeholder="1"
+                    min="1"
+                    step="1"
                     registration={register('estimated_hours')}
                     error={formState.errors.estimated_hours}
                   />
@@ -192,6 +196,7 @@ export const TaskModal: FC<TaskModalProps> = ({
                   <Input
                     type="date"
                     label="Due Date"
+                    min={getTodayDate()}
                     registration={register('due_date')}
                     error={formState.errors.due_date}
                   />
