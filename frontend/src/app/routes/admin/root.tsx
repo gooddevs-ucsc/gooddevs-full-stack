@@ -14,11 +14,6 @@ export const ErrorBoundary = () => {
 const AdminRoot = () => {
   const navigation = [
     { name: 'Dashboard', to: paths.admin.dashboard.getHref(), icon: Home },
-    {
-      name: 'Discussions',
-      to: paths.admin.discussions.getHref(),
-      icon: Folder,
-    },
     { name: 'Users', to: paths.admin.users.getHref(), icon: Users },
     {
       name: 'Project Approvals',
