@@ -97,6 +97,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
       lazy: () => import('./routes/admin/root').then(convert(queryClient)),
       children: [
         {
+          path: paths.admin.dashboard.path,
+          lazy: () =>
+            import('./routes/admin/dashboard').then(convert(queryClient)),
+        },
+        {
           path: paths.admin.donationsSponshorships.path,
           lazy: () =>
             import('./routes/admin/donations-sponsorships').then(
@@ -147,7 +152,7 @@ export const createAppRouter = (queryClient: QueryClient) =>
         {
           path: paths.requester.createProject.path,
           lazy: () =>
-            import('./routes/requester/submitnewproject').then(
+            import('./routes/requester/project-create').then(
               convert(queryClient),
             ),
         },

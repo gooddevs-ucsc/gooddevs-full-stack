@@ -49,20 +49,62 @@ export type Comment = Entity<{
 }>;
 
 /**
+ * Project-related enums that match the backend models
+ */
+export const PROJECT_TYPES = {
+  WEBSITE: 'WEBSITE',
+  MOBILE_APP: 'MOBILE_APP',
+  DATABASE: 'DATABASE',
+  API: 'API',
+  DESKTOP_APP: 'DESKTOP_APP',
+  OTHER: 'OTHER',
+} as const;
+
+export const ESTIMATED_TIMELINES = {
+  LESS_THAN_1_MONTH: 'LESS_THAN_1_MONTH',
+  ONE_TO_THREE_MONTHS: 'ONE_TO_THREE_MONTHS',
+  THREE_TO_SIX_MONTHS: 'THREE_TO_SIX_MONTHS',
+  MORE_THAN_SIX_MONTHS: 'MORE_THAN_SIX_MONTHS',
+} as const;
+
+export type ProjectType = (typeof PROJECT_TYPES)[keyof typeof PROJECT_TYPES];
+export type EstimatedTimeline =
+  (typeof ESTIMATED_TIMELINES)[keyof typeof ESTIMATED_TIMELINES];
+
+/**
+ * UI Select options for forms
+ */
+export const PROJECT_TYPE_OPTIONS = [
+  { label: 'Select a project type...', value: '' },
+  { label: 'Website Development', value: PROJECT_TYPES.WEBSITE },
+  { label: 'Mobile App', value: PROJECT_TYPES.MOBILE_APP },
+  { label: 'API Development', value: PROJECT_TYPES.API },
+  { label: 'Database Design', value: PROJECT_TYPES.DATABASE },
+  { label: 'Desktop Application', value: PROJECT_TYPES.DESKTOP_APP },
+  { label: 'Other', value: PROJECT_TYPES.OTHER },
+];
+
+export const ESTIMATED_TIMELINE_OPTIONS = [
+  { label: 'Select timeline...', value: '' },
+  { label: 'Less than 1 month', value: ESTIMATED_TIMELINES.LESS_THAN_1_MONTH },
+  { label: '1-3 months', value: ESTIMATED_TIMELINES.ONE_TO_THREE_MONTHS },
+  { label: '3-6 months', value: ESTIMATED_TIMELINES.THREE_TO_SIX_MONTHS },
+  {
+    label: 'More than 6 months',
+    value: ESTIMATED_TIMELINES.MORE_THAN_SIX_MONTHS,
+  },
+];
+
+/**
  * Project-related types that match the backend models
  */
 export type Project = Entity<{
   id: string;
   title: string;
   description: string;
-  project_type: string;
+  project_type: ProjectType;
   preferred_technologies: string | null;
-  estimated_timeline:
-    | 'LESS_THAN_1_MONTH'
-    | 'ONE_TO_THREE_MONTHS'
-    | 'THREE_TO_SIX_MONTHS'
-    | 'MORE_THAN_SIX_MONTHS'
-    | null;
+  estimated_timeline: EstimatedTimeline | null;
   created_at: string;
   updated_at: string;
   requester_id: string;

@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { SponsorshipCard } from '@/components/ui/sponsorship-card';
+import { SponsorshipCard } from '@/features/donations/components/sponsorship-card';
 
 import { SponsorshipForm } from './sponsorship-form';
 
@@ -15,14 +15,14 @@ const mockSponsorSponsorships = [
     sponsorEmail: 'jane@example.com',
     amount: 2000,
     currency: 'USD',
-    projectId: 'proj-1',
-    projectName: 'Fitness Tracker App',
+    projectId: null,
+    projectName: null,
     volunteerId: 'vol-1',
     volunteerName: 'Januli Nanayakkara',
     duration: '3 months',
     createdAt: '2024-01-12T09:15:00Z',
     status: 'active' as const,
-    sponsorshipType: 'project' as const,
+    sponsorshipType: 'volunteer' as const,
   },
   {
     id: '2',

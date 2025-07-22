@@ -40,7 +40,7 @@ export const registerInputSchema = z.object({
   email: z.string().min(1, 'Required').email('Invalid email'),
   firstname: z.string().min(1, 'Required'),
   lastname: z.string().min(1, 'Required'),
-  password: z.string().min(5, 'Required'),
+  password: z.string().min(8, 'Should be at least 8 characters'),
   role: z.enum([ROLES.ADMIN, ROLES.SPONSOR, ROLES.VOLUNTEER, ROLES.REQUESTER]),
 });
 

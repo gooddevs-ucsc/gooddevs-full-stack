@@ -1,16 +1,20 @@
 import { default as dayjs } from 'dayjs';
 
+import {
+  ESTIMATED_TIMELINE_LABELS,
+  PROJECT_TYPE_LABELS,
+} from '@/lib/constants/ui';
+import { EstimatedTimeline, ProjectType } from '@/types/api';
+
 export const formatDate = (date: number) =>
   dayjs(date).format('MMMM D, YYYY h:mm A');
 
-export const formatEstimatedTimeline = (timeline: string) => {
-  const timelineMap = {
-    LESS_THAN_1_MONTH: 'Less than 1 month',
-    ONE_TO_THREE_MONTHS: '1-3 months',
-    THREE_TO_SIX_MONTHS: '3-6 months',
-    MORE_THAN_SIX_MONTHS: 'More than 6 months',
-  };
-  return timelineMap[timeline as keyof typeof timelineMap] || timeline;
+export const formatEstimatedTimeline = (timeline: EstimatedTimeline) => {
+  return ESTIMATED_TIMELINE_LABELS[timeline] || timeline;
+};
+
+export const formatProjectType = (projectType: ProjectType) => {
+  return PROJECT_TYPE_LABELS[projectType] || projectType;
 };
 
 export const formatDateOnly = (dateString: string) => {

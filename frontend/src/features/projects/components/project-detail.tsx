@@ -17,21 +17,15 @@ import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useProject } from '@/features/projects/api/get-project';
 import { TasksTab } from '@/features/tasks/components/tasks-tab';
+import { PROJECT_TYPE_STYLES } from '@/lib/constants/ui';
+import { ProjectType } from '@/types/api';
 import { formatDate } from '@/utils/format';
 
 import { ProjectDescriptionTab } from './project-description-tab';
 import { ProjectThread } from './project-thread';
 
-const getProjectTypeColor = (type: string) => {
-  const colors = {
-    WEBSITE: 'bg-blue-50 text-blue-800 border border-blue-200',
-    MOBILE_APP: 'bg-emerald-50 text-emerald-800 border border-emerald-200',
-    DATABASE: 'bg-purple-50 text-purple-800 border border-purple-200',
-    API: 'bg-amber-50 text-amber-800 border border-amber-200',
-    DESKTOP_APP: 'bg-rose-50 text-rose-800 border border-rose-200',
-    OTHER: 'bg-slate-50 text-slate-700 border border-slate-200',
-  };
-  return colors[type as keyof typeof colors] || colors.OTHER;
+const getProjectTypeColor = (type: ProjectType) => {
+  return PROJECT_TYPE_STYLES[type] || PROJECT_TYPE_STYLES.OTHER;
 };
 
 export const ProjectDetail = () => {
