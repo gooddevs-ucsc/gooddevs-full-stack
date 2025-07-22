@@ -154,7 +154,7 @@ export const ProjectDetail = () => {
       {/* Project Content with Tabs */}
       <div className="w-full">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6 grid w-full grid-cols-4">
+          <TabsList className="mb-6 grid w-full grid-cols-3">
             <TabsTrigger
               value="description"
               className="flex items-center gap-2"
