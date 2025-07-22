@@ -68,3 +68,61 @@ export type Project = Entity<{
   requester_id: string;
   status: string;
 }>;
+
+// task types
+export enum TaskStatus {
+  TODO = 'TODO',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum TaskPriority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  URGENT = 'URGENT',
+}
+
+export interface Task {
+  id: string;
+  project_id: string;
+  title: string;
+  description?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  estimated_hours?: number;
+  actual_hours?: number;
+  due_date?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskCreate {
+  title: string;
+  description?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  estimated_hours?: number;
+  actual_hours?: number;
+  due_date?: string;
+}
+
+export interface TaskUpdate {
+  title?: string;
+  description?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  estimated_hours?: number;
+  actual_hours?: number;
+  due_date?: string;
+}
+
+export interface TasksResponse {
+  data: Task[];
+  meta: Meta;
+}
+
+export interface TaskResponse {
+  data: Task;
+}
