@@ -9,12 +9,12 @@ export const ErrorBoundary = () => {
 };
 
 const SponsorRoot = () => {
-  const navigation = [ 
-    { name: 'Dashboard', to: paths.admin.dashboard.getHref(), icon: Home },
-    { 
-      name: 'My Donations & Sponsorships', 
-      to: paths.sponsor.donationsSponshorships.getHref(), 
-      icon: DollarSign 
+  const navigation = [
+    { name: 'Dashboard', to: paths.sponsor.dashboard.getHref(), icon: Home },
+    {
+      name: 'My Donations & Sponsorships',
+      to: paths.sponsor.donationsSponshorships.getHref(),
+      icon: DollarSign,
     },
   ] as SideNavigationItem[];
 

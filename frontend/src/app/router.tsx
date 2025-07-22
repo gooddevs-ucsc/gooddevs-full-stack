@@ -119,14 +119,19 @@ export const createAppRouter = (queryClient: QueryClient) =>
     },
     {
       path: paths.sponsor.root.path,
-      lazy: () => import('./routes/sponsor/root').then(convert(queryClient)), // Change this line
+      lazy: () => import('./routes/sponsor/root').then(convert(queryClient)),
       children: [
+        {
+          path: paths.sponsor.dashboard.path,
+          lazy: () =>
+            import('./routes/sponsor/dashboard').then(convert(queryClient)),
+        },
         {
           path: paths.sponsor.donationsSponshorships.path,
           lazy: () =>
             import('./routes/sponsor/donations-sponsorships').then(
               convert(queryClient),
-            ), // Change this line
+            ),
         },
       ],
     },
