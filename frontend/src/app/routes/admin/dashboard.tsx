@@ -138,7 +138,7 @@ const AdminDashboardRoute = () => {
   };
 
   return (
-    <ContentLayout title="Admin Dashboard">
+    <ContentLayout title="Dashboard">
       <div className="space-y-8">
         {/* Welcome Section */}
         <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 p-8 shadow-sm">
@@ -150,7 +150,9 @@ const AdminDashboardRoute = () => {
           </h1>
           <p className="mt-2 text-lg text-slate-600">
             Your role:{' '}
-            <span className="font-semibold text-primary">Administrator</span>
+            <span className="font-semibold text-primary">
+              {user.data?.role}
+            </span>
           </p>
           <p className="mt-4 text-slate-600">
             Monitor platform activity, manage users, and oversee project
