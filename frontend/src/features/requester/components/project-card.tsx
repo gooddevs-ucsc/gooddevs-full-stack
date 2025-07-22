@@ -181,8 +181,10 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
             onClick={handleViewDetails}
             className="border-primary/20 text-primary shadow-sm transition-all duration-200 hover:bg-primary hover:text-white hover:shadow-lg group-hover:translate-x-1"
           >
-            View Project
-            <ExternalLink className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
+            <div className="flex items-center gap-2">
+              View Project
+              <ExternalLink className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
+            </div>
           </Button>
         </div>
       </div>
