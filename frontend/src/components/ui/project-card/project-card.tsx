@@ -2,8 +2,9 @@ import { ArrowRight, Clock, MapPin, Users } from 'lucide-react';
 import { FC } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Project } from '@/types/api';
-import { formatEstimatedTimeline } from '@/utils/format';
+import { PROJECT_TYPE_STYLES } from '@/lib/constants/ui';
+import { Project, ProjectType } from '@/types/api';
+import { formatEstimatedTimeline, formatProjectType } from '@/utils/format';
 
 interface ProjectCardProps {
   project: Project;
@@ -17,16 +18,8 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const getProjectTypeColor = (type: string) => {
-  const colors = {
-    WEBSITE: 'bg-blue-50 text-blue-800 border border-blue-200',
-    MOBILE_APP: 'bg-emerald-50 text-emerald-800 border border-emerald-200',
-    DATABASE: 'bg-purple-50 text-purple-800 border border-purple-200',
-    API: 'bg-amber-50 text-amber-800 border border-amber-200',
-    DESKTOP_APP: 'bg-rose-50 text-rose-800 border border-rose-200',
-    OTHER: 'bg-slate-50 text-slate-700 border border-slate-200',
-  };
-  return colors[type as keyof typeof colors] || colors.OTHER;
+const getProjectTypeColor = (type: ProjectType) => {
+  return PROJECT_TYPE_STYLES[type] || PROJECT_TYPE_STYLES.OTHER;
 };
 
 export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
@@ -42,7 +35,7 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
             <span
               className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${getProjectTypeColor(project.project_type)}`}
             >
-              {project.project_type.replace('_', ' ')}
+              {formatProjectType(project.project_type)}
             </span>
           </div>
         </div>
