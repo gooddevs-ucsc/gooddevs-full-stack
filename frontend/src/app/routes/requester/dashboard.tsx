@@ -139,7 +139,7 @@ const RequestorDashboardRoute = () => {
   };
 
   return (
-    <ContentLayout title="Requester Dashboard">
+    <ContentLayout title="Dashboard">
       <div className="space-y-8">
         {/* Welcome Section */}
         <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 p-8 shadow-sm">
@@ -152,7 +152,7 @@ const RequestorDashboardRoute = () => {
           <p className="mt-2 text-lg text-slate-600">
             Your role:{' '}
             <span className="font-semibold text-primary">
-              Project Requester
+              {user.data?.role}
             </span>
           </p>
           <p className="mt-4 text-slate-600">
