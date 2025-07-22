@@ -135,7 +135,6 @@ const RequesterProjectsRoute = () => {
         {/* Header Section */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">My Projects</h1>
             <p className="text-slate-600">
               Manage and track your submitted projects
             </p>
@@ -145,8 +144,10 @@ const RequesterProjectsRoute = () => {
             size="lg"
             onClick={() => navigate(paths.requester.createProject.getHref())}
           >
-            <Plus className="mr-2 size-4" />
-            New Project
+            <div className="flex items-center gap-4">
+              <Plus className="mr-2 size-4" />
+              New Project
+            </div>
           </Button>
         </div>
 
