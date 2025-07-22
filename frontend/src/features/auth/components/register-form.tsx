@@ -59,6 +59,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
               options={[
                 { label: 'Volunteer', value: 'VOLUNTEER' },
                 { label: 'Requester', value: 'REQUESTER' },
+                { label: 'Sponsor', value: 'SPONSOR' },
               ]}
             />
 
