@@ -138,7 +138,7 @@ const AdminDashboardRoute = () => {
   };
 
   return (
-    <ContentLayout title="Admin Dashboard">
+    <ContentLayout title="Dashboard">
       <div className="space-y-8">
         {/* Welcome Section */}
         <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 p-8 shadow-sm">
