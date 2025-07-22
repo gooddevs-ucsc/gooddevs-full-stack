@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown';
 import { Task, TaskPriority } from '@/types/api';
-import { formatDate } from '@/utils/format';
+import { formatDateOnly } from '@/utils/format';
 
 interface TaskCardProps {
   task: Task;
@@ -99,7 +99,7 @@ export const TaskCard: FC<TaskCardProps> = ({ task, onEdit, onDelete }) => {
         {task.due_date && (
           <div className="flex items-center text-xs text-slate-500">
             <Calendar className="mr-1 size-3" />
-            Due {formatDate(new Date(task.due_date).getTime())}
+            Due {formatDateOnly(task.due_date)}
           </div>
         )}
       </div>

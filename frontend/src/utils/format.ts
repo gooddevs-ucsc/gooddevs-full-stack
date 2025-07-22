@@ -12,3 +12,12 @@ export const formatEstimatedTimeline = (timeline: string) => {
   };
   return timelineMap[timeline as keyof typeof timelineMap] || timeline;
 };
+
+export const formatDateOnly = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
