@@ -8,10 +8,16 @@ import { useRegister, registerInputSchema } from '@/lib/auth';
 
 type RegisterFormProps = {
   onSuccess: () => void;
+  onError?: (error: unknown) => void;
 };
 
-export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
-  const registering = useRegister({ onSuccess });
+export const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
+  const registering = useRegister({
+    onSuccess,
+    onError: (error) => {
+      onError?.(error);
+    },
+  });
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get('redirectTo');
 
