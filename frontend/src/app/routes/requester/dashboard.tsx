@@ -197,30 +197,36 @@ const RequestorDashboardRoute = () => {
                 <h3 className="font-semibold text-slate-900">
                   Project Management
                 </h3>
-                <div className="mt-3 space-y-2">
+                <div className="mt-3 space-y-4">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start border-primary/20 text-primary hover:bg-primary hover:text-white"
+                    className="w-full justify-start border-primary/20 text-primary h-10"
                   >
-                    <Plus className="mr-2 size-4" />
-                    Submit New Project Request
+                    <div className="flex items-center gap-6">
+                      <Plus className="size-4" />
+                      Submit New Project Request
+                    </div>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start"
+                    className="w-full justify-start h-10"
                   >
-                    <Eye className="mr-2 size-4" />
-                    View All My Projects
+                    <div className="flex items-center gap-6">
+                      <Eye className="size-4" />
+                      View All My Projects
+                    </div>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start"
+                    className="w-full justify-start h-10"
                   >
-                    <Users className="mr-2 size-4" />
-                    Browse Recommended Developers
+                    <div className="flex items-center gap-6">
+                      <Users className="size-4" />
+                      Browse Recommended Developers
+                    </div>
                   </Button>
                 </div>
               </div>
