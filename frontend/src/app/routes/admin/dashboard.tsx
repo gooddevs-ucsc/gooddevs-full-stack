@@ -150,7 +150,9 @@ const AdminDashboardRoute = () => {
           </h1>
           <p className="mt-2 text-lg text-slate-600">
             Your role:{' '}
-            <span className="font-semibold text-primary">Administrator</span>
+            <span className="font-semibold text-primary">
+              {user.data?.role}
+            </span>
           </p>
           <p className="mt-4 text-slate-600">
             Monitor platform activity, manage users, and oversee project
