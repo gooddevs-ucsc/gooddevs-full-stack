@@ -133,6 +133,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
               convert(queryClient),
             ),
         },
+        {
+          path: paths.sponsor.settings.path,
+          lazy: () =>
+            import('./routes/sponsor/settings').then(convert(queryClient)),
+        },
       ],
     },
     {
