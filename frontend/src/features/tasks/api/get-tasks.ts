@@ -17,7 +17,7 @@ export const getTasks = ({
   page = 1,
   limit = 100,
 }: GetTasksInput): Promise<TasksResponse> => {
-  return api.get(`/projects/${projectId}/tasks`, {
+  return api.get(`/projects/${projectId}/tasks/`, {
     params: {
       page,
       limit,

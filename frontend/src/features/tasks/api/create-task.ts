@@ -22,7 +22,7 @@ export const createTask = ({
   projectId,
   data,
 }: CreateTaskInput): Promise<TaskResponse> => {
-  return api.post(`/projects/${projectId}/tasks`, data);
+  return api.post(`/projects/${projectId}/tasks/`, data);
 };
 
 type UseCreateTaskOptions = {
