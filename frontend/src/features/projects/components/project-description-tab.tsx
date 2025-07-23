@@ -589,38 +589,6 @@ export const ProjectDescriptionTab = ({
             </div>
           </div>
         </div>
-
-        {/* Project Timeline & Commitment */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-full bg-orange-100 p-2">
-              <Calendar className="size-5 text-orange-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-slate-900">
-              Timeline & Commitment
-            </h2>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="text-center">
-              <div className="mb-2 text-2xl font-bold text-blue-600">
-                {project.estimated_timeline
-                  ? formatEstimatedTimeline(project.estimated_timeline)
-                  : '12-16 weeks'}
-              </div>
-              <div className="text-sm text-slate-600">Project Duration</div>
-            </div>
-            <div className="text-center">
-              <div className="mb-2 text-2xl font-bold text-green-600">5-10</div>
-              <div className="text-sm text-slate-600">Hours per week</div>
-            </div>
-            <div className="text-center">
-              <div className="mb-2 text-2xl font-bold text-purple-600">
-                Remote
-              </div>
-              <div className="text-sm text-slate-600">Work Style</div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Sidebar */}
@@ -822,7 +790,7 @@ export const ProjectDescriptionTab = ({
         </div>
 
         {/* Recent Activity */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-violet-50 to-purple-100 p-6 shadow-sm">
           <h3 className="mb-4 text-lg font-semibold text-slate-900">
             Recent Updates
           </h3>
@@ -867,8 +835,40 @@ export const ProjectDescriptionTab = ({
           </div>
         </div>
 
+        {/* Timeline & Commitment - Moved to Sidebar */}
+        <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-orange-50 to-red-50 p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-full bg-gradient-to-r from-orange-500 to-red-500 p-2">
+              <Calendar className="size-5 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              Timeline & Commitment
+            </h3>
+          </div>
+          <div className="space-y-4">
+            <div className="rounded-lg bg-white p-4 text-center shadow-sm">
+              <div className="mb-2 text-2xl font-bold text-blue-600">
+                {project.estimated_timeline
+                  ? formatEstimatedTimeline(project.estimated_timeline)
+                  : '12-16 weeks'}
+              </div>
+              <div className="text-sm text-slate-600">Project Duration</div>
+            </div>
+            <div className="rounded-lg bg-white p-4 text-center shadow-sm">
+              <div className="mb-2 text-2xl font-bold text-green-600">5-10</div>
+              <div className="text-sm text-slate-600">Hours per week</div>
+            </div>
+            <div className="rounded-lg bg-white p-4 text-center shadow-sm">
+              <div className="mb-2 text-2xl font-bold text-purple-600">
+                Remote
+              </div>
+              <div className="text-sm text-slate-600">Work Style</div>
+            </div>
+          </div>
+        </div>
+
         {/* Navigation */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-sky-50 to-blue-100 p-6 shadow-sm">
           <Button
             variant="outline"
             className="w-full"
