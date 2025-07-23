@@ -118,6 +118,10 @@ export const paths = {
       path: 'projects/create',
       getHref: () => '/requester/projects/create',
     },
+    profile: {
+      path: 'profile',
+      getHref: () => '/requester/profile',
+    },
     settings: {
       path: 'settings',
       getHref: () => '/requester/settings',
