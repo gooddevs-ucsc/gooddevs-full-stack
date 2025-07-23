@@ -99,6 +99,10 @@ export const paths = {
       path: 'donations-sponsorships',
       getHref: () => '/sponsor/donations-sponsorships',
     },
+    profile: {
+      path: 'profile',
+      getHref: () => '/sponsor/profile',
+    },
     settings: {
       path: 'settings',
       getHref: () => '/sponsor/settings',
