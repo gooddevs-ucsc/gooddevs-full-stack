@@ -1,4 +1,9 @@
-import { Home, Users, Folder, DollarSign, ClipboardCheck } from 'lucide-react';
+import {
+  Home,
+  // Users, Folder,
+  DollarSign,
+  ClipboardCheck,
+} from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
@@ -14,7 +19,10 @@ export const ErrorBoundary = () => {
 const AdminRoot = () => {
   const navigation = [
     { name: 'Dashboard', to: paths.admin.dashboard.getHref(), icon: Home },
-    { name: 'Users', to: paths.admin.users.getHref(), icon: Users },
+    /**
+     * TODO: Refactor or remove this component if no longer needed.
+     */
+    // { name: 'Users', to: paths.admin.users.getHref(), icon: Users },
     {
       name: 'Project Approvals',
       to: paths.admin.projectApprovals.getHref(),
