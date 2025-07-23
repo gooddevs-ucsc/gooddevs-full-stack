@@ -32,11 +32,11 @@ export interface ProfileData {
 const DeveloperProfilePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [profileData, setProfileData] = useState<ProfileData>({
-    name: 'Samuel Winskey',
+    name: 'Vihan Perera',
     age: 29,
     title: 'Senior Frontend Developer',
     bio: 'Passionate about crafting intuitive and performant user interfaces. Experienced in React, TypeScript, and modern web development practices.',
-    email: 'samuelwinskey@gmail.com',
+    email: 'vihan@gmail.com',
     phone: '+94 77 123 4567',
     location: 'Colombo, Sri Lanka',
     profilePhoto: '/profile.png',
