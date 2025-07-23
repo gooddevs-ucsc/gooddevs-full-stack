@@ -131,7 +131,9 @@ export const ProjectDescriptionTab = ({
               />
               <div className="flex-1">
                 <div className="mb-2 flex items-center gap-3">
-                  <h4 className="font-semibold text-slate-900">Alex Kumar</h4>
+                  <h4 className="font-semibold text-slate-900">
+                    Ravindra Fernando
+                  </h4>
                   <span className="rounded-full bg-indigo-200 px-2 py-1 text-xs font-medium text-indigo-800">
                     Project Lead
                   </span>
@@ -170,7 +172,9 @@ export const ProjectDescriptionTab = ({
               />
               <div className="flex-1">
                 <div className="mb-2 flex items-center gap-3">
-                  <h4 className="font-semibold text-slate-900">Sarah Patel</h4>
+                  <h4 className="font-semibold text-slate-900">
+                    Aksha Kumarasooriya
+                  </h4>
                   <span className="rounded-full bg-emerald-200 px-2 py-1 text-xs font-medium text-emerald-800">
                     Frontend Developer
                   </span>
@@ -210,7 +214,7 @@ export const ProjectDescriptionTab = ({
               <div className="flex-1">
                 <div className="mb-2 flex items-center gap-3">
                   <h4 className="font-semibold text-slate-900">
-                    Mike Rodriguez
+                    Mahesh Withanage
                   </h4>
                   <span className="rounded-full bg-purple-200 px-2 py-1 text-xs font-medium text-purple-800">
                     Backend Developer
@@ -985,7 +989,7 @@ export const ProjectDescriptionTab = ({
         </div>
 
         {/* Timeline & Commitment - Moved to Sidebar */}
-        <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-orange-50 to-red-50 p-6 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-orange-50 to-yellow-50 p-6 shadow-sm">
           <div className="mb-4 flex items-center gap-3">
             <div className="rounded-full bg-gradient-to-r from-orange-500 to-red-500 p-2">
               <Calendar className="size-5 text-white" />
