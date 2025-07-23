@@ -122,6 +122,10 @@ export const paths = {
       path: 'projects/create',
       getHref: () => '/requester/projects/create',
     },
+    sponsorships: {
+      path: 'sponsorships',
+      getHref: () => '/requester/sponsorships',
+    },
     profile: {
       path: 'profile',
       getHref: () => '/requester/profile',
