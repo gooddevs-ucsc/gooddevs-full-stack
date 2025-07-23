@@ -697,43 +697,192 @@ export const ProjectDescriptionTab = ({
           </div>
         </div>
 
-        {/* Open Positions */}
+        {/* Team Formation & Open Positions */}
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-lg font-semibold text-slate-900">
-            Open Positions
+            Team Formation & Open Positions
           </h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between rounded bg-blue-50 px-3 py-2">
-              <span className="text-sm font-medium text-blue-900">
-                UI/UX Designer
-              </span>
-              <span className="rounded-full bg-blue-200 px-2 py-1 text-xs font-bold text-blue-800">
-                2
-              </span>
+          <div className="space-y-4">
+            {/* Project Lead - Assigned */}
+            <div className="rounded-lg bg-gradient-to-r from-indigo-50 to-indigo-100 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-indigo-600">
+                    <Users className="size-4 text-white" />
+                  </div>
+                  <span className="font-medium text-indigo-900">
+                    Project Lead
+                  </span>
+                </div>
+                <span className="rounded-full bg-green-500 px-3 py-1 text-xs font-bold text-white">
+                  ✓ Assigned
+                </span>
+              </div>
+              <div className="flex items-center">
+                <div className="flex size-6 items-center justify-center rounded-full bg-indigo-500">
+                  <span className="text-[10px] font-bold text-white">1</span>
+                </div>
+                <div className="ml-2 h-2 flex-1 rounded-full bg-green-200">
+                  <div className="h-2 w-full rounded-full bg-green-500"></div>
+                </div>
+                <span className="ml-2 text-xs text-indigo-700">1/1 filled</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between rounded bg-green-50 px-3 py-2">
-              <span className="text-sm font-medium text-green-900">
-                Frontend Dev
-              </span>
-              <span className="rounded-full bg-green-200 px-2 py-1 text-xs font-bold text-green-800">
-                3
-              </span>
+
+            {/* Frontend Developer - Partially Assigned */}
+            <div className="rounded-lg bg-gradient-to-r from-emerald-50 to-emerald-100 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-emerald-600">
+                    <Code className="size-4 text-white" />
+                  </div>
+                  <span className="font-medium text-emerald-900">
+                    Frontend Dev
+                  </span>
+                </div>
+                <span className="rounded-full bg-yellow-500 px-3 py-1 text-xs font-bold text-white">
+                  2 more needed
+                </span>
+              </div>
+              <div className="flex items-center">
+                <div className="flex space-x-1">
+                  <div className="flex size-6 items-center justify-center rounded-full bg-emerald-500">
+                    <span className="text-[10px] font-bold text-white">1</span>
+                  </div>
+                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-dashed border-emerald-300 bg-emerald-50">
+                    <span className="text-[10px] font-bold text-emerald-400">
+                      ?
+                    </span>
+                  </div>
+                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-dashed border-emerald-300 bg-emerald-50">
+                    <span className="text-[10px] font-bold text-emerald-400">
+                      ?
+                    </span>
+                  </div>
+                </div>
+                <div className="ml-3 h-2 flex-1 rounded-full bg-emerald-200">
+                  <div className="h-2 w-1/3 rounded-full bg-emerald-500"></div>
+                </div>
+                <span className="ml-2 text-xs text-emerald-700">
+                  1/3 filled
+                </span>
+              </div>
             </div>
-            <div className="flex items-center justify-between rounded bg-purple-50 px-3 py-2">
-              <span className="text-sm font-medium text-purple-900">
-                Backend Dev
-              </span>
-              <span className="rounded-full bg-purple-200 px-2 py-1 text-xs font-bold text-purple-800">
-                2
-              </span>
+
+            {/* Backend Developer - Partially Assigned */}
+            <div className="rounded-lg bg-gradient-to-r from-purple-50 to-purple-100 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-purple-600">
+                    <GitBranch className="size-4 text-white" />
+                  </div>
+                  <span className="font-medium text-purple-900">
+                    Backend Dev
+                  </span>
+                </div>
+                <span className="rounded-full bg-yellow-500 px-3 py-1 text-xs font-bold text-white">
+                  1 more needed
+                </span>
+              </div>
+              <div className="flex items-center">
+                <div className="flex space-x-1">
+                  <div className="flex size-6 items-center justify-center rounded-full bg-purple-500">
+                    <span className="text-[10px] font-bold text-white">1</span>
+                  </div>
+                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-dashed border-purple-300 bg-purple-50">
+                    <span className="text-[10px] font-bold text-purple-400">
+                      ?
+                    </span>
+                  </div>
+                </div>
+                <div className="ml-3 h-2 flex-1 rounded-full bg-purple-200">
+                  <div className="h-2 w-1/2 rounded-full bg-purple-500"></div>
+                </div>
+                <span className="ml-2 text-xs text-purple-700">1/2 filled</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between rounded bg-orange-50 px-3 py-2">
-              <span className="text-sm font-medium text-orange-900">
-                Full-Stack Dev
-              </span>
-              <span className="rounded-full bg-orange-200 px-2 py-1 text-xs font-bold text-orange-800">
-                1
-              </span>
+
+            {/* UI/UX Designer - Open */}
+            <div className="rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-blue-600">
+                    <Target className="size-4 text-white" />
+                  </div>
+                  <span className="font-medium text-blue-900">
+                    UI/UX Designer
+                  </span>
+                </div>
+                <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
+                  2 open spots
+                </span>
+              </div>
+              <div className="flex items-center">
+                <div className="flex space-x-1">
+                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-dashed border-blue-300 bg-blue-50">
+                    <span className="text-[10px] font-bold text-blue-400">
+                      ?
+                    </span>
+                  </div>
+                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-dashed border-blue-300 bg-blue-50">
+                    <span className="text-[10px] font-bold text-blue-400">
+                      ?
+                    </span>
+                  </div>
+                </div>
+                <div className="ml-3 h-2 flex-1 rounded-full bg-blue-200">
+                  <div className="h-2 w-0 rounded-full bg-blue-500"></div>
+                </div>
+                <span className="ml-2 text-xs text-blue-700">0/2 filled</span>
+              </div>
+            </div>
+
+            {/* Full-Stack Developer - Open */}
+            <div className="rounded-lg bg-gradient-to-r from-orange-50 to-orange-100 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-orange-600">
+                    <Zap className="size-4 text-white" />
+                  </div>
+                  <span className="font-medium text-orange-900">
+                    Full-Stack Dev
+                  </span>
+                </div>
+                <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
+                  1 open spot
+                </span>
+              </div>
+              <div className="flex items-center">
+                <div className="flex space-x-1">
+                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-dashed border-orange-300 bg-orange-50">
+                    <span className="text-[10px] font-bold text-orange-400">
+                      ?
+                    </span>
+                  </div>
+                </div>
+                <div className="ml-3 h-2 flex-1 rounded-full bg-orange-200">
+                  <div className="h-2 w-0 rounded-full bg-orange-500"></div>
+                </div>
+                <span className="ml-2 text-xs text-orange-700">0/1 filled</span>
+              </div>
+            </div>
+
+            {/* Team Progress Summary */}
+            <div className="mt-6 rounded-lg bg-gradient-to-r from-slate-50 to-slate-100 p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-900">
+                  Overall Team Progress
+                </span>
+                <span className="text-xs text-slate-600">
+                  3/9 positions filled
+                </span>
+              </div>
+              <div className="h-3 rounded-full bg-slate-200">
+                <div className="h-3 w-1/3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"></div>
+              </div>
+              <div className="mt-2 text-center text-xs text-slate-600">
+                🎯 Ready to welcome 6 more talented developers!
+              </div>
             </div>
           </div>
         </div>
@@ -790,7 +939,7 @@ export const ProjectDescriptionTab = ({
         </div>
 
         {/* Recent Activity */}
-        <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-violet-50 to-purple-100 p-6 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-lg font-semibold text-slate-900">
             Recent Updates
           </h3>
@@ -868,7 +1017,7 @@ export const ProjectDescriptionTab = ({
         </div>
 
         {/* Navigation */}
-        <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-sky-50 to-blue-100 p-6 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <Button
             variant="outline"
             className="w-full"
