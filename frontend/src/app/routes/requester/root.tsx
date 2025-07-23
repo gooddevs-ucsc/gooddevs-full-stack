@@ -1,4 +1,4 @@
-import { ArrowLeft, Folder, Home, Settings } from 'lucide-react';
+import { ArrowLeft, Folder, Home, Settings, User } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
@@ -20,6 +20,7 @@ const RequesterRoot = () => {
   const defaultNavigation = [
     { name: 'Dashboard', to: paths.requester.dashboard.getHref(), icon: Home },
     { name: 'Projects', to: paths.requester.projects.getHref(), icon: Folder },
+    { name: 'Profile', to: paths.requester.profile.getHref(), icon: User },
     {
       name: 'Settings',
       to: paths.requester.settings.getHref(),
