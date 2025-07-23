@@ -10,6 +10,8 @@ import {
   Eye,
   Plus,
 } from 'lucide-react';
+import { useNavigate } from 'react-router';
+import { paths } from '@/config/paths';
 
 import { ContentLayout } from '@/components/layouts';
 import { Button } from '@/components/ui/button';
@@ -17,6 +19,7 @@ import { useUser } from '@/lib/auth';
 
 const RequestorDashboardRoute = () => {
   const user = useUser();
+  const navigate = useNavigate();
 
   const stats = [
     {
@@ -202,6 +205,9 @@ const RequestorDashboardRoute = () => {
                     variant="outline"
                     size="sm"
                     className="w-full justify-start border-primary/20 text-primary h-10"
+                    onClick={() =>
+                      navigate(paths.requester.createProject.getHref())
+                    }
                   >
                     <div className="flex items-center gap-6">
                       <Plus className="size-4" />
@@ -212,6 +218,7 @@ const RequestorDashboardRoute = () => {
                     variant="outline"
                     size="sm"
                     className="w-full justify-start h-10"
+                    onClick={() => navigate(paths.requester.projects.getHref())}
                   >
                     <div className="flex items-center gap-6">
                       <Eye className="size-4" />
