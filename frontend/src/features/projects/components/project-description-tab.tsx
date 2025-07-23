@@ -124,9 +124,11 @@ export const ProjectDescriptionTab = ({
           <div className="space-y-4">
             {/* Project Lead */}
             <div className="flex items-start gap-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
-              <div className="flex size-12 items-center justify-center rounded-full bg-indigo-600 font-bold text-white">
-                AK
-              </div>
+              <img
+                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face&auto=format"
+                alt="Alex Kumar"
+                className="size-12 rounded-full object-cover"
+              />
               <div className="flex-1">
                 <div className="mb-2 flex items-center gap-3">
                   <h4 className="font-semibold text-slate-900">Alex Kumar</h4>
@@ -138,7 +140,7 @@ export const ProjectDescriptionTab = ({
                   Full-stack developer with 5+ years experience leading
                   nonprofit tech projects
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="mb-3 flex flex-wrap gap-2">
                   <span className="rounded bg-indigo-200 px-2 py-1 text-xs text-indigo-800">
                     Leadership
                   </span>
@@ -149,18 +151,27 @@ export const ProjectDescriptionTab = ({
                     Node.js
                   </span>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  View Profile
+                </Button>
               </div>
             </div>
 
             {/* Developer 1 */}
-            <div className="flex items-start gap-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <div className="flex size-12 items-center justify-center rounded-full bg-blue-600 font-bold text-white">
-                SP
-              </div>
+            <div className="flex items-start gap-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+              <img
+                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face&auto=format"
+                alt="Sarah Patel"
+                className="size-12 rounded-full object-cover"
+              />
               <div className="flex-1">
                 <div className="mb-2 flex items-center gap-3">
                   <h4 className="font-semibold text-slate-900">Sarah Patel</h4>
-                  <span className="rounded-full bg-blue-200 px-2 py-1 text-xs font-medium text-blue-800">
+                  <span className="rounded-full bg-emerald-200 px-2 py-1 text-xs font-medium text-emerald-800">
                     Frontend Developer
                   </span>
                 </div>
@@ -168,31 +179,40 @@ export const ProjectDescriptionTab = ({
                   UI/UX focused developer passionate about creating accessible
                   and beautiful interfaces
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded bg-blue-200 px-2 py-1 text-xs text-blue-800">
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <span className="rounded bg-emerald-200 px-2 py-1 text-xs text-emerald-800">
                     React
                   </span>
-                  <span className="rounded bg-blue-200 px-2 py-1 text-xs text-blue-800">
+                  <span className="rounded bg-emerald-200 px-2 py-1 text-xs text-emerald-800">
                     TypeScript
                   </span>
-                  <span className="rounded bg-blue-200 px-2 py-1 text-xs text-blue-800">
+                  <span className="rounded bg-emerald-200 px-2 py-1 text-xs text-emerald-800">
                     Design
                   </span>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  View Profile
+                </Button>
               </div>
             </div>
 
             {/* Developer 2 */}
-            <div className="flex items-start gap-4 rounded-lg border border-green-200 bg-green-50 p-4">
-              <div className="flex size-12 items-center justify-center rounded-full bg-green-600 font-bold text-white">
-                MR
-              </div>
+            <div className="flex items-start gap-4 rounded-lg border border-purple-200 bg-purple-50 p-4">
+              <img
+                src="https://images.unsplash.com/photo-1556157382-97eda2d62296?w=150&h=150&fit=crop&crop=face&auto=format"
+                alt="Mike Rodriguez"
+                className="size-12 rounded-full object-cover"
+              />
               <div className="flex-1">
                 <div className="mb-2 flex items-center gap-3">
                   <h4 className="font-semibold text-slate-900">
                     Mike Rodriguez
                   </h4>
-                  <span className="rounded-full bg-green-200 px-2 py-1 text-xs font-medium text-green-800">
+                  <span className="rounded-full bg-purple-200 px-2 py-1 text-xs font-medium text-purple-800">
                     Backend Developer
                   </span>
                 </div>
@@ -200,17 +220,24 @@ export const ProjectDescriptionTab = ({
                   Database and API specialist with expertise in scalable backend
                   architecture
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded bg-green-200 px-2 py-1 text-xs text-green-800">
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <span className="rounded bg-purple-200 px-2 py-1 text-xs text-purple-800">
                     Python
                   </span>
-                  <span className="rounded bg-green-200 px-2 py-1 text-xs text-green-800">
+                  <span className="rounded bg-purple-200 px-2 py-1 text-xs text-purple-800">
                     FastAPI
                   </span>
-                  <span className="rounded bg-green-200 px-2 py-1 text-xs text-green-800">
+                  <span className="rounded bg-purple-200 px-2 py-1 text-xs text-purple-800">
                     PostgreSQL
                   </span>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  View Profile
+                </Button>
               </div>
             </div>
           </div>
