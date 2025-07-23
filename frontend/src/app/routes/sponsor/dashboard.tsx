@@ -1,18 +1,4 @@
-import {
-  DollarSign,
-  Heart,
-  TrendingUp,
-  Activity,
-  Users,
-  Award,
-  BarChart3,
-  Target,
-  Zap,
-  Eye,
-  Search,
-  Star,
-  Shield,
-} from 'lucide-react';
+import { DollarSign, Heart, TrendingUp, Activity, Users } from 'lucide-react';
 
 import { ContentLayout } from '@/components/layouts';
 import { useUser } from '@/lib/auth';
@@ -28,34 +14,34 @@ const SponsorDashboardRoute = () => {
       icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
-      description: 'Platform & project donations',
+      description: 'Platform & volunteer donations',
     },
     {
-      title: 'Projects Sponsored',
+      title: 'Volunteers Sponsored',
       value: '12',
       change: '+15%',
-      icon: Heart,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
-      description: 'Approved projects supported',
-    },
-    {
-      title: 'Developers Sponsored',
-      value: '8',
-      change: '+25%',
       icon: Users,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
-      description: 'Individual developer support',
+      description: 'Individual volunteers supported',
     },
     {
-      title: 'Impact Score',
-      value: '94%',
-      change: '+8%',
+      title: 'Platform Donations',
+      value: '$8,500',
+      change: '+18%',
       icon: TrendingUp,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
-      description: 'Community impact rating',
+      description: 'Platform infrastructure support',
+    },
+    {
+      title: 'Total Sponsor Amount',
+      value: '$16,250',
+      change: '+22%',
+      icon: Heart,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      description: 'Total spent on volunteer sponsorships',
     },
   ];
 
@@ -69,105 +55,31 @@ const SponsorDashboardRoute = () => {
       badge: 'Platform Support',
     },
     {
-      title: 'Project Sponsorship',
-      description: 'Sponsored "Healthcare Management System" project',
-      time: '1 day ago',
-      type: 'project',
-      amount: '$750',
-      badge: 'Project Sponsor',
-    },
-    {
-      title: 'Developer Sponsorship',
+      title: 'Volunteer Sponsor - Sarah Chen',
       description:
-        'Monthly sponsorship for Senior Frontend Developer - Sarah Chen',
+        'Monthly sponsorship payment for Frontend Volunteer specializing in React & TypeScript',
       time: '3 days ago',
-      type: 'developer',
+      type: 'volunteer',
       amount: '$300/month',
-      badge: 'Developer Sponsor',
+      badge: 'Frontend Volunteer',
     },
     {
-      title: 'Category Sponsorship',
-      description: 'Sponsored all "Education Technology" category projects',
-      time: '5 days ago',
-      type: 'category',
-      amount: '$2,000',
-      badge: 'Category Sponsor',
-    },
-    {
-      title: 'Impact Report Received',
-      description: 'Quarterly transparency report on donation utilization',
+      title: 'Volunteer Sponsor - John Smith',
+      description:
+        'Monthly sponsorship payment for Backend Volunteer specializing in Python & FastAPI',
       time: '1 week ago',
-      type: 'report',
-      badge: 'Transparency',
-    },
-  ];
-
-  const sponsoredProjects = [
-    {
-      name: 'Healthcare Management System',
-      progress: 75,
-      totalFunding: '$4,500',
-      yourContribution: '$1,200',
-      status: 'In Progress',
-      developers: 6,
-      category: 'Healthcare',
-      bgClass: 'bg-gradient-to-r from-green-50 to-green-100/50',
-      textClass: 'text-green-600',
-      progressClass: 'bg-green-200',
-      barClass: 'bg-green-600',
+      type: 'volunteer',
+      amount: '$250/month',
+      badge: 'Backend Volunteer',
     },
     {
-      name: 'Education Platform',
-      progress: 100,
-      totalFunding: '$3,800',
-      yourContribution: '$800',
-      status: 'Completed',
-      developers: 4,
-      category: 'Education',
-      bgClass: 'bg-gradient-to-r from-blue-50 to-blue-100/50',
-      textClass: 'text-blue-600',
-      progressClass: 'bg-blue-200',
-      barClass: 'bg-blue-600',
-    },
-    {
-      name: 'Community Food Bank App',
-      progress: 85,
-      totalFunding: '$2,900',
-      yourContribution: '$750',
-      status: 'In Progress',
-      developers: 3,
-      category: 'Social Impact',
-      bgClass: 'bg-gradient-to-r from-purple-50 to-purple-100/50',
-      textClass: 'text-purple-600',
-      progressClass: 'bg-purple-200',
-      barClass: 'bg-purple-600',
-    },
-  ];
-
-  const impactMetrics = [
-    {
-      label: 'Lives Impacted',
-      value: '1,250+',
-      icon: Heart,
-      description: 'Through sponsored applications',
-    },
-    {
-      label: 'Developers Trained',
-      value: '42',
-      icon: Users,
-      description: 'Gained real-world experience',
-    },
-    {
-      label: 'Open Source Contributions',
-      value: '156',
-      icon: Award,
-      description: 'Pull requests merged',
-    },
-    {
-      label: 'Project Success Rate',
-      value: '94%',
-      icon: Target,
-      description: 'Projects completed successfully',
+      title: 'Volunteer Sponsor - Maria Garcia',
+      description:
+        'Completed sponsorship program for Full-Stack Volunteer specializing in React & Node.js',
+      time: '2 weeks ago',
+      type: 'volunteer',
+      amount: '$1,200 total',
+      badge: 'Full-Stack Volunteer',
     },
   ];
 
@@ -189,7 +101,7 @@ const SponsorDashboardRoute = () => {
             </span>
           </p>
           <p className="mt-4 text-slate-600">
-            Thank you for supporting developers and creating positive impact
+            Thank you for supporting volunteers and creating positive impact
             through technology.
           </p>
         </div>
@@ -221,75 +133,121 @@ const SponsorDashboardRoute = () => {
 
         {/* Content Grid */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {/* Sponsored Projects Progress */}
+          {/* Sponsored Volunteers */}
           <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
             <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
-              <BarChart3 className="size-5 text-green-600" />
-              Sponsored Projects Progress
+              <div className="rounded-full bg-blue-100 p-2">
+                <Users className="size-5 text-blue-600" />
+              </div>
+              Sponsored Volunteers
             </h2>
             <div className="space-y-4">
-              {sponsoredProjects.map((project, index) => (
-                <div
-                  key={index}
-                  className={`rounded-lg p-4 ${project.bgClass}`}
-                >
+              <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 via-blue-100/50 to-indigo-100/30 p-5 transition-all hover:scale-[1.02] hover:shadow-lg">
+                <div className="absolute -right-6 -top-6 size-20 rounded-full bg-blue-200/30"></div>
+                <div className="relative">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-slate-900">
-                        {project.name}
-                      </h3>
-                      <div className="mt-1 text-xs text-slate-500">
-                        Category: {project.category}
-                      </div>
-                      <div className="mt-2 grid grid-cols-2 gap-4 text-sm text-slate-600">
-                        <div>
-                          <span className="font-medium">
-                            Your contribution:
-                          </span>
-                          <br />
-                          <span
-                            className={`font-semibold ${project.textClass}`}
-                          >
-                            {project.yourContribution}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="font-medium">Developers:</span>
-                          <br />
-                          <span className="font-semibold">
-                            {project.developers}
-                          </span>
-                        </div>
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900">
+                          Sarah Chen
+                        </h3>
+                        <p className="text-sm font-medium text-blue-700">
+                          Frontend Volunteer
+                        </p>
                       </div>
                     </div>
-                    <span
-                      className={`rounded-full px-2 py-1 text-xs font-medium ${
-                        project.status === 'Completed'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}
-                    >
-                      {project.status}
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-blue-600">
+                        $300
+                      </div>
+                      <div className="text-xs text-slate-500">per month</div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+                      React
+                    </span>
+                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+                      TypeScript
+                    </span>
+                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+                      UI/UX
                     </span>
                   </div>
-                  <div className="mt-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600">Progress</span>
-                      <span className={`font-semibold ${project.textClass}`}>
-                        {project.progress}%
-                      </span>
+                </div>
+              </div>
+
+              <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 via-green-100/50 to-teal-100/30 p-5 transition-all hover:scale-[1.02] hover:shadow-lg">
+                <div className="absolute -right-6 -top-6 size-20 rounded-full bg-green-200/30"></div>
+                <div className="relative">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900">
+                          John Smith
+                        </h3>
+                        <p className="text-sm font-medium text-green-700">
+                          Backend Volunteer
+                        </p>
+                      </div>
                     </div>
-                    <div
-                      className={`mt-2 h-2 w-full rounded-full ${project.progressClass}`}
-                    >
-                      <div
-                        className={`h-full rounded-full ${project.barClass}`}
-                        style={{ width: `${project.progress}%` }}
-                      ></div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-green-600">
+                        $250
+                      </div>
+                      <div className="text-xs text-slate-500">per month</div>
                     </div>
                   </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
+                      Python
+                    </span>
+                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
+                      FastAPI
+                    </span>
+                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
+                      PostgreSQL
+                    </span>
+                  </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-50 via-violet-100/50 to-indigo-100/30 p-5 transition-all hover:scale-[1.02] hover:shadow-lg">
+                <div className="absolute -right-6 -top-6 size-20 rounded-full bg-purple-200/30"></div>
+                <div className="relative">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900">
+                          Maria Garcia
+                        </h3>
+                        <p className="text-sm font-medium text-purple-700">
+                          Full-Stack Volunteer
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-purple-600">
+                        $1,200
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        total sponsored
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800">
+                      React
+                    </span>
+                    <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800">
+                      Node.js
+                    </span>
+                    <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800">
+                      MongoDB
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -309,13 +267,9 @@ const SponsorDashboardRoute = () => {
                     className={`mt-1 size-2 rounded-full ${
                       activity.type === 'platform'
                         ? 'bg-green-500'
-                        : activity.type === 'project'
+                        : activity.type === 'volunteer'
                           ? 'bg-blue-500'
-                          : activity.type === 'developer'
-                            ? 'bg-purple-500'
-                            : activity.type === 'category'
-                              ? 'bg-orange-500'
-                              : 'bg-slate-500'
+                          : 'bg-slate-500'
                     }`}
                   ></div>
                   <div className="flex-1">
@@ -343,49 +297,20 @@ const SponsorDashboardRoute = () => {
           </div>
         </div>
 
-        {/* Impact Metrics */}
-        <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-          <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
-            <Zap className="size-5 text-purple-600" />
-            Your Impact Summary
-          </h2>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {impactMetrics.map((metric, index) => (
-              <div
-                key={index}
-                className="rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/50 p-6 text-center"
-              >
-                <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-purple-100">
-                  <metric.icon className="size-6 text-purple-600" />
-                </div>
-                <div className="text-2xl font-bold text-slate-900">
-                  {metric.value}
-                </div>
-                <div className="text-sm font-medium text-slate-900">
-                  {metric.label}
-                </div>
-                <div className="mt-1 text-xs text-slate-600">
-                  {metric.description}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Enhanced Quick Actions for Sponsor Management */}
+        {/* Volunteer Sponsorship Actions */}
         <div className="rounded-xl border border-slate-200/60 bg-gradient-to-r from-green-50 to-blue-50 p-6 shadow-sm">
           <h2 className="mb-4 text-xl font-semibold text-slate-900">
-            Sponsor Actions & Management
+            Volunteer Sponsorship Actions
           </h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <button className="flex items-center gap-3 rounded-lg bg-white p-4 shadow-sm transition-all hover:shadow-md">
-              <Search className="size-6 text-blue-600" />
+              <Users className="size-6 text-blue-600" />
               <div className="text-left">
                 <div className="font-medium text-slate-900">
-                  Browse Projects
+                  Browse Volunteers
                 </div>
                 <div className="text-sm text-slate-600">
-                  View approved projects
+                  Find volunteers to sponsor
                 </div>
               </div>
             </button>
@@ -393,102 +318,13 @@ const SponsorDashboardRoute = () => {
               <DollarSign className="size-6 text-green-600" />
               <div className="text-left">
                 <div className="font-medium text-slate-900">
-                  Make a Donation
+                  Platform Donation
                 </div>
                 <div className="text-sm text-slate-600">
-                  Support platform or project
+                  Support platform operations
                 </div>
               </div>
             </button>
-            <button className="flex items-center gap-3 rounded-lg bg-white p-4 shadow-sm transition-all hover:shadow-md">
-              <Users className="size-6 text-purple-600" />
-              <div className="text-left">
-                <div className="font-medium text-slate-900">
-                  Sponsor Developer
-                </div>
-                <div className="text-sm text-slate-600">
-                  Support individual developers
-                </div>
-              </div>
-            </button>
-            <button className="flex items-center gap-3 rounded-lg bg-white p-4 shadow-sm transition-all hover:shadow-md">
-              <BarChart3 className="size-6 text-orange-600" />
-              <div className="text-left">
-                <div className="font-medium text-slate-900">Track Impact</div>
-                <div className="text-sm text-slate-600">
-                  View donation tracking
-                </div>
-              </div>
-            </button>
-          </div>
-
-          {/* Category Sponsorship Options */}
-          <div className="mt-6">
-            <h3 className="mb-3 text-lg font-medium text-slate-900">
-              Category Sponsorship
-            </h3>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <button className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-center transition-colors hover:bg-blue-100">
-                <div className="text-sm font-medium text-blue-900">
-                  Healthcare
-                </div>
-                <div className="text-xs text-blue-700">4 projects</div>
-              </button>
-              <button className="rounded-lg border border-green-200 bg-green-50 p-3 text-center transition-colors hover:bg-green-100">
-                <div className="text-sm font-medium text-green-900">
-                  Education
-                </div>
-                <div className="text-xs text-green-700">6 projects</div>
-              </button>
-              <button className="rounded-lg border border-purple-200 bg-purple-50 p-3 text-center transition-colors hover:bg-purple-100">
-                <div className="text-sm font-medium text-purple-900">
-                  Social Impact
-                </div>
-                <div className="text-xs text-purple-700">3 projects</div>
-              </button>
-              <button className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-center transition-colors hover:bg-orange-100">
-                <div className="text-sm font-medium text-orange-900">
-                  Environment
-                </div>
-                <div className="text-xs text-orange-700">2 projects</div>
-              </button>
-            </div>
-          </div>
-
-          {/* Sponsor Recognition Options */}
-          <div className="mt-6">
-            <h3 className="mb-3 text-lg font-medium text-slate-900">
-              Recognition Preferences
-            </h3>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <div className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="flex items-center gap-2">
-                  <Shield className="size-5 text-blue-600" />
-                  <span className="font-medium text-slate-900">Anonymous</span>
-                </div>
-                <div className="mt-1 text-sm text-slate-600">
-                  Keep contributions private
-                </div>
-              </div>
-              <div className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="flex items-center gap-2">
-                  <Eye className="size-5 text-green-600" />
-                  <span className="font-medium text-slate-900">Public</span>
-                </div>
-                <div className="mt-1 text-sm text-slate-600">
-                  Show name on projects
-                </div>
-              </div>
-              <div className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="flex items-center gap-2">
-                  <Star className="size-5 text-yellow-600" />
-                  <span className="font-medium text-slate-900">Featured</span>
-                </div>
-                <div className="mt-1 text-sm text-slate-600">
-                  Highlight major contributions
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
