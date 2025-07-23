@@ -76,7 +76,7 @@ export const SponsorshipCard: FC<SponsorshipCardProps> = ({ sponsorship }) => {
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-blue-600">
-              ${sponsorship.amount.toLocaleString()}
+              Rs.{sponsorship.amount.toLocaleString()}
             </div>
             <div className="text-sm text-slate-500">{sponsorship.currency}</div>
           </div>
