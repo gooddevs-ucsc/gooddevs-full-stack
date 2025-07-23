@@ -54,25 +54,25 @@ const DashboardRoute = () => {
       title: 'New Pull Request',
       description: 'Added feature for real-time collaboration',
       time: '1 hour ago',
-      user: 'Alice Johnson',
+      user: 'Januli Nanayakkara',
     },
     {
       title: 'Issue Resolved',
       description: 'Fixed bug in authentication flow',
       time: '3 hours ago',
-      user: 'Bob Smith',
+      user: 'Chathuri Nadeesha',
     },
     {
       title: 'Code Review Completed',
       description: 'Reviewed PR #42 for performance improvements',
       time: '5 hours ago',
-      user: 'Charlie Brown',
+      user: 'Peshani Ranaweera',
     },
     {
       title: 'New Repository Starred',
       description: 'Starred "Open Source Dashboard"',
       time: '7 hours ago',
-      user: 'Diana Prince',
+      user: 'Hashini Sewmini',
     },
   ];
 
