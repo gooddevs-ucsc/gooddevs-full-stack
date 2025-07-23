@@ -102,6 +102,25 @@ const ProjectsRoute = () => {
     },
   ];
 
+  const acceptedProjects: BaseProject[] = [
+    {
+      id: 1,
+      title: 'Remote Work Platform',
+      description: 'Facilitate remote team collaboration.',
+      icon: TrendingUp,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+    },
+    {
+      id: 2,
+      title: 'Food Delivery App',
+      description: 'Streamline food ordering and delivery.',
+      icon: Code,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+    },
+  ];
+
   const workspaceProjects: WorkspaceProject[] = [
     {
       id: 1,
@@ -150,6 +169,25 @@ const ProjectsRoute = () => {
     },
   ];
 
+  const completedProjects: BaseProject[] = [
+    {
+      id: 1,
+      title: 'E-Commerce Platform',
+      description: 'Facilitate online shopping and transactions.',
+      icon: TrendingUp,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+    },
+    {
+      id: 2,
+      title: 'Online Learning Portal',
+      description: 'Facilitate online learning and course management.',
+      icon: Code,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+    },
+  ];
+
   const tabs = [
     {
       id: 'available',
@@ -158,9 +196,19 @@ const ProjectsRoute = () => {
     },
     { id: 'applied', label: 'Applied Projects', count: appliedProjects.length },
     {
+      id: 'accepted',
+      label: 'Accepted Projects',
+      count: acceptedProjects.length,
+    },
+    {
       id: 'workspace',
-      label: 'Project Workspace',
+      label: 'Active Projects',
       count: workspaceProjects.length,
+    },
+    {
+      id: 'completed',
+      label: 'Completed Projects',
+      count: completedProjects.length,
     },
   ];
 
@@ -173,8 +221,14 @@ const ProjectsRoute = () => {
       case 'applied':
         projects = appliedProjects;
         break;
+      case 'accepted':
+        projects = acceptedProjects;
+        break;
       case 'workspace':
         projects = workspaceProjects;
+        break;
+      case 'completed':
+        projects = completedProjects;
         break;
       default:
         projects = [];

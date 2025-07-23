@@ -84,7 +84,7 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const logout = useLogout({
-    onSuccess: () => navigate(paths.auth.login.getHref(location.pathname)),
+    onSuccess: () => navigate(paths.auth.login.getHref()),
   });
 
   return (

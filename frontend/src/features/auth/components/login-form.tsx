@@ -7,11 +7,13 @@ import { useLogin, loginInputSchema } from '@/lib/auth';
 
 type LoginFormProps = {
   onSuccess: () => void;
+  onError?: (error: unknown) => void;
 };
 
-export const LoginForm = ({ onSuccess }: LoginFormProps) => {
+export const LoginForm = ({ onSuccess, onError }: LoginFormProps) => {
   const login = useLogin({
     onSuccess,
+    onError,
   });
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get('redirectTo');

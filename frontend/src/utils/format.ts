@@ -16,3 +16,12 @@ export const formatEstimatedTimeline = (timeline: EstimatedTimeline) => {
 export const formatProjectType = (projectType: ProjectType) => {
   return PROJECT_TYPE_LABELS[projectType] || projectType;
 };
+
+export const formatDateOnly = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};

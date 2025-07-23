@@ -1,26 +1,25 @@
 import {
   ArrowLeft,
-  Clock,
-  Users,
   Calendar,
-  Tag,
-  ChevronRight,
-  Heart,
-  Share2,
-  MessageCircle,
-  FileText,
   CheckCircle,
+  ChevronRight,
+  FileText,
+  Heart,
+  MessageCircle,
+  Share2,
+  Tag,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useProject } from '@/features/projects/api/get-project';
+import { TasksTab } from '@/features/tasks/components/tasks-tab';
 import { PROJECT_TYPE_STYLES } from '@/lib/constants/ui';
 import { ProjectType } from '@/types/api';
-import { formatDate, formatEstimatedTimeline } from '@/utils/format';
+import { formatDate } from '@/utils/format';
 
 import { ProjectDescriptionTab } from './project-description-tab';
 import { ProjectThread } from './project-thread';
@@ -180,182 +179,7 @@ export const ProjectDetail = () => {
 
           {/* Tasks & Requirements Tab */}
           <TabsContent value="tasks" className="space-y-8">
-            {/* Project Information */}
-            <div className="rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm">
-              <h2 className="mb-6 text-2xl font-semibold text-slate-900">
-                Project Information
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-blue-100">
-                    <Users className="size-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-slate-900">Team Size</p>
-                    <p className="text-sm text-slate-600">
-                      Looking for 2-4 developers
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-green-100">
-                    <Clock className="size-4 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-slate-900">Duration</p>
-                    <p className="text-sm text-slate-600">
-                      {project.estimated_timeline
-                        ? formatEstimatedTimeline(project.estimated_timeline)
-                        : 'TBD'}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-purple-100">
-                    <Tag className="size-4 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-slate-900">Status</p>
-                    <p className="text-sm text-slate-600">
-                      {project.status.charAt(0).toUpperCase() +
-                        project.status.slice(1).toLowerCase()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Requirements & Skills */}
-            <div className="rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm">
-              <h2 className="mb-6 text-2xl font-semibold text-slate-900">
-                Requirements & Skills
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="mr-3 mt-1 size-2 rounded-full bg-green-500"></div>
-                  <p className="text-slate-700">
-                    Strong understanding of web development fundamentals
-                  </p>
-                </div>
-                <div className="flex items-start">
-                  <div className="mr-3 mt-1 size-2 rounded-full bg-green-500"></div>
-                  <p className="text-slate-700">
-                    Experience with modern JavaScript frameworks
-                  </p>
-                </div>
-                <div className="flex items-start">
-                  <div className="mr-3 mt-1 size-2 rounded-full bg-green-500"></div>
-                  <p className="text-slate-700">
-                    Passion for learning and contributing to open source
-                  </p>
-                </div>
-                <div className="flex items-start">
-                  <div className="mr-3 mt-1 size-2 rounded-full bg-amber-500"></div>
-                  <p className="text-slate-700">
-                    Version control experience (Git) - preferred
-                  </p>
-                </div>
-                {project.preferred_technologies && (
-                  <div className="mt-6">
-                    <h3 className="mb-2 font-medium text-slate-900">
-                      Tech Stack
-                    </h3>
-                    <p className="text-slate-700">
-                      {project.preferred_technologies}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Task Breakdown */}
-            <div className="rounded-xl border border-slate-200/60 bg-white p-8 shadow-sm">
-              <h2 className="mb-6 text-2xl font-semibold text-slate-900">
-                Proposed Task Breakdown
-              </h2>
-              <div className="space-y-6">
-                {/* Phase 1 */}
-                <div className="border-l-4 border-blue-500 pl-6">
-                  <h3 className="mb-3 text-lg font-semibold text-slate-900">
-                    Phase 1: Planning & Setup
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <div className="size-2 rounded-full bg-blue-500"></div>
-                      <span className="text-slate-700">
-                        Project architecture planning
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="size-2 rounded-full bg-blue-500"></div>
-                      <span className="text-slate-700">
-                        Development environment setup
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="size-2 rounded-full bg-blue-500"></div>
-                      <span className="text-slate-700">
-                        Team communication channels
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Phase 2 */}
-                <div className="border-l-4 border-green-500 pl-6">
-                  <h3 className="mb-3 text-lg font-semibold text-slate-900">
-                    Phase 2: Core Development
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <div className="size-2 rounded-full bg-green-500"></div>
-                      <span className="text-slate-700">
-                        Backend API development
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="size-2 rounded-full bg-green-500"></div>
-                      <span className="text-slate-700">
-                        Frontend user interface
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="size-2 rounded-full bg-green-500"></div>
-                      <span className="text-slate-700">
-                        Database design & implementation
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Phase 3 */}
-                <div className="border-l-4 border-purple-500 pl-6">
-                  <h3 className="mb-3 text-lg font-semibold text-slate-900">
-                    Phase 3: Testing & Deployment
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <div className="size-2 rounded-full bg-purple-500"></div>
-                      <span className="text-slate-700">
-                        Unit and integration testing
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="size-2 rounded-full bg-purple-500"></div>
-                      <span className="text-slate-700">
-                        User acceptance testing
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="size-2 rounded-full bg-purple-500"></div>
-                      <span className="text-slate-700">
-                        Production deployment
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <TasksTab projectId={id!} />
           </TabsContent>
 
           {/* Discussion Tab */}
