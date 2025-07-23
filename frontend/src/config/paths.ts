@@ -99,6 +99,10 @@ export const paths = {
       path: 'donations-sponsorships',
       getHref: () => '/sponsor/donations-sponsorships',
     },
+    settings: {
+      path: 'settings',
+      getHref: () => '/sponsor/settings',
+    },
   },
 
   requester: {
