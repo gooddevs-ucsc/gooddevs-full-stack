@@ -6,7 +6,7 @@ const SponsorProfilePage = () => {
     name: 'Rayan Alwis',
     email: 'rayanalwis@gmail.com',
     organization: 'GoodDevs Foundation',
-    phone: '+1 555 123 4567',
+    phone: '071 123 4567',
     location: 'Galle, Sri Lanka',
     profilePhoto: '/sponsor-profile.jpg',
     bio: 'Committed to supporting impactful projects and making a difference in the community.',
