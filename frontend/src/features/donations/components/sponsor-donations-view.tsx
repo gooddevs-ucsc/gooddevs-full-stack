@@ -16,7 +16,7 @@ const mockSponsorDonations = [
     donorName: 'Current Sponsor',
     donorEmail: 'sponsor@example.com',
     amount: 500,
-    currency: 'USD',
+    currency: 'LKR',
     message: 'Supporting the developer community',
     createdAt: '2024-01-15T10:30:00Z',
     status: 'completed' as const,
@@ -27,7 +27,7 @@ const mockSponsorDonations = [
     donorName: 'Current Sponsor',
     donorEmail: 'sponsor@example.com',
     amount: 250,
-    currency: 'USD',
+    currency: 'LKR',
     message: 'Keep up the great work!',
     createdAt: '2024-01-10T14:20:00Z',
     status: 'completed' as const,
@@ -41,7 +41,7 @@ const mockSponsorSponsorships = [
     sponsorName: 'Current Sponsor',
     sponsorEmail: 'sponsor@example.com',
     amount: 2000,
-    currency: 'USD',
+    currency: 'LKR',
     projectId: null,
     projectName: null,
     volunteerId: 'vol-1',
@@ -56,7 +56,7 @@ const mockSponsorSponsorships = [
     sponsorName: 'Current Sponsor',
     sponsorEmail: 'sponsor@example.com',
     amount: 1500,
-    currency: 'USD',
+    currency: 'LKR',
     projectId: null,
     projectName: null,
     volunteerId: 'vol-2',
@@ -151,7 +151,7 @@ export const SponsorDonationsView = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              ${totalDonations.toLocaleString()}
+              Rs.{totalDonations.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
               {mockSponsorDonations.length} donations made
@@ -168,7 +168,7 @@ export const SponsorDonationsView = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              ${totalSponsorships.toLocaleString()}
+              Rs.{totalSponsorships.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
               {activeSponsorships} active sponsorships
@@ -185,7 +185,7 @@ export const SponsorDonationsView = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
-              ${(totalDonations + totalSponsorships).toLocaleString()}
+              Rs.{(totalDonations + totalSponsorships).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">Overall impact</p>
           </CardContent>

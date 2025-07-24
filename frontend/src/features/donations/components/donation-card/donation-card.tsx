@@ -43,7 +43,6 @@ export const DonationCard: FC<DonationCardProps> = ({ donation }) => {
     <div className="group relative overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all duration-300 hover:border-green-300 hover:shadow-xl hover:shadow-green-200/20 hover:ring-green-200">
       <div className="absolute inset-0 bg-gradient-to-br from-green-50/30 to-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
       <div className="relative p-6">
-        
         <div className="mb-4 flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-full bg-green-100">
@@ -60,7 +59,7 @@ export const DonationCard: FC<DonationCardProps> = ({ donation }) => {
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-green-600">
-              ${donation.amount.toLocaleString()}
+              Rs.{donation.amount.toLocaleString()}
             </div>
             <div className="text-sm text-slate-500">{donation.currency}</div>
           </div>
@@ -82,7 +81,9 @@ export const DonationCard: FC<DonationCardProps> = ({ donation }) => {
               <DollarSign className="size-3 text-purple-600" />
             </div>
             <span className="font-medium">Method:</span>
-            <span className="ml-2 text-slate-700">{donation.paymentMethod}</span>
+            <span className="ml-2 text-slate-700">
+              {donation.paymentMethod}
+            </span>
           </div>
 
           <div className="flex items-center text-sm text-slate-500">
@@ -90,13 +91,17 @@ export const DonationCard: FC<DonationCardProps> = ({ donation }) => {
               <Calendar className="size-3 text-emerald-600" />
             </div>
             <span className="font-medium">Date:</span>
-            <span className="ml-2 text-slate-700">{formatDate(donation.createdAt)}</span>
+            <span className="ml-2 text-slate-700">
+              {formatDate(donation.createdAt)}
+            </span>
           </div>
         </div>
 
         {donation.message && (
           <div className="rounded-lg bg-slate-50 border-l-4 border-green-500 p-3">
-            <p className="text-sm text-slate-700 italic">"{donation.message}"</p>
+            <p className="text-sm text-slate-700 italic">
+              "{donation.message}"
+            </p>
           </div>
         )}
       </div>
