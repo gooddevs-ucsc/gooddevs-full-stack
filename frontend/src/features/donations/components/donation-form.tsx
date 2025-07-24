@@ -18,9 +18,14 @@ const Label = ({ ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
 );
 
 // Same simple Select components as above
-const Select = ({ value, onValueChange, children, placeholder }: { 
-  value: string; 
-  onValueChange: (value: string) => void; 
+const Select = ({
+  value,
+  onValueChange,
+  children,
+  placeholder,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
   children: React.ReactNode;
   placeholder?: string;
 }) => (
@@ -29,17 +34,28 @@ const Select = ({ value, onValueChange, children, placeholder }: {
     onChange={(e) => onValueChange(e.target.value)}
     className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
   >
-    {placeholder && <option value="" disabled>{placeholder}</option>}
+    {placeholder && (
+      <option value="" disabled>
+        {placeholder}
+      </option>
+    )}
     {children}
   </select>
 );
 
-const SelectItem = ({ value, children }: { value: string; children: React.ReactNode }) => (
-  <option value={value}>{children}</option>
-);
+const SelectItem = ({
+  value,
+  children,
+}: {
+  value: string;
+  children: React.ReactNode;
+}) => <option value={value}>{children}</option>;
 
 // Simple Textarea component
-const Textarea = ({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+const Textarea = ({
+  className,
+  ...props
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
   <textarea
     className="flex min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
     {...props}
@@ -55,19 +71,19 @@ export const DonationForm = ({ onSuccess, onCancel }: DonationFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     amount: '',
-    currency: 'USD',
+    currency: 'LKR',
     message: '',
     paymentMethod: '',
     donorName: '',
-    donorEmail: ''
+    donorEmail: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       console.log('Donation submitted:', formData);
       onSuccess?.();
     } catch (error) {
@@ -78,7 +94,7 @@ export const DonationForm = ({ onSuccess, onCancel }: DonationFormProps) => {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -108,7 +124,9 @@ export const DonationForm = ({ onSuccess, onCancel }: DonationFormProps) => {
                 id="donorEmail"
                 type="email"
                 value={formData.donorEmail}
-                onChange={(e) => handleInputChange('donorEmail', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange('donorEmail', e.target.value)
+                }
                 placeholder="your@email.com"
                 required
               />
@@ -130,7 +148,11 @@ export const DonationForm = ({ onSuccess, onCancel }: DonationFormProps) => {
             </div>
             <div>
               <Label htmlFor="currency">Currency</Label>
-              <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
+              <Select
+                value={formData.currency}
+                onValueChange={(value) => handleInputChange('currency', value)}
+              >
+                <SelectItem value="LKR">LKR</SelectItem>
                 <SelectItem value="USD">USD</SelectItem>
                 <SelectItem value="EUR">EUR</SelectItem>
                 <SelectItem value="GBP">GBP</SelectItem>
@@ -140,9 +162,11 @@ export const DonationForm = ({ onSuccess, onCancel }: DonationFormProps) => {
 
           <div>
             <Label htmlFor="paymentMethod">Payment Method</Label>
-            <Select 
-              value={formData.paymentMethod} 
-              onValueChange={(value) => handleInputChange('paymentMethod', value)}
+            <Select
+              value={formData.paymentMethod}
+              onValueChange={(value) =>
+                handleInputChange('paymentMethod', value)
+              }
               placeholder="Select payment method"
             >
               <SelectItem value="credit-card">Credit Card</SelectItem>
