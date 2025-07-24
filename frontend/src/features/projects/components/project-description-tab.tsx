@@ -111,6 +111,142 @@ export const ProjectDescriptionTab = ({
           </div>
         </div>
 
+        {/* Current Team Members */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="rounded-full bg-indigo-100 p-2">
+              <Users className="size-5 text-indigo-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              Current Team Members
+            </h2>
+          </div>
+          <div className="space-y-4">
+            {/* Project Lead */}
+            <div className="flex items-start gap-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
+              <img
+                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face&auto=format"
+                alt="Alex Kumar"
+                className="size-12 rounded-full object-cover"
+              />
+              <div className="flex-1">
+                <div className="mb-2 flex items-center gap-3">
+                  <h4 className="font-semibold text-slate-900">
+                    Ravindra Fernando
+                  </h4>
+                  <span className="rounded-full bg-indigo-200 px-2 py-1 text-xs font-medium text-indigo-800">
+                    Project Lead
+                  </span>
+                </div>
+                <p className="mb-3 text-sm text-slate-600">
+                  Full-stack developer with 5+ years experience leading
+                  nonprofit tech projects
+                </p>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <span className="rounded bg-indigo-200 px-2 py-1 text-xs text-indigo-800">
+                    Leadership
+                  </span>
+                  <span className="rounded bg-indigo-200 px-2 py-1 text-xs text-indigo-800">
+                    React
+                  </span>
+                  <span className="rounded bg-indigo-200 px-2 py-1 text-xs text-indigo-800">
+                    Node.js
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  View Profile
+                </Button>
+              </div>
+            </div>
+
+            {/* Developer 1 */}
+            <div className="flex items-start gap-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+              <img
+                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face&auto=format"
+                alt="Sarah Patel"
+                className="size-12 rounded-full object-cover"
+              />
+              <div className="flex-1">
+                <div className="mb-2 flex items-center gap-3">
+                  <h4 className="font-semibold text-slate-900">
+                    Aksha Kumarasooriya
+                  </h4>
+                  <span className="rounded-full bg-emerald-200 px-2 py-1 text-xs font-medium text-emerald-800">
+                    Frontend Developer
+                  </span>
+                </div>
+                <p className="mb-3 text-sm text-slate-600">
+                  UI/UX focused developer passionate about creating accessible
+                  and beautiful interfaces
+                </p>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <span className="rounded bg-emerald-200 px-2 py-1 text-xs text-emerald-800">
+                    React
+                  </span>
+                  <span className="rounded bg-emerald-200 px-2 py-1 text-xs text-emerald-800">
+                    TypeScript
+                  </span>
+                  <span className="rounded bg-emerald-200 px-2 py-1 text-xs text-emerald-800">
+                    Design
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  View Profile
+                </Button>
+              </div>
+            </div>
+
+            {/* Developer 2 */}
+            <div className="flex items-start gap-4 rounded-lg border border-purple-200 bg-purple-50 p-4">
+              <img
+                src="https://images.unsplash.com/photo-1556157382-97eda2d62296?w=150&h=150&fit=crop&crop=face&auto=format"
+                alt="Mike Rodriguez"
+                className="size-12 rounded-full object-cover"
+              />
+              <div className="flex-1">
+                <div className="mb-2 flex items-center gap-3">
+                  <h4 className="font-semibold text-slate-900">
+                    Mahesh Withanage
+                  </h4>
+                  <span className="rounded-full bg-purple-200 px-2 py-1 text-xs font-medium text-purple-800">
+                    Backend Developer
+                  </span>
+                </div>
+                <p className="mb-3 text-sm text-slate-600">
+                  Database and API specialist with expertise in scalable backend
+                  architecture
+                </p>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <span className="rounded bg-purple-200 px-2 py-1 text-xs text-purple-800">
+                    Python
+                  </span>
+                  <span className="rounded bg-purple-200 px-2 py-1 text-xs text-purple-800">
+                    FastAPI
+                  </span>
+                  <span className="rounded bg-purple-200 px-2 py-1 text-xs text-purple-800">
+                    PostgreSQL
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  View Profile
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Project Goals & Impact */}
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center gap-3">
@@ -457,38 +593,6 @@ export const ProjectDescriptionTab = ({
             </div>
           </div>
         </div>
-
-        {/* Project Timeline & Commitment */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-full bg-orange-100 p-2">
-              <Calendar className="size-5 text-orange-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-slate-900">
-              Timeline & Commitment
-            </h2>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="text-center">
-              <div className="mb-2 text-2xl font-bold text-blue-600">
-                {project.estimated_timeline
-                  ? formatEstimatedTimeline(project.estimated_timeline)
-                  : '12-16 weeks'}
-              </div>
-              <div className="text-sm text-slate-600">Project Duration</div>
-            </div>
-            <div className="text-center">
-              <div className="mb-2 text-2xl font-bold text-green-600">5-10</div>
-              <div className="text-sm text-slate-600">Hours per week</div>
-            </div>
-            <div className="text-center">
-              <div className="mb-2 text-2xl font-bold text-purple-600">
-                Remote
-              </div>
-              <div className="text-sm text-slate-600">Work Style</div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Sidebar */}
@@ -597,88 +701,191 @@ export const ProjectDescriptionTab = ({
           </div>
         </div>
 
-        {/* Team & Progress */}
+        {/* Team Formation & Open Positions */}
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-lg font-semibold text-slate-900">
-            Team & Open Positions
+            Team Formation & Open Positions
           </h3>
           <div className="space-y-4">
-            {/* Current Team */}
-            <div>
-              <h4 className="mb-2 text-sm font-medium text-slate-700">
-                Current Team
-              </h4>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="text-center">
-                  <div className="mb-1 text-lg font-bold text-blue-600">1</div>
-                  <div className="text-xs text-slate-600">Project Lead</div>
+            {/* Project Lead - Assigned */}
+            <div className="rounded-lg bg-gradient-to-r from-indigo-50 to-indigo-100 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-indigo-600">
+                    <Users className="size-4 text-white" />
+                  </div>
+                  <span className="font-medium text-indigo-900">
+                    Project Lead
+                  </span>
                 </div>
-                <div className="text-center">
-                  <div className="mb-1 text-lg font-bold text-green-600">2</div>
-                  <div className="text-xs text-slate-600">Developers</div>
+                <span className="rounded-full bg-green-500 px-3 py-1 text-xs font-bold text-white">
+                  ✓ Assigned
+                </span>
+              </div>
+              <div className="flex items-center">
+                <div className="flex size-6 items-center justify-center rounded-full bg-indigo-500">
+                  <span className="text-[10px] font-bold text-white">1</span>
                 </div>
+                <div className="ml-2 h-2 flex-1 rounded-full bg-green-200">
+                  <div className="h-2 w-full rounded-full bg-green-500"></div>
+                </div>
+                <span className="ml-2 text-xs text-indigo-700">1/1 filled</span>
               </div>
             </div>
 
-            {/* Open Positions */}
-            <div>
-              <h4 className="mb-2 text-sm font-medium text-slate-700">
-                Positions Needed
-              </h4>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between rounded bg-blue-50 px-3 py-2">
-                  <span className="text-sm font-medium text-blue-900">
-                    UI/UX Designer
-                  </span>
-                  <span className="rounded-full bg-blue-200 px-2 py-1 text-xs font-bold text-blue-800">
-                    2
-                  </span>
-                </div>
-                <div className="flex items-center justify-between rounded bg-green-50 px-3 py-2">
-                  <span className="text-sm font-medium text-green-900">
+            {/* Frontend Developer - Partially Assigned */}
+            <div className="rounded-lg bg-gradient-to-r from-emerald-50 to-emerald-100 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-emerald-600">
+                    <Code className="size-4 text-white" />
+                  </div>
+                  <span className="font-medium text-emerald-900">
                     Frontend Dev
                   </span>
-                  <span className="rounded-full bg-green-200 px-2 py-1 text-xs font-bold text-green-800">
-                    3
-                  </span>
                 </div>
-                <div className="flex items-center justify-between rounded bg-purple-50 px-3 py-2">
-                  <span className="text-sm font-medium text-purple-900">
-                    Backend Dev
-                  </span>
-                  <span className="rounded-full bg-purple-200 px-2 py-1 text-xs font-bold text-purple-800">
-                    2
-                  </span>
+                <span className="rounded-full bg-yellow-500 px-3 py-1 text-xs font-bold text-white">
+                  2 more needed
+                </span>
+              </div>
+              <div className="flex items-center">
+                <div className="flex space-x-1">
+                  <div className="flex size-6 items-center justify-center rounded-full bg-emerald-500">
+                    <span className="text-[10px] font-bold text-white">1</span>
+                  </div>
+                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-dashed border-emerald-300 bg-emerald-50">
+                    <span className="text-[10px] font-bold text-emerald-400">
+                      ?
+                    </span>
+                  </div>
+                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-dashed border-emerald-300 bg-emerald-50">
+                    <span className="text-[10px] font-bold text-emerald-400">
+                      ?
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between rounded bg-orange-50 px-3 py-2">
-                  <span className="text-sm font-medium text-orange-900">
-                    Full-Stack Dev
-                  </span>
-                  <span className="rounded-full bg-orange-200 px-2 py-1 text-xs font-bold text-orange-800">
-                    1
-                  </span>
+                <div className="ml-3 h-2 flex-1 rounded-full bg-emerald-200">
+                  <div className="h-2 w-1/3 rounded-full bg-emerald-500"></div>
                 </div>
+                <span className="ml-2 text-xs text-emerald-700">
+                  1/3 filled
+                </span>
               </div>
             </div>
 
-            {/* Progress Stats */}
-            <div>
-              <h4 className="mb-2 text-sm font-medium text-slate-700">
-                Project Progress
-              </h4>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="text-center">
-                  <div className="mb-1 text-lg font-bold text-emerald-600">
-                    25%
+            {/* Backend Developer - Partially Assigned */}
+            <div className="rounded-lg bg-gradient-to-r from-purple-50 to-purple-100 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-purple-600">
+                    <GitBranch className="size-4 text-white" />
                   </div>
-                  <div className="text-xs text-slate-600">Complete</div>
+                  <span className="font-medium text-purple-900">
+                    Backend Dev
+                  </span>
                 </div>
-                <div className="text-center">
-                  <div className="mb-1 text-lg font-bold text-amber-600">
-                    18
+                <span className="rounded-full bg-yellow-500 px-3 py-1 text-xs font-bold text-white">
+                  1 more needed
+                </span>
+              </div>
+              <div className="flex items-center">
+                <div className="flex space-x-1">
+                  <div className="flex size-6 items-center justify-center rounded-full bg-purple-500">
+                    <span className="text-[10px] font-bold text-white">1</span>
                   </div>
-                  <div className="text-xs text-slate-600">Applications</div>
+                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-dashed border-purple-300 bg-purple-50">
+                    <span className="text-[10px] font-bold text-purple-400">
+                      ?
+                    </span>
+                  </div>
                 </div>
+                <div className="ml-3 h-2 flex-1 rounded-full bg-purple-200">
+                  <div className="h-2 w-1/2 rounded-full bg-purple-500"></div>
+                </div>
+                <span className="ml-2 text-xs text-purple-700">1/2 filled</span>
+              </div>
+            </div>
+
+            {/* UI/UX Designer - Open */}
+            <div className="rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-blue-600">
+                    <Target className="size-4 text-white" />
+                  </div>
+                  <span className="font-medium text-blue-900">
+                    UI/UX Designer
+                  </span>
+                </div>
+                <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
+                  2 open spots
+                </span>
+              </div>
+              <div className="flex items-center">
+                <div className="flex space-x-1">
+                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-dashed border-blue-300 bg-blue-50">
+                    <span className="text-[10px] font-bold text-blue-400">
+                      ?
+                    </span>
+                  </div>
+                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-dashed border-blue-300 bg-blue-50">
+                    <span className="text-[10px] font-bold text-blue-400">
+                      ?
+                    </span>
+                  </div>
+                </div>
+                <div className="ml-3 h-2 flex-1 rounded-full bg-blue-200">
+                  <div className="h-2 w-0 rounded-full bg-blue-500"></div>
+                </div>
+                <span className="ml-2 text-xs text-blue-700">0/2 filled</span>
+              </div>
+            </div>
+
+            {/* Full-Stack Developer - Open */}
+            <div className="rounded-lg bg-gradient-to-r from-orange-50 to-orange-100 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-orange-600">
+                    <Zap className="size-4 text-white" />
+                  </div>
+                  <span className="font-medium text-orange-900">
+                    Full-Stack Dev
+                  </span>
+                </div>
+                <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
+                  1 open spot
+                </span>
+              </div>
+              <div className="flex items-center">
+                <div className="flex space-x-1">
+                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-dashed border-orange-300 bg-orange-50">
+                    <span className="text-[10px] font-bold text-orange-400">
+                      ?
+                    </span>
+                  </div>
+                </div>
+                <div className="ml-3 h-2 flex-1 rounded-full bg-orange-200">
+                  <div className="h-2 w-0 rounded-full bg-orange-500"></div>
+                </div>
+                <span className="ml-2 text-xs text-orange-700">0/1 filled</span>
+              </div>
+            </div>
+
+            {/* Team Progress Summary */}
+            <div className="mt-6 rounded-lg bg-gradient-to-r from-slate-50 to-slate-100 p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-900">
+                  Overall Team Progress
+                </span>
+                <span className="text-xs text-slate-600">
+                  3/9 positions filled
+                </span>
+              </div>
+              <div className="h-3 rounded-full bg-slate-200">
+                <div className="h-3 w-1/3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"></div>
+              </div>
+              <div className="mt-2 text-center text-xs text-slate-600">
+                🎯 Ready to welcome 6 more talented developers!
               </div>
             </div>
           </div>
@@ -777,6 +984,38 @@ export const ProjectDescriptionTab = ({
                   Project mentor available
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Timeline & Commitment - Moved to Sidebar */}
+        <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-orange-50 to-yellow-50 p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-full bg-gradient-to-r from-orange-500 to-red-500 p-2">
+              <Calendar className="size-5 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              Timeline & Commitment
+            </h3>
+          </div>
+          <div className="space-y-4">
+            <div className="rounded-lg bg-white p-4 text-center shadow-sm">
+              <div className="mb-2 text-2xl font-bold text-blue-600">
+                {project.estimated_timeline
+                  ? formatEstimatedTimeline(project.estimated_timeline)
+                  : '12-16 weeks'}
+              </div>
+              <div className="text-sm text-slate-600">Project Duration</div>
+            </div>
+            <div className="rounded-lg bg-white p-4 text-center shadow-sm">
+              <div className="mb-2 text-2xl font-bold text-green-600">5-10</div>
+              <div className="text-sm text-slate-600">Hours per week</div>
+            </div>
+            <div className="rounded-lg bg-white p-4 text-center shadow-sm">
+              <div className="mb-2 text-2xl font-bold text-purple-600">
+                Remote
+              </div>
+              <div className="text-sm text-slate-600">Work Style</div>
             </div>
           </div>
         </div>
