@@ -1,4 +1,4 @@
-import { Home, DollarSign } from 'lucide-react';
+import { Home, DollarSign, Settings, User } from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
@@ -18,6 +18,16 @@ const SponsorRoot = () => {
       name: 'My Donations & Sponsorships',
       to: paths.sponsor.donationsSponshorships.getHref(),
       icon: DollarSign,
+    },
+    {
+      name: 'Profile',
+      to: paths.sponsor.profile.getHref(),
+      icon: User,
+    },
+    {
+      name: 'Settings',
+      to: paths.sponsor.settings.getHref(),
+      icon: Settings,
     },
   ] as SideNavigationItem[];
 
