@@ -9,13 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DonationForm } from './donation-form';
 import { SponsorshipForm } from './sponsorship-form';
 
-// Mock data for current sponsor (filtered by sponsor email)
+// Mock data for Current Sponsor (filtered by sponsor email)
 const mockSponsorDonations = [
   {
     id: '1',
-    donorName: 'Current Sponsor',
+    donorName: 'Rayan Alwis',
     donorEmail: 'sponsor@example.com',
-    amount: 500,
+    amount: 50000,
     currency: 'LKR',
     message: 'Supporting the developer community',
     createdAt: '2024-01-15T10:30:00Z',
@@ -24,9 +24,9 @@ const mockSponsorDonations = [
   },
   {
     id: '2',
-    donorName: 'Current Sponsor',
+    donorName: 'Rayan Alwis',
     donorEmail: 'sponsor@example.com',
-    amount: 250,
+    amount: 25000,
     currency: 'LKR',
     message: 'Keep up the great work!',
     createdAt: '2024-01-10T14:20:00Z',
@@ -38,9 +38,9 @@ const mockSponsorDonations = [
 const mockSponsorSponsorships = [
   {
     id: '1',
-    sponsorName: 'Current Sponsor',
+    sponsorName: 'Rayan Alwis',
     sponsorEmail: 'sponsor@example.com',
-    amount: 2000,
+    amount: 200000,
     currency: 'LKR',
     projectId: null,
     projectName: null,
@@ -53,9 +53,9 @@ const mockSponsorSponsorships = [
   },
   {
     id: '2',
-    sponsorName: 'Current Sponsor',
+    sponsorName: 'Rayan Alwis',
     sponsorEmail: 'sponsor@example.com',
-    amount: 1500,
+    amount: 150000,
     currency: 'LKR',
     projectId: null,
     projectName: null,

@@ -9,7 +9,7 @@ const SponsorDashboardRoute = () => {
   const stats = [
     {
       title: 'Total Contributions',
-      value: '$24,750',
+      value: 'Rs.425,000',
       change: '+32%',
       icon: DollarSign,
       color: 'text-green-600',
@@ -27,7 +27,7 @@ const SponsorDashboardRoute = () => {
     },
     {
       title: 'Platform Donations',
-      value: '$8,500',
+      value: 'Rs.75,000',
       change: '+18%',
       icon: TrendingUp,
       color: 'text-purple-600',
@@ -36,7 +36,7 @@ const SponsorDashboardRoute = () => {
     },
     {
       title: 'Total Sponsor Amount',
-      value: '$16,250',
+      value: 'Rs.350,000',
       change: '+22%',
       icon: Heart,
       color: 'text-red-600',
@@ -51,34 +51,34 @@ const SponsorDashboardRoute = () => {
       description: 'General platform support for infrastructure & operations',
       time: '2 hours ago',
       type: 'platform',
-      amount: '$1,000',
+      amount: 'Rs.10,000',
       badge: 'Platform Support',
     },
     {
-      title: 'Volunteer Sponsor - Sarah Chen',
+      title: 'Volunteer Sponsor - Saman Fonseka',
       description:
         'Monthly sponsorship payment for Frontend Volunteer specializing in React & TypeScript',
       time: '3 days ago',
       type: 'volunteer',
-      amount: '$300/month',
+      amount: 'Rs.3,000/month',
       badge: 'Frontend Volunteer',
     },
     {
-      title: 'Volunteer Sponsor - John Smith',
+      title: 'Volunteer Sponsor - Jayath Indunil',
       description:
         'Monthly sponsorship payment for Backend Volunteer specializing in Python & FastAPI',
       time: '1 week ago',
       type: 'volunteer',
-      amount: '$250/month',
+      amount: 'Rs.2,500/month',
       badge: 'Backend Volunteer',
     },
     {
-      title: 'Volunteer Sponsor - Maria Garcia',
+      title: 'Volunteer Sponsor - Malindu Pathum',
       description:
         'Completed sponsorship program for Full-Stack Volunteer specializing in React & Node.js',
       time: '2 weeks ago',
       type: 'volunteer',
-      amount: '$1,200 total',
+      amount: 'Rs.12,000 total',
       badge: 'Full-Stack Volunteer',
     },
   ];
@@ -149,7 +149,7 @@ const SponsorDashboardRoute = () => {
                     <div className="flex items-center gap-3">
                       <div>
                         <h3 className="text-lg font-bold text-slate-900">
-                          Sarah Chen
+                          Saman Fonseka
                         </h3>
                         <p className="text-sm font-medium text-blue-700">
                           Frontend Volunteer
@@ -158,7 +158,7 @@ const SponsorDashboardRoute = () => {
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold text-blue-600">
-                        $300
+                        Rs.3,000
                       </div>
                       <div className="text-xs text-slate-500">per month</div>
                     </div>
@@ -184,7 +184,7 @@ const SponsorDashboardRoute = () => {
                     <div className="flex items-center gap-3">
                       <div>
                         <h3 className="text-lg font-bold text-slate-900">
-                          John Smith
+                          Jayath Indunil
                         </h3>
                         <p className="text-sm font-medium text-green-700">
                           Backend Volunteer
@@ -193,7 +193,7 @@ const SponsorDashboardRoute = () => {
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold text-green-600">
-                        $250
+                        Rs.2,500
                       </div>
                       <div className="text-xs text-slate-500">per month</div>
                     </div>
@@ -219,7 +219,7 @@ const SponsorDashboardRoute = () => {
                     <div className="flex items-center gap-3">
                       <div>
                         <h3 className="text-lg font-bold text-slate-900">
-                          Maria Garcia
+                          Malindu Pathum
                         </h3>
                         <p className="text-sm font-medium text-purple-700">
                           Full-Stack Volunteer
@@ -228,7 +228,7 @@ const SponsorDashboardRoute = () => {
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold text-purple-600">
-                        $1,200
+                        Rs.12,000
                       </div>
                       <div className="text-xs text-slate-500">
                         total sponsored
