@@ -1,8 +1,12 @@
 import { FC } from 'react';
+import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
+import { paths } from '@/config/paths';
 
 export const HeroSection: FC = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="relative bg-white px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-32">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5"></div>
@@ -26,6 +30,7 @@ export const HeroSection: FC = () => {
           <Button
             size="lg"
             className="w-full whitespace-nowrap bg-primary px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:scale-105 hover:bg-primary/90 hover:shadow-xl sm:w-auto"
+            onClick={() => navigate('/projects')}
           >
             Browse Projects
           </Button>

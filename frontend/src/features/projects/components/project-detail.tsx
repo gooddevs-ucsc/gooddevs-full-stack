@@ -94,18 +94,6 @@ export const ProjectDetail = () => {
 
   return (
     <>
-      {/* Back Button */}
-      <div className="mb-8">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/projects')}
-          className="-ml-2 mb-4 text-slate-600 hover:text-slate-900"
-        >
-          <ArrowLeft className="mr-2 size-4" />
-          Back to Projects
-        </Button>
-      </div>
-
       {/* Breadcrumb */}
       <nav className="mb-8 flex items-center space-x-2 text-sm text-slate-600">
         <button
