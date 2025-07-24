@@ -1,5 +1,5 @@
 import { ContentLayout } from '@/components/layouts';
-import { DeveloperSponsorshipsView } from '@/features/donations/components/developer-sponsorships-view';
+import { RequesterDonationsView } from '@/features/donations/components/requester-sponsorships-view';
 
 export const clientLoader = () => async () => {
   return {};
@@ -8,7 +8,7 @@ export const clientLoader = () => async () => {
 const RequesterSponsorshipsRoute = () => {
   return (
     <ContentLayout title="My Sponsorships">
-      <DeveloperSponsorshipsView />
+      <RequesterDonationsView />
     </ContentLayout>
   );
 };

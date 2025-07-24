@@ -8,14 +8,6 @@ const DashboardRoute = () => {
 
   const stats = [
     {
-      title: 'Total Projects',
-      value: '20',
-      change: '+15%',
-      icon: GitBranch,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-    },
-    {
       title: 'Applied Projects',
       value: '3',
       change: '+5%',
@@ -41,7 +33,7 @@ const DashboardRoute = () => {
     },
     {
       title: 'Projects Contributed',
-      value: '12',
+      value: '2',
       change: '+2%',
       icon: Code,
       color: 'text-green-600',
@@ -146,15 +138,7 @@ const DashboardRoute = () => {
               {recentActivities.map((activity, index) => (
                 <div
                   key={index}
-                  className={`flex items-start gap-4 rounded-lg p-3 transition-colors hover:bg-slate-50 ${
-                    activity.title.includes('Pull Request')
-                      ? 'bg-blue-50'
-                      : activity.title.includes('Issue Resolved')
-                        ? 'bg-green-50'
-                        : activity.title.includes('Code Review')
-                          ? 'bg-yellow-50'
-                          : 'bg-gray-50'
-                  }`}
+                  className="flex items-start gap-4 rounded-lg p-3 transition-colors hover:bg-gray-100"
                 >
                   <div className="mt-1 size-2 rounded-full bg-primary"></div>
                   <div className="flex-1">
@@ -276,11 +260,7 @@ const DashboardRoute = () => {
               {acceptedProjects.map((project, index) => (
                 <div
                   key={index}
-                  className={`flex items-start gap-4 rounded-lg p-3 transition-colors ${
-                    project.title === 'Food Delivery App'
-                      ? 'bg-blue-100'
-                      : 'bg-green-100'
-                  }`}
+                  className="flex items-start gap-4 rounded-lg p-3 transition-colors hover:bg-gray-100"
                 >
                   <div className="flex-1">
                     <h4 className="font-medium text-slate-900">
