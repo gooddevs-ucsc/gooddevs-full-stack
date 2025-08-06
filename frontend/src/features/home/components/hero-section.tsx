@@ -8,8 +8,11 @@ export const HeroSection: FC = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative bg-white px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-32">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5"></div>
+    <section
+      className="relative bg-cover bg-center bg-no-repeat px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-32"
+      style={{ backgroundImage: "url('/img/hero-background.webp')" }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-slate-50/90 backdrop-blur-none" />
       <div className="relative mx-auto max-w-4xl text-center">
         <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary">
           <div className="size-2 animate-pulse rounded-full bg-primary"></div>
