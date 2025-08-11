@@ -60,7 +60,7 @@ export const CommentsList = ({ discussionId }: CommentsListProps) => {
               <div className="flex justify-between">
                 <div>
                   <span className="text-xs font-semibold">
-                    {formatDate(comment.createdAt)}
+                    {formatDate(comment.created_at)}
                   </span>
                   {comment.author && (
                     <span className="text-xs font-bold">

@@ -36,8 +36,8 @@ const ProfileRoute = () => {
         </div>
         <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
           <dl className="sm:divide-y sm:divide-gray-200">
-            <Entry label="First Name" value={user.data.firstName} />
-            <Entry label="Last Name" value={user.data.lastName} />
+            <Entry label="First Name" value={user.data.firstname} />
+            <Entry label="Last Name" value={user.data.lastname} />
             <Entry label="Email Address" value={user.data.email} />
             <Entry label="Role" value={user.data.role} />
             <Entry label="Bio" value={user.data.bio} />

@@ -27,11 +27,11 @@ export const UsersList = () => {
       columns={[
         {
           title: 'First Name',
-          field: 'firstName',
+          field: 'firstname',
         },
         {
           title: 'Last Name',
-          field: 'lastName',
+          field: 'lastname',
         },
         {
           title: 'Email',
@@ -43,9 +43,9 @@ export const UsersList = () => {
         },
         {
           title: 'Created At',
-          field: 'createdAt',
-          Cell({ entry: { createdAt } }) {
-            return <span>{formatDate(createdAt)}</span>;
+          field: 'created_at',
+          Cell({ entry: { created_at } }) {
+            return <span>{formatDate(created_at)}</span>;
           },
         },
         {
