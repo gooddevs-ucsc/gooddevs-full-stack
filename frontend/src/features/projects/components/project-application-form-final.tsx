@@ -1,4 +1,4 @@
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -417,19 +417,9 @@ export default function ProjectApplicationForm({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl font-bold text-slate-900">
-              Apply to Project
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="size-8 p-0 hover:bg-slate-100"
-            >
-              <X className="size-4" />
-            </Button>
-          </div>
+          <DialogTitle className="text-2xl font-bold text-slate-900">
+            Apply to Project
+          </DialogTitle>
 
           {/* Progress bar */}
           <div className="mt-4">
