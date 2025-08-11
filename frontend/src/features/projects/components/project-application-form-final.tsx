@@ -38,6 +38,8 @@ export default function ProjectApplicationForm({
   onClose,
 }: ProjectApplicationFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     firstname: '',
     lastname: '',
@@ -56,35 +58,127 @@ export default function ProjectApplicationForm({
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  // Validation functions
+  const validateStep = (step: number): boolean => {
+    const stepErrors: Partial<FormData> = {};
+
+    switch (step) {
+      case 1:
+        if (!formData.firstname.trim())
+          stepErrors.firstname = 'First name is required';
+        if (!formData.lastname.trim())
+          stepErrors.lastname = 'Last name is required';
+        if (!formData.email.trim()) stepErrors.email = 'Email is required';
+        if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+          stepErrors.email = 'Please enter a valid email';
+        }
+        break;
+      case 2:
+        if (!formData.github.trim())
+          stepErrors.github = 'GitHub profile is required';
+        break;
+      case 3:
+        if (!formData.role) stepErrors.role = 'Please select a role';
+        if (!formData.experience_level)
+          stepErrors.experience_level = 'Please select experience level';
+        if (!formData.availability)
+          stepErrors.availability = 'Please select availability';
+        break;
+      case 4:
+        if (!formData.motivation.trim())
+          stepErrors.motivation = 'Motivation is required';
+        break;
+    }
+
+    // Update only the errors for the current step
+    setErrors((prev) => ({
+      ...prev,
+      ...stepErrors,
+    }));
+
+    return Object.keys(stepErrors).length === 0;
+  };
+
+  const validateAllSteps = (): boolean => {
+    const newErrors: Partial<FormData> = {};
+
+    // Required fields validation
+    if (!formData.firstname.trim())
+      newErrors.firstname = 'First name is required';
+    if (!formData.lastname.trim()) newErrors.lastname = 'Last name is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+    if (!formData.github.trim())
+      newErrors.github = 'GitHub profile is required';
+    if (!formData.role) newErrors.role = 'Please select a role';
+    if (!formData.experience_level)
+      newErrors.experience_level = 'Please select experience level';
+    if (!formData.availability)
+      newErrors.availability = 'Please select availability';
+    if (!formData.motivation.trim())
+      newErrors.motivation = 'Motivation is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleNext = () => {
-    if (currentStep < 4) setCurrentStep(currentStep + 1);
+    if (validateStep(currentStep) && currentStep < 4) {
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   const handlePrevious = () => {
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
-  const handleSubmit = () => {
-    console.log('Application submitted:', formData);
-    onClose();
-    setCurrentStep(1);
-    setFormData({
-      firstname: '',
-      lastname: '',
-      email: '',
-      phone: '',
-      linkedin: '',
-      github: '',
-      portfolio: '',
-      role: '',
-      experience_level: '',
-      motivation: '',
-      relevant_experience: '',
-      availability: '',
-      preferred_technologies: '',
-    });
+  const handleSubmit = async () => {
+    if (!validateAllSteps()) {
+      // Find first step with errors
+      for (let step = 1; step <= 4; step++) {
+        if (!validateStep(step)) {
+          setCurrentStep(step);
+          break;
+        }
+      }
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      console.log('Application submitted:', formData);
+      // TODO: API call will go here
+      onClose();
+      setCurrentStep(1);
+      setFormData({
+        firstname: '',
+        lastname: '',
+        email: '',
+        phone: '',
+        linkedin: '',
+        github: '',
+        portfolio: '',
+        role: '',
+        experience_level: '',
+        motivation: '',
+        relevant_experience: '',
+        availability: '',
+        preferred_technologies: '',
+      });
+      setErrors({});
+    } catch (error) {
+      console.error('Failed to submit application:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderStepContent = () => {
@@ -116,9 +210,18 @@ export default function ProjectApplicationForm({
                     handleInputChange('firstname', e.target.value)
                   }
                   placeholder="Enter your first name"
-                  className="w-full"
+                  className={`w-full ${
+                    errors.firstname
+                      ? 'border-red-500 focus:border-red-500'
+                      : ''
+                  }`}
                   required
                 />
+                {errors.firstname && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.firstname}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -135,9 +238,14 @@ export default function ProjectApplicationForm({
                     handleInputChange('lastname', e.target.value)
                   }
                   placeholder="Enter your last name"
-                  className="w-full"
+                  className={`w-full ${
+                    errors.lastname ? 'border-red-500 focus:border-red-500' : ''
+                  }`}
                   required
                 />
+                {errors.lastname && (
+                  <p className="mt-1 text-sm text-red-600">{errors.lastname}</p>
+                )}
               </div>
             </div>
 
@@ -154,9 +262,14 @@ export default function ProjectApplicationForm({
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="your.email@example.com"
-                className="w-full"
+                className={`w-full ${
+                  errors.email ? 'border-red-500 focus:border-red-500' : ''
+                }`}
                 required
               />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              )}
             </div>
 
             <div>
@@ -218,9 +331,14 @@ export default function ProjectApplicationForm({
                 value={formData.github}
                 onChange={(e) => handleInputChange('github', e.target.value)}
                 placeholder="https://github.com/yourusername"
-                className="w-full"
+                className={`w-full ${
+                  errors.github ? 'border-red-500 focus:border-red-500' : ''
+                }`}
                 required
               />
+              {errors.github && (
+                <p className="mt-1 text-sm text-red-600">{errors.github}</p>
+              )}
             </div>
 
             <div>
@@ -265,7 +383,11 @@ export default function ProjectApplicationForm({
                   id="role"
                   value={formData.role}
                   onChange={(e) => handleInputChange('role', e.target.value)}
-                  className="w-full appearance-none rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className={`w-full appearance-none rounded-md border bg-white px-3 py-2 text-slate-900 shadow-sm focus:outline-none focus:ring-1 ${
+                    errors.role
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                      : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500'
+                  }`}
                   required
                 >
                   <option value="">Select a role</option>
@@ -280,6 +402,9 @@ export default function ProjectApplicationForm({
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
               </div>
+              {errors.role && (
+                <p className="mt-1 text-sm text-red-600">{errors.role}</p>
+              )}
             </div>
 
             <div>
@@ -296,7 +421,11 @@ export default function ProjectApplicationForm({
                   onChange={(e) =>
                     handleInputChange('experience_level', e.target.value)
                   }
-                  className="w-full appearance-none rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className={`w-full appearance-none rounded-md border bg-white px-3 py-2 text-slate-900 shadow-sm focus:outline-none focus:ring-1 ${
+                    errors.experience_level
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                      : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500'
+                  }`}
                   required
                 >
                   <option value="">Select experience level</option>
@@ -307,6 +436,11 @@ export default function ProjectApplicationForm({
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
               </div>
+              {errors.experience_level && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.experience_level}
+                </p>
+              )}
             </div>
 
             <div>
@@ -341,7 +475,11 @@ export default function ProjectApplicationForm({
                   onChange={(e) =>
                     handleInputChange('availability', e.target.value)
                   }
-                  className="w-full appearance-none rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className={`w-full appearance-none rounded-md border bg-white px-3 py-2 text-slate-900 shadow-sm focus:outline-none focus:ring-1 ${
+                    errors.availability
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                      : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500'
+                  }`}
                   required
                 >
                   <option value="">Select availability</option>
@@ -352,6 +490,11 @@ export default function ProjectApplicationForm({
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
               </div>
+              {errors.availability && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.availability}
+                </p>
+              )}
             </div>
           </div>
         );
@@ -383,9 +526,14 @@ export default function ProjectApplicationForm({
                   handleInputChange('motivation', e.target.value)
                 }
                 placeholder="Share what motivates you to contribute to this project..."
-                className="min-h-[120px] w-full resize-none"
+                className={`min-h-[120px] w-full resize-none ${
+                  errors.motivation ? 'border-red-500 focus:border-red-500' : ''
+                }`}
                 required
               />
+              {errors.motivation && (
+                <p className="mt-1 text-sm text-red-600">{errors.motivation}</p>
+              )}
             </div>
 
             <div>
@@ -472,9 +620,10 @@ export default function ProjectApplicationForm({
           {currentStep === 4 ? (
             <Button
               onClick={handleSubmit}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 text-white hover:from-blue-700 hover:to-purple-700"
+              disabled={isSubmitting}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 text-white hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
             >
-              Submit Application
+              {isSubmitting ? 'Submitting...' : 'Submit Application'}
             </Button>
           ) : (
             <Button
