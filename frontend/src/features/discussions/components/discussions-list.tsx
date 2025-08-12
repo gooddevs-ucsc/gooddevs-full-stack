@@ -49,9 +49,9 @@ export const DiscussionsList = ({
         },
         {
           title: 'Created At',
-          field: 'createdAt',
-          Cell({ entry: { createdAt } }) {
-            return <span>{formatDate(createdAt)}</span>;
+          field: 'created_at',
+          Cell({ entry: { created_at } }) {
+            return <span>{formatDate(created_at)}</span>;
           },
         },
         {

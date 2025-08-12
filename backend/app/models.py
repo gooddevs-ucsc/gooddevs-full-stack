@@ -334,5 +334,112 @@ class TasksPublic(SQLModel):
 # Response wrapper for single task
 class TaskResponse(SQLModel):   
     data: TaskPublic
+
+
+# Project Application related models
+class ApplicationStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    WITHDRAWN = "WITHDRAWN"
+
+
+class DeveloperRole(str, enum.Enum):
+    FRONTEND = "frontend"
+    BACKEND = "backend"
+    FULLSTACK = "fullstack"
+    UIUX = "uiux"
+    MOBILE = "mobile"
+    DEVOPS = "devops"
+    QA = "qa"
+    PM = "pm"
+
+
+class ExperienceLevel(str, enum.Enum):
+    BEGINNER = "beginner"
+    INTERMEDIATE = "intermediate"  
+    ADVANCED = "advanced"
+    EXPERT = "expert"
+
+
+class Availability(str, enum.Enum):
+    FIVE_TO_TEN = "5-10"
+    TEN_TO_TWENTY = "10-20"
+    TWENTY_TO_THIRTY = "20-30"
+    THIRTY_PLUS = "30+"
+
+
+# Base model for project application
+class ProjectApplicationBase(SQLModel):
+    firstname: str = Field(min_length=1, max_length=255)
+    lastname: str = Field(min_length=1, max_length=255)
+    email: EmailStr = Field(max_length=255)
+    phone: str | None = Field(default=None, max_length=20)
+    linkedin: str | None = Field(default=None, max_length=500)
+    github: str = Field(min_length=1, max_length=500)
+    portfolio: str | None = Field(default=None, max_length=500)
+    role: DeveloperRole = Field(sa_column=Column(Enum(DeveloperRole)))
+    experience_level: ExperienceLevel = Field(sa_column=Column(Enum(ExperienceLevel)))
+    motivation: str = Field(min_length=10, max_length=2000)
+    relevant_experience: str | None = Field(default=None, max_length=2000)
+    availability: Availability = Field(sa_column=Column(Enum(Availability)))
+    preferred_technologies: str | None = Field(default=None, max_length=500)
+
+
+# API model for creating application
+class ProjectApplicationCreate(ProjectApplicationBase):
+    pass
+
+
+# API model for updating application
+class ProjectApplicationUpdate(SQLModel):
+    firstname: str | None = Field(default=None, min_length=1, max_length=255)
+    lastname: str | None = Field(default=None, min_length=1, max_length=255)
+    email: EmailStr | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=20)
+    linkedin: str | None = Field(default=None, max_length=500)
+    github: str | None = Field(default=None, min_length=1, max_length=500)
+    portfolio: str | None = Field(default=None, max_length=500)
+    role: DeveloperRole | None = Field(default=None)
+    experience_level: ExperienceLevel | None = Field(default=None)
+    motivation: str | None = Field(default=None, min_length=10, max_length=2000)
+    relevant_experience: str | None = Field(default=None, max_length=2000)
+    availability: Availability | None = Field(default=None)
+    preferred_technologies: str | None = Field(default=None, max_length=500)
+    status: ApplicationStatus | None = Field(default=None)
+
+
+# Database model
+class ProjectApplication(ProjectApplicationBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    project_id: uuid.UUID = Field(foreign_key="project.id", nullable=False, ondelete="CASCADE")
+    applicant_id: uuid.UUID | None = Field(foreign_key="user.id", nullable=True, ondelete="SET NULL")  # Allow anonymous applications
+    status: ApplicationStatus = Field(default=ApplicationStatus.PENDING, sa_column=Column(Enum(ApplicationStatus)))
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    project: Project | None = Relationship()
+    applicant: User | None = Relationship()
+
+
+# Public API model
+class ProjectApplicationPublic(ProjectApplicationBase):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    applicant_id: uuid.UUID | None
+    status: ApplicationStatus
+    created_at: datetime
+    updated_at: datetime
+
+
+# Response models
+class ProjectApplicationResponse(SQLModel):
+    data: ProjectApplicationPublic
+
+
+class ProjectApplicationsPublic(SQLModel):
+    data: list[ProjectApplicationPublic]
+    meta: Meta
     
     

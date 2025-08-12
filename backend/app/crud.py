@@ -7,6 +7,7 @@ from sqlmodel import Session, select, func
 from app.core.security import get_password_hash, verify_password
 from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate
 from app.models import ProjectThread, ProjectComment, ProjectCommentCreate, ProjectCommentUpdate
+from app.models import ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -195,3 +196,89 @@ def get_tasks_by_project_id(*, session: Session, project_id: uuid.UUID, skip: in
 def count_tasks_by_project(*, session: Session, project_id: uuid.UUID)-> int:
     statement = select(func.count(Task.id)).where(Task.project_id == project_id)
     return session.exec(statement).one() or 0
+
+
+# Project Application CRUD operations
+def create_project_application(*, session: Session, application_in: ProjectApplicationCreate, project_id: uuid.UUID, applicant_id: uuid.UUID | None = None) -> ProjectApplication:
+    """Create a new project application"""
+    db_application = ProjectApplication.model_validate(
+        application_in, 
+        update={
+            "project_id": project_id,
+            "applicant_id": applicant_id
+        }
+    )
+    session.add(db_application)
+    session.commit()
+    session.refresh(db_application)
+    return db_application
+
+
+def get_project_application_by_id(*, session: Session, application_id: uuid.UUID) -> ProjectApplication | None:
+    """Get project application by ID"""
+    return session.get(ProjectApplication, application_id)
+
+
+def get_project_applications_by_project(*, session: Session, project_id: uuid.UUID, skip: int = 0, limit: int = 100) -> list[ProjectApplication]:
+    """Get all applications for a specific project"""
+    statement = select(ProjectApplication).where(
+        ProjectApplication.project_id == project_id
+    ).offset(skip).limit(limit).order_by(ProjectApplication.created_at.desc())
+    return session.exec(statement).all()
+
+
+def get_project_applications_by_user(*, session: Session, applicant_id: uuid.UUID, skip: int = 0, limit: int = 100) -> list[ProjectApplication]:
+    """Get all applications by a specific user"""
+    statement = select(ProjectApplication).where(
+        ProjectApplication.applicant_id == applicant_id
+    ).offset(skip).limit(limit).order_by(ProjectApplication.created_at.desc())
+    return session.exec(statement).all()
+
+
+def get_all_project_applications(*, session: Session, skip: int = 0, limit: int = 100) -> list[ProjectApplication]:
+    """Get all project applications (admin only)"""
+    statement = select(ProjectApplication).offset(skip).limit(limit).order_by(ProjectApplication.created_at.desc())
+    return session.exec(statement).all()
+
+
+def update_project_application(*, session: Session, db_application: ProjectApplication, application_in: ProjectApplicationUpdate) -> ProjectApplication:
+    """Update a project application"""
+    application_data = application_in.model_dump(exclude_unset=True)
+    application_data["updated_at"] = datetime.now(timezone.utc)
+    
+    db_application.sqlmodel_update(application_data)
+    session.add(db_application)
+    session.commit()
+    session.refresh(db_application)
+    return db_application
+
+
+def delete_project_application(*, session: Session, application_id: uuid.UUID) -> bool:
+    """Delete a project application"""
+    application = session.get(ProjectApplication, application_id)
+    if application:
+        session.delete(application)
+        session.commit()
+        return True
+    return False
+
+
+def count_project_applications_by_project(*, session: Session, project_id: uuid.UUID) -> int:
+    """Count applications for a specific project"""
+    statement = select(func.count(ProjectApplication.id)).where(ProjectApplication.project_id == project_id)
+    return session.exec(statement).one() or 0
+
+
+def count_project_applications_by_user(*, session: Session, applicant_id: uuid.UUID) -> int:
+    """Count applications by a specific user"""
+    statement = select(func.count(ProjectApplication.id)).where(ProjectApplication.applicant_id == applicant_id)
+    return session.exec(statement).one() or 0
+
+
+def check_existing_application(*, session: Session, project_id: uuid.UUID, email: str) -> ProjectApplication | None:
+    """Check if user already applied to the project using email"""
+    statement = select(ProjectApplication).where(
+        ProjectApplication.project_id == project_id,
+        ProjectApplication.email == email
+    )
+    return session.exec(statement).first()
