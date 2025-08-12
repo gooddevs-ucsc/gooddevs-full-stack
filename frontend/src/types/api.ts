@@ -168,3 +168,108 @@ export interface TasksResponse {
 export interface TaskResponse {
   data: Task;
 }
+
+// Project Application types
+export const DEVELOPER_ROLES = {
+  FRONTEND: 'frontend',
+  BACKEND: 'backend',
+  FULLSTACK: 'fullstack',
+  UIUX: 'uiux',
+  MOBILE: 'mobile',
+  DEVOPS: 'devops',
+  QA: 'qa',
+  PM: 'pm',
+} as const;
+
+export const EXPERIENCE_LEVELS = {
+  BEGINNER: 'beginner',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED: 'advanced',
+  EXPERT: 'expert',
+} as const;
+
+export const AVAILABILITIES = {
+  FIVE_TO_TEN: '5-10',
+  TEN_TO_TWENTY: '10-20',
+  TWENTY_TO_THIRTY: '20-30',
+  THIRTY_PLUS: '30+',
+} as const;
+
+export const APPLICATION_STATUSES = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  WITHDRAWN: 'WITHDRAWN',
+} as const;
+
+export type DeveloperRole =
+  (typeof DEVELOPER_ROLES)[keyof typeof DEVELOPER_ROLES];
+export type ExperienceLevel =
+  (typeof EXPERIENCE_LEVELS)[keyof typeof EXPERIENCE_LEVELS];
+export type Availability = (typeof AVAILABILITIES)[keyof typeof AVAILABILITIES];
+export type ApplicationStatus =
+  (typeof APPLICATION_STATUSES)[keyof typeof APPLICATION_STATUSES];
+
+export interface ProjectApplication {
+  id: string;
+  project_id: string;
+  applicant_id?: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  phone?: string;
+  linkedin?: string;
+  github: string;
+  portfolio?: string;
+  role: DeveloperRole;
+  experience_level: ExperienceLevel;
+  motivation: string;
+  relevant_experience?: string;
+  availability: Availability;
+  preferred_technologies?: string;
+  status: ApplicationStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectApplicationCreate {
+  firstname: string;
+  lastname: string;
+  email: string;
+  phone?: string;
+  linkedin?: string;
+  github: string;
+  portfolio?: string;
+  role: DeveloperRole;
+  experience_level: ExperienceLevel;
+  motivation: string;
+  relevant_experience?: string;
+  availability: Availability;
+  preferred_technologies?: string;
+}
+
+export interface ProjectApplicationUpdate {
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  phone?: string;
+  linkedin?: string;
+  github?: string;
+  portfolio?: string;
+  role?: DeveloperRole;
+  experience_level?: ExperienceLevel;
+  motivation?: string;
+  relevant_experience?: string;
+  availability?: Availability;
+  preferred_technologies?: string;
+  status?: ApplicationStatus;
+}
+
+export interface ProjectApplicationResponse {
+  data: ProjectApplication;
+}
+
+export interface ProjectApplicationsResponse {
+  data: ProjectApplication[];
+  meta: Meta;
+}

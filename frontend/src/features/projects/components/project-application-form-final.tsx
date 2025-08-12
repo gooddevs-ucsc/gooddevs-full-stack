@@ -10,11 +10,19 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Project,
+  DeveloperRole,
+  ExperienceLevel,
+  Availability,
+} from '@/types/api';
+
+import { useCreateProjectApplication } from '../api/create-project-application';
 
 interface ProjectApplicationFormProps {
   isOpen: boolean;
   onClose: () => void;
-  project: any;
+  project: Project;
 }
 
 interface FormData {
@@ -36,10 +44,10 @@ interface FormData {
 export default function ProjectApplicationForm({
   isOpen,
   onClose,
+  project,
 }: ProjectApplicationFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Partial<FormData>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     firstname: '',
     lastname: '',
@@ -55,6 +63,42 @@ export default function ProjectApplicationForm({
     availability: '',
     preferred_technologies: '',
   });
+
+  const { mutate: createApplication, isPending: isSubmitting } =
+    useCreateProjectApplication({
+      mutationConfig: {
+        onSuccess: () => {
+          console.log('Application submitted successfully!');
+          onClose();
+          setCurrentStep(1);
+          setFormData({
+            firstname: '',
+            lastname: '',
+            email: '',
+            phone: '',
+            linkedin: '',
+            github: '',
+            portfolio: '',
+            role: '',
+            experience_level: '',
+            motivation: '',
+            relevant_experience: '',
+            availability: '',
+            preferred_technologies: '',
+          });
+          setErrors({});
+          // TODO: Show success notification
+        },
+        onError: (error) => {
+          console.error('Failed to submit application:', error);
+          console.error(
+            'Error details:',
+            (error as any).response?.data || error.message,
+          );
+          // TODO: Show error notification
+        },
+      },
+    });
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -141,7 +185,10 @@ export default function ProjectApplicationForm({
   };
 
   const handleSubmit = async () => {
+    console.log('Submit clicked!', { formData, project });
+
     if (!validateAllSteps()) {
+      console.log('Validation failed');
       // Find first step with errors
       for (let step = 1; step <= 4; step++) {
         if (!validateStep(step)) {
@@ -152,33 +199,27 @@ export default function ProjectApplicationForm({
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      console.log('Application submitted:', formData);
-      // TODO: API call will go here
-      onClose();
-      setCurrentStep(1);
-      setFormData({
-        firstname: '',
-        lastname: '',
-        email: '',
-        phone: '',
-        linkedin: '',
-        github: '',
-        portfolio: '',
-        role: '',
-        experience_level: '',
-        motivation: '',
-        relevant_experience: '',
-        availability: '',
-        preferred_technologies: '',
-      });
-      setErrors({});
-    } catch (error) {
-      console.error('Failed to submit application:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    console.log('Validation passed, submitting...');
+
+    // Submit application using the API
+    createApplication({
+      data: {
+        firstname: formData.firstname,
+        lastname: formData.lastname,
+        email: formData.email,
+        phone: formData.phone || undefined,
+        linkedin: formData.linkedin || undefined,
+        github: formData.github,
+        portfolio: formData.portfolio || undefined,
+        role: formData.role as DeveloperRole,
+        experience_level: formData.experience_level as ExperienceLevel,
+        motivation: formData.motivation,
+        relevant_experience: formData.relevant_experience || undefined,
+        availability: formData.availability as Availability,
+        preferred_technologies: formData.preferred_technologies || undefined,
+      },
+      projectId: project.id,
+    });
   };
 
   const renderStepContent = () => {
