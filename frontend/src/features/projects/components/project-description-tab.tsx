@@ -20,6 +20,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
+import { useUser } from '@/lib/auth';
+import { ROLES } from '@/lib/roles';
 import { formatDate, formatEstimatedTimeline } from '@/utils/format';
 
 import ProjectApplicationForm from './project-application-form-final';
@@ -33,6 +35,7 @@ export const ProjectDescriptionTab = ({
 }: ProjectDescriptionTabProps) => {
   const navigate = useNavigate();
   const [isApplicationFormOpen, setIsApplicationFormOpen] = useState(false);
+  const user = useUser();
 
   return (
     <>
@@ -622,12 +625,35 @@ export const ProjectDescriptionTab = ({
               </p>
             </div>
             <div className="space-y-3">
-              <Button
-                className="w-full bg-blue-600 text-white hover:bg-blue-700"
-                onClick={() => setIsApplicationFormOpen(true)}
-              >
-                Apply to Join Project
-              </Button>
+              {!user.data ? (
+                // Not authenticated
+                <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-center">
+                  <p className="text-sm font-medium text-orange-800">
+                    Please sign in as a developer to apply for this project
+                  </p>
+                  <p className="mt-1 text-xs text-orange-600">
+                    Only registered developers can submit applications
+                  </p>
+                </div>
+              ) : user.data.role === ROLES.VOLUNTEER ? (
+                // Authenticated developer/volunteer
+                <Button
+                  className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                  onClick={() => setIsApplicationFormOpen(true)}
+                >
+                  Apply to Join Project
+                </Button>
+              ) : (
+                // Authenticated but not a developer
+                <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-center">
+                  <p className="text-sm font-medium text-orange-800">
+                    Only developers can apply for projects
+                  </p>
+                  <p className="mt-1 text-xs text-orange-600">
+                    Please register as a developer to submit applications
+                  </p>
+                </div>
+              )}
               <Button
                 variant="outline"
                 className="flex w-full items-center justify-center"
