@@ -48,6 +48,7 @@ export default function ProjectApplicationForm({
 }: ProjectApplicationFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     firstname: '',
     lastname: '',
@@ -69,25 +70,29 @@ export default function ProjectApplicationForm({
       mutationConfig: {
         onSuccess: () => {
           console.log('Application submitted successfully!');
-          onClose();
-          setCurrentStep(1);
-          setFormData({
-            firstname: '',
-            lastname: '',
-            email: '',
-            phone: '',
-            linkedin: '',
-            github: '',
-            portfolio: '',
-            role: '',
-            experience_level: '',
-            motivation: '',
-            relevant_experience: '',
-            availability: '',
-            preferred_technologies: '',
-          });
-          setErrors({});
-          // TODO: Show success notification
+          setShowSuccess(true);
+          // Reset form after a delay
+          setTimeout(() => {
+            setShowSuccess(false);
+            setCurrentStep(1);
+            setFormData({
+              firstname: '',
+              lastname: '',
+              email: '',
+              phone: '',
+              linkedin: '',
+              github: '',
+              portfolio: '',
+              role: '',
+              experience_level: '',
+              motivation: '',
+              relevant_experience: '',
+              availability: '',
+              preferred_technologies: '',
+            });
+            setErrors({});
+            onClose();
+          }, 3000); // Show success message for 3 seconds
         },
         onError: (error) => {
           console.error('Failed to submit application:', error);
@@ -325,7 +330,7 @@ export default function ProjectApplicationForm({
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="+1 (555) 123-4567"
+                placeholder="+94 71 234 5678"
                 className="w-full"
               />
             </div>
@@ -607,74 +612,143 @@ export default function ProjectApplicationForm({
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader className="pb-4">
           <DialogTitle className="text-2xl font-bold text-slate-900">
-            Apply to Project
+            {showSuccess ? 'Application Submitted' : 'Apply to Project'}
           </DialogTitle>
 
-          {/* Progress bar */}
-          <div className="mt-4">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-700">
-                Step {currentStep} of 4
-              </span>
-              <span className="text-sm text-slate-500">
-                {Math.round((currentStep / 4) * 100)}% Complete
-              </span>
-            </div>
-            <div className="h-2 w-full rounded-full bg-slate-200">
-              <div
-                className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-300 ease-out"
-                style={{ width: `${(currentStep / 4) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-
-          {/* Step indicators */}
-          <div className="mt-4 flex justify-between">
-            {[1, 2, 3, 4].map((step) => (
-              <div
-                key={step}
-                className={`flex size-8 items-center justify-center rounded-full text-sm font-medium ${
-                  step <= currentStep
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-200 text-slate-500'
-                }`}
-              >
-                {step}
+          {/* Progress bar - only show when not in success state */}
+          {!showSuccess && (
+            <>
+              <div className="mt-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700">
+                    Step {currentStep} of 4
+                  </span>
+                  <span className="text-sm text-slate-500">
+                    {Math.round((currentStep / 4) * 100)}% Complete
+                  </span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-200">
+                  <div
+                    className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-300 ease-out"
+                    style={{ width: `${(currentStep / 4) * 100}%` }}
+                  ></div>
+                </div>
               </div>
-            ))}
-          </div>
+
+              {/* Step indicators */}
+              <div className="mt-4 flex justify-between">
+                {[1, 2, 3, 4].map((step) => (
+                  <div
+                    key={step}
+                    className={`flex size-8 items-center justify-center rounded-full text-sm font-medium ${
+                      step <= currentStep
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-200 text-slate-500'
+                    }`}
+                  >
+                    {step}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </DialogHeader>
 
-        <div className="py-6">{renderStepContent()}</div>
-
-        {/* Navigation buttons */}
-        <div className="flex justify-between border-t border-slate-200 pt-6">
-          <Button
-            variant="outline"
-            onClick={handlePrevious}
-            disabled={currentStep === 1}
-            className="px-6"
-          >
-            Previous
-          </Button>
-
-          {currentStep === 4 ? (
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 text-white hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Application'}
-            </Button>
+        <div className="py-6">
+          {showSuccess ? (
+            // Success Message
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-green-100">
+                <svg
+                  className="size-8 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <h3 className="mb-2 text-xl font-semibold text-slate-900">
+                Application Submitted Successfully!
+              </h3>
+              <p className="mb-4 text-slate-600">
+                Thank you for your interest in joining this project. We&apos;ve
+                received your application and will review it shortly.
+              </p>
+              <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                <p className="mb-1 font-medium">What&apos;s Next?</p>
+                <p>
+                  The project owner will review your application and contact you
+                  via email if you&apos;re selected to join the team.
+                </p>
+              </div>
+              <Button
+                onClick={() => {
+                  setShowSuccess(false);
+                  setCurrentStep(1);
+                  setFormData({
+                    firstname: '',
+                    lastname: '',
+                    email: '',
+                    phone: '',
+                    linkedin: '',
+                    github: '',
+                    portfolio: '',
+                    role: '',
+                    experience_level: '',
+                    motivation: '',
+                    relevant_experience: '',
+                    availability: '',
+                    preferred_technologies: '',
+                  });
+                  setErrors({});
+                  onClose();
+                }}
+                className="mt-6 bg-green-600 text-white hover:bg-green-700"
+              >
+                Done
+              </Button>
+            </div>
           ) : (
-            <Button
-              onClick={handleNext}
-              className="bg-blue-600 px-6 text-white hover:bg-blue-700"
-            >
-              Next
-            </Button>
+            renderStepContent()
           )}
         </div>
+
+        {/* Navigation buttons */}
+        {!showSuccess && (
+          <div className="flex justify-between border-t border-slate-200 pt-6">
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentStep === 1}
+              className="px-6"
+            >
+              Previous
+            </Button>
+
+            {currentStep === 4 ? (
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 text-white hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Application'}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleNext}
+                className="bg-blue-600 px-6 text-white hover:bg-blue-700"
+              >
+                Next
+              </Button>
+            )}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
