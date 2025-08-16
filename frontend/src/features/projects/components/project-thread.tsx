@@ -8,117 +8,212 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
+  Plus,
 } from 'lucide-react';
 import { useState } from 'react';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
-import { Form, Textarea } from '@/components/ui/form';
+import { Form, Input, Textarea } from '@/components/ui/form';
 import { useNotifications } from '@/components/ui/notifications';
 import { formatDate } from '@/utils/format';
 import { Spinner } from '@/components/ui/spinner';
 import { useUser } from '@/lib/auth';
 
 import {
-  useProjectThread,
-  useCreateProjectComment,
-  useUpdateProjectComment,
-  useDeleteProjectComment,
-  type ProjectThreadComment,
+  useProjectThreads,
+  useCreateProjectThread,
+  useCreateComment,
+  useUpdateComment,
+  useDeleteComment,
+  createCommentInputSchema,
+  updateCommentInputSchema,
+  createThreadInputSchema,
+  type CreateCommentInput,
+  type UpdateCommentInput,
+  type CreateThreadInput,
 } from '../api/get-project-thread';
+import { Comment as CommentType } from '@/types/api';
 
 type ProjectThreadProps = {
   projectId: string;
 };
 
-const commentSchema = z.object({
-  content: z
-    .string()
-    .min(1, 'Comment content is required')
-    .max(2000, 'Comment is too long'),
-});
+const CommentItem = ({
+  comment,
+  currentUser,
+  isEditing,
+  onEdit,
+  onCancelEdit,
+  onUpdate,
+  onDelete,
+  isUpdating,
+  isDeleting,
+}: {
+  comment: CommentType;
+  currentUser: any;
+  isEditing: boolean;
+  onEdit: () => void;
+  onCancelEdit: () => void;
+  onUpdate: (values: UpdateCommentInput) => void;
+  onDelete: () => void;
+  isUpdating: boolean;
+  isDeleting: boolean;
+}) => {
+  const canEdit = currentUser?.id === comment.author_id;
+
+  return (
+    <div className="p-6">
+      <div className="flex items-start gap-4">
+        <div className="flex size-10 items-center justify-center rounded-full bg-slate-100">
+          <User className="size-5 text-slate-500" />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="font-semibold text-slate-900">
+                {comment.author.firstname} {comment.author.lastname}
+              </span>
+              <span className="ml-2 text-sm text-slate-500">
+                {formatDate(new Date(comment.created_at).getTime())}
+              </span>
+            </div>
+            {canEdit && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onEdit}
+                  disabled={isEditing}
+                >
+                  <Edit className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onDelete}
+                  isLoading={isDeleting}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+          {isEditing ? (
+            <Form
+              onSubmit={onUpdate}
+              schema={updateCommentInputSchema}
+              options={{ defaultValues: { body: comment.body } }}
+            >
+              {({ register, formState }) => (
+                <div className="mt-2 space-y-2">
+                  <Textarea
+                    registration={register('body')}
+                    error={formState.errors.body}
+                    rows={3}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={onCancelEdit}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      isLoading={isUpdating}
+                      className="bg-green-600 text-white hover:bg-green-700"
+                    >
+                      Update
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </Form>
+          ) : (
+            <p className="mt-2 text-slate-700">{comment.body}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
   const { addNotification } = useNotifications();
   const [isCommentFormOpen, setIsCommentFormOpen] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
 
-  const { data: thread, isLoading, error } = useProjectThread({ projectId });
-
-  const createCommentMutation = useCreateProjectComment();
-  const updateCommentMutation = useUpdateProjectComment();
-  const deleteCommentMutation = useDeleteProjectComment();
+  const {
+    data: threadsData,
+    isLoading,
+    error,
+  } = useProjectThreads({ projectId });
+  const createThreadMutation = useCreateProjectThread({ projectId });
+  const createCommentMutation = useCreateComment({
+    projectId,
+    threadId: threadsData?.data?.[0]?.id || '',
+  });
+  const updateCommentMutation = useUpdateComment({ projectId });
+  const deleteCommentMutation = useDeleteComment({ projectId });
 
   const user = useUser();
 
+  const thread = threadsData?.data?.[0];
   const comments = thread?.comments || [];
 
-  const handleAddComment = async (values: { content: string }) => {
-    try {
-      await createCommentMutation.mutateAsync({
-        projectId,
-        data: { content: values.content },
-      });
+  const handleCreateThread = async (values: CreateThreadInput) => {
+    await createThreadMutation.mutateAsync({
+      projectId,
+      data: values,
+    });
+    addNotification({
+      type: 'success',
+      title: 'Discussion Started',
+    });
+  };
 
-      setIsCommentFormOpen(false);
-      addNotification({
-        type: 'success',
-        title: 'Comment posted successfully',
-      });
-    } catch (error) {
-      addNotification({
-        type: 'error',
-        title: 'Failed to post comment',
-        message: 'Please try again.',
-      });
-    }
+  const handleAddComment = async (values: CreateCommentInput) => {
+    if (!thread) return;
+    await createCommentMutation.mutateAsync({
+      projectId,
+      threadId: thread.id,
+      data: values,
+    });
+    setIsCommentFormOpen(false);
+    addNotification({
+      type: 'success',
+      title: 'Comment posted',
+    });
   };
 
   const handleUpdateComment = async (
     commentId: string,
-    values: { content: string },
+    values: UpdateCommentInput,
   ) => {
-    try {
-      await updateCommentMutation.mutateAsync({
-        projectId,
-        commentId,
-        data: { content: values.content },
-      });
-
-      setEditingCommentId(null);
-      addNotification({
-        type: 'success',
-        title: 'Comment updated successfully',
-      });
-    } catch (error) {
-      addNotification({
-        type: 'error',
-        title: 'Failed to update comment',
-        message: 'Please try again.',
-      });
-    }
+    if (!thread) return;
+    await updateCommentMutation.mutateAsync({
+      threadId: thread.id,
+      commentId,
+      data: values,
+    });
+    setEditingCommentId(null);
+    addNotification({
+      type: 'success',
+      title: 'Comment updated',
+    });
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!confirm('Are you sure you want to delete this comment?')) return;
-
-    try {
-      await deleteCommentMutation.mutateAsync({
-        projectId,
-        commentId,
-      });
-
-      addNotification({
-        type: 'success',
-        title: 'Comment deleted successfully',
-      });
-    } catch (error) {
-      addNotification({
-        type: 'error',
-        title: 'Failed to delete comment',
-        message: 'Please try again.',
-      });
-    }
+    if (!thread) return;
+    await deleteCommentMutation.mutateAsync({ commentId, threadId: thread.id });
+    addNotification({
+      type: 'success',
+      title: 'Comment deleted',
+    });
   };
 
   if (isLoading) {
@@ -135,7 +230,7 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
     return (
       <div className="rounded-xl border border-red-200 bg-red-50 p-6 shadow-sm">
         <div className="text-center">
-          <h3 className="text-lg font-medium text-red-900 mb-2">
+          <h3 className="mb-2 text-lg font-medium text-red-900">
             Unable to load discussion
           </h3>
           <p className="text-red-700">
@@ -143,6 +238,43 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
             later.
           </p>
         </div>
+      </div>
+    );
+  }
+
+  if (!thread) {
+    return (
+      <div className="rounded-xl border border-slate-200/60 bg-white p-12 text-center shadow-sm">
+        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-slate-100">
+          <MessageCircle className="size-8 text-slate-400" />
+        </div>
+        <h4 className="mb-4 text-lg font-medium text-slate-900">
+          Start the Project Discussion
+        </h4>
+        <Form onSubmit={handleCreateThread} schema={createThreadInputSchema}>
+          {({ register, formState }) => (
+            <div className="mx-auto max-w-lg space-y-4">
+              <Input
+                label="Title"
+                registration={register('title')}
+                error={formState.errors.title}
+              />
+              <Textarea
+                label="Message"
+                registration={register('body')}
+                error={formState.errors.body}
+              />
+              <Button
+                type="submit"
+                isLoading={createThreadMutation.isPending}
+                className="bg-green-600 text-white hover:bg-green-700"
+              >
+                <Plus className="mr-2 size-4" />
+                Start Discussion
+              </Button>
+            </div>
+          )}
+        </Form>
       </div>
     );
   }
@@ -158,14 +290,11 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
             </div>
             <div>
               <h3 className="text-xl font-semibold text-slate-900">
-                Project Discussion
+                {thread.title}
               </h3>
               <p className="text-sm text-slate-600">
                 {comments.length}{' '}
-                {comments.length === 1 ? 'comment' : 'comments'} •
-                <span className="ml-1 text-green-600">
-                  Active collaboration
-                </span>
+                {comments.length === 1 ? 'comment' : 'comments'}
               </p>
             </div>
           </div>
@@ -187,23 +316,14 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
       <div className="divide-y divide-slate-200/60">
         {comments.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-slate-100">
-              <MessageCircle className="size-8 text-slate-400" />
-            </div>
-            <h4 className="mb-2 text-lg font-medium text-slate-900">
-              Start the conversation
-            </h4>
-            <p className="text-slate-600">
-              Share your ideas, ask questions, or introduce yourself to the team
-            </p>
+            <p className="text-slate-600">No comments yet.</p>
           </div>
         ) : (
-          comments.map((comment, index) => (
+          comments.map((comment: CommentType) => (
             <CommentItem
               key={comment.id}
               comment={comment}
               currentUser={user.data}
-              isFirst={index === 0}
               isEditing={editingCommentId === comment.id}
               onEdit={() => setEditingCommentId(comment.id)}
               onCancelEdit={() => setEditingCommentId(null)}
@@ -219,38 +339,23 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
       {/* Add Comment Form */}
       {isCommentFormOpen && (
         <div className="border-t border-slate-200/60 bg-gradient-to-br from-slate-50/30 to-white p-6">
-          <Form onSubmit={handleAddComment} schema={commentSchema}>
+          <Form onSubmit={handleAddComment} schema={createCommentInputSchema}>
             {({ register, formState, reset }) => (
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-200 flex-shrink-0">
+                  <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-200">
                     <User className="size-5 text-green-700" />
                   </div>
                   <div className="flex-1">
                     <Textarea
-                      placeholder="Share your ideas, ask questions, or contribute to the discussion...
-
-You can use **markdown** formatting:
-- **bold text**
-- *italic text*  
-- `code snippets`
-- Lists and more!"
-                      registration={register('content')}
-                      error={formState.errors['content']}
-                      rows={6}
-                      className="resize-none border-slate-300 focus:border-green-500 focus:ring-green-500"
+                      placeholder="Add your comment..."
+                      registration={register('body')}
+                      error={formState.errors.body}
+                      rows={4}
                     />
-                    <div className="mt-2 text-xs text-slate-500">
-                      💡 <strong>Tip:</strong> Introduce yourself, share your
-                      skills, ask questions, or propose ideas
-                    </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-xs text-slate-500">
-                    <span>✨ Be respectful and constructive</span>
-                    <span>• 📝 Markdown supported</span>
-                  </div>
+                <div className="flex justify-end">
                   <div className="flex items-center gap-3">
                     <Button
                       type="button"
@@ -281,183 +386,6 @@ You can use **markdown** formatting:
           </Form>
         </div>
       )}
-
-      {/* Thread Stats Footer */}
-      {comments.length > 0 && (
-        <div className="border-t border-slate-200/60 bg-gradient-to-r from-slate-50/50 to-white px-6 py-4">
-          <div className="flex items-center justify-between text-sm text-slate-600">
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-1">
-                <Clock className="size-4" />
-                <span>
-                  Last activity:{' '}
-                  {formatDate(
-                    new Date(
-                      comments[comments.length - 1]?.updated_at || Date.now(),
-                    ).getTime(),
-                  )}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <User className="size-4" />
-                <span>
-                  {
-                    new Set(
-                      comments.map(
-                        (c) => `${c.author.firstname} ${c.author.lastname}`,
-                      ),
-                    ).size
-                  }{' '}
-                  participants
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Comment Item Component
-type CommentItemProps = {
-  comment: ProjectThreadComment;
-  currentUser: any;
-  isFirst: boolean;
-  isEditing: boolean;
-  onEdit: () => void;
-  onCancelEdit: () => void;
-  onUpdate: (values: { content: string }) => void;
-  onDelete: () => void;
-  isUpdating: boolean;
-  isDeleting: boolean;
-};
-
-const CommentItem = ({
-  comment,
-  currentUser,
-  isFirst,
-  isEditing,
-  onEdit,
-  onCancelEdit,
-  onUpdate,
-  onDelete,
-  isUpdating,
-  isDeleting,
-}: CommentItemProps) => {
-  const canModify =
-    currentUser?.id === comment.author.id || currentUser?.is_superuser;
-
-  if (isEditing) {
-    return (
-      <div className="p-6 bg-slate-50/50">
-        <Form onSubmit={onUpdate} schema={commentSchema}>
-          {({ register, formState }) => (
-            <div className="space-y-4">
-              <Textarea
-                defaultValue={comment.content}
-                registration={register('content')}
-                error={formState.errors['content']}
-                rows={4}
-                className="resize-none"
-              />
-              <div className="flex items-center gap-3">
-                <Button type="submit" size="sm" isLoading={isUpdating}>
-                  Save Changes
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={onCancelEdit}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-        </Form>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-6 hover:bg-slate-50/50 transition-colors">
-      <div className="flex gap-4">
-        {/* Avatar */}
-        <div className="flex size-12 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex-shrink-0">
-          <User className="size-6 text-slate-600" />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          {/* Comment Header */}
-          <div className="mb-3 flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-slate-900">
-              {comment.author.firstname} {comment.author.lastname}
-            </span>
-            <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
-              {comment.author.role}
-            </span>
-            <span className="text-sm text-slate-500">•</span>
-            <span className="text-sm text-slate-500">
-              {formatDate(new Date(comment.created_at).getTime())}
-            </span>
-            {isFirst && (
-              <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
-                OP
-              </span>
-            )}
-          </div>
-
-          {/* Comment Content */}
-          <div className="prose prose-sm max-w-none text-slate-700 mb-4">
-            <div
-              className="whitespace-pre-wrap leading-relaxed"
-              style={{ wordBreak: 'break-word' }}
-            >
-              {comment.content}
-            </div>
-          </div>
-
-          {/* Comment Actions */}
-          <div className="flex items-center gap-4 text-sm">
-            <button className="flex items-center gap-1 text-slate-500 hover:text-slate-700 transition-colors">
-              <Reply className="size-4" />
-              Reply
-            </button>
-            <div className="relative">
-              <button
-                className="text-slate-500 hover:text-slate-700 transition-colors"
-                onClick={() => {
-                  // Show context menu with Edit/Delete options
-                  const canModify = true; // You can check if current user can modify this comment
-                  if (canModify) {
-                    onEdit();
-                  }
-                }}
-              >
-                <MoreHorizontal className="size-4" />
-              </button>
-            </div>
-            {/* Add Edit/Delete buttons for comment owner */}
-            <button
-              onClick={onEdit}
-              className="text-slate-500 hover:text-blue-600 transition-colors"
-            >
-              <Edit className="size-4" />
-            </button>
-            <button
-              onClick={onDelete}
-              disabled={isDeleting}
-              className="text-slate-500 hover:text-red-600 transition-colors disabled:opacity-50"
-            >
-              <Trash2 className="size-4" />
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

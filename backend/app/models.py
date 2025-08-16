@@ -181,7 +181,8 @@ class Project(ProjectBase, table=True):
     # Relationships
     requester: User | None = Relationship(back_populates="projects")
     tasks: list["Task"] = Relationship(back_populates="project", cascade_delete=True)
- 
+    threads: list["ProjectThread"] = Relationship(back_populates="project")
+    
 
 # Properties to return via API, id is always required
 class ProjectPublic(ProjectBase):
@@ -236,42 +237,6 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
-
-class ProjectThread(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    project_id: uuid.UUID = Field(foreign_key="project.id")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-
-class ProjectComment(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    content: str
-    project_id: uuid.UUID = Field(foreign_key="project.id")
-    author_id: uuid.UUID = Field(foreign_key="user.id")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-
-# Request/Response models
-class ProjectCommentCreate(SQLModel):
-    content: str
-
-class ProjectCommentUpdate(SQLModel):
-    content: str | None = None
-
-class ProjectCommentPublic(SQLModel):
-    id: uuid.UUID
-    content: str
-    project_id: uuid.UUID
-    author: UserPublic
-    created_at: datetime
-    updated_at: datetime
-
-class ProjectThreadPublic(SQLModel):
-    id: uuid.UUID
-    project_id: uuid.UUID
-    comments: list[ProjectCommentPublic]
-    created_at: datetime
-    updated_at: datetime
     
 # Task status enum
 class TaskStatus(str, enum.Enum):
@@ -334,5 +299,83 @@ class TasksPublic(SQLModel):
 # Response wrapper for single task
 class TaskResponse(SQLModel):   
     data: TaskPublic
-    
-    
+
+
+# Project Thread models
+class ProjectThreadBase(SQLModel):
+    title: str = Field(min_length=1, max_length=255)
+    body: str = Field(min_length=1, max_length=10000)
+
+
+class ProjectThreadCreate(ProjectThreadBase):
+    pass
+
+
+class ProjectThreadUpdate(SQLModel):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    body: str | None = Field(default=None, min_length=1, max_length=10000)
+
+
+class ProjectThread(ProjectThreadBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    author_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
+    project_id: uuid.UUID = Field(foreign_key="project.id", nullable=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
+
+    author: "User" = Relationship()
+    project: "Project" = Relationship(back_populates="threads")
+    comments: list["Comment"] = Relationship(back_populates="thread", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+
+
+class ProjectThreadPublic(ProjectThreadBase):
+    id: uuid.UUID
+    author_id: uuid.UUID
+    project_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    author: UserPublic
+    comments: list["CommentPublic"] = []
+
+
+class ProjectThreadsPublic(SQLModel):
+    data: list[ProjectThreadPublic]
+    meta: Meta
+
+
+# Refactored Comment models
+class CommentBase(SQLModel):
+    body: str = Field(min_length=1, max_length=10000)
+
+
+class CommentCreate(CommentBase):
+    pass
+
+
+class CommentUpdate(SQLModel):
+    body: str | None = Field(default=None, min_length=1, max_length=10000)
+
+
+class Comment(CommentBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    author_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
+    thread_id: uuid.UUID = Field(foreign_key="projectthread.id", nullable=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
+
+    author: "User" = Relationship()
+    thread: ProjectThread = Relationship(back_populates="comments")
+
+
+class CommentPublic(CommentBase):
+    id: uuid.UUID
+    author_id: uuid.UUID
+    thread_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    author: UserPublic
+
+
+class CommentsPublic(SQLModel):
+    data: list[CommentPublic]
+    meta: Meta

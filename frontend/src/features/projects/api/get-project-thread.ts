@@ -1,123 +1,211 @@
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
 
 import { api } from '@/lib/api-client';
-import { QueryConfig } from '@/lib/react-query';
+import { MutationConfig, QueryConfig } from '@/lib/react-query';
+import { Paginated, ProjectThread, Comment } from '@/types/api';
 
-export type ProjectThreadComment = {
-  id: string;
-  content: string;
-  author: {
-    id: string;
-    firstname: string;
-    lastname: string;
-    email: string;
-    role: string;
-    is_active: boolean;
-    is_superuser: boolean;
-  };
-  created_at: string;
-  updated_at: string;
-  project_id: string;
-};
+// Schema for creating a new thread
+export const createThreadInputSchema = z.object({
+  title: z.string().min(1, 'Required'),
+  body: z.string().min(1, 'Required'),
+});
+export type CreateThreadInput = z.infer<typeof createThreadInputSchema>;
 
-export type ProjectThread = {
-  id: string;
-  project_id: string;
-  comments: ProjectThreadComment[];
-  created_at: string;
-  updated_at: string;
-};
+// Schema for creating a new comment
+export const createCommentInputSchema = z.object({
+  body: z.string().min(1, 'Required'),
+});
+export type CreateCommentInput = z.infer<typeof createCommentInputSchema>;
 
-export const getProjectThread = ({ projectId }: { projectId: string }): Promise< ProjectThread > => {
-  return api.get(`/projects/${projectId}/thread`);
-};
+// Schema for updating a comment
+export const updateCommentInputSchema = z.object({
+  body: z.string().min(1, 'Required'),
+});
+export type UpdateCommentInput = z.infer<typeof updateCommentInputSchema>;
 
-export const getProjectThreadQueryOptions = (projectId: string) => {
-  return {
-    queryKey: ['project-thread', projectId],
-    queryFn: () => getProjectThread({ projectId }),
-  } as const;
-};
-
-type UseProjectThreadOptions = {
+// API function to get all threads for a project
+export const getProjectThreads = ({
+  projectId,
+}: {
   projectId: string;
-  queryConfig?: QueryConfig<typeof getProjectThread>;
+}): Promise<Paginated<ProjectThread>> => {
+  return api.get(`/projects/${projectId}/threads`);
 };
 
-export const useProjectThread = ({ projectId, queryConfig }: UseProjectThreadOptions) => {
+export const useProjectThreads = ({
+  projectId,
+  config,
+}: {
+  projectId: string;
+  config?: QueryConfig<typeof getProjectThreads>;
+}) => {
   return useQuery({
-    ...getProjectThreadQueryOptions(projectId),
-    ...queryConfig,
+    ...config,
+    queryKey: ['projects', projectId, 'threads'],
+    queryFn: () => getProjectThreads({ projectId }),
   });
 };
 
-export const createProjectComment = ({ 
-  projectId, 
-  data 
-}: { 
-  projectId: string; 
-  data: { content: string } 
-}): Promise< ProjectThreadComment > => {
-  return api.post(`/projects/${projectId}/thread/comments`, data);
+// API function to get a single thread by ID
+export const getProjectThread = ({
+  threadId,
+}: {
+  threadId: string;
+}): Promise<ProjectThread> => {
+  return api.get(`/projects/threads/${threadId}`);
 };
 
-export const updateProjectComment = ({ 
+export const useProjectThread = ({
+  threadId,
+  config,
+}: {
+  threadId: string;
+  config?: QueryConfig<typeof getProjectThread>;
+}) => {
+  return useQuery({
+    ...config,
+    queryKey: ['projects', 'threads', threadId],
+    queryFn: () => getProjectThread({ threadId }),
+  });
+};
+
+// API function to create a thread
+export const createProjectThread = ({
   projectId,
-  commentId, 
-  data 
-}: { 
+  data,
+}: {
   projectId: string;
-  commentId: string; 
-  data: { content: string } 
-}): Promise< ProjectThreadComment > => {
-  return api.patch(`/projects/${projectId}/thread/comments/${commentId}`, data);
+  data: CreateThreadInput;
+}): Promise<ProjectThread> => {
+  return api.post(`/projects/${projectId}/threads`, data);
 };
 
-export const deleteProjectComment = ({ 
+export const useCreateProjectThread = ({
   projectId,
-  commentId 
-}: { 
+  config,
+}: {
   projectId: string;
-  commentId: string 
-}): Promise<{ message: string }> => {
-  return api.delete(`/projects/${projectId}/thread/comments/${commentId}`);
-};
-
-export const useCreateProjectComment = () => {
+  config?: MutationConfig<typeof createProjectThread>;
+}) => {
   const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: createProjectComment,
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: ['project-thread', variables.projectId] 
+    ...config,
+    mutationFn: createProjectThread,
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries({
+        queryKey: ['projects', projectId, 'threads'],
       });
+      if (config?.onSuccess) {
+        config.onSuccess(...args);
+      }
     },
   });
 };
 
-export const useUpdateProjectComment = () => {
+// API function to create a comment
+export const createComment = ({
+  projectId,
+  threadId,
+  data,
+}: {
+  projectId: string;
+  threadId: string;
+  data: CreateCommentInput;
+}): Promise<Comment> => {
+  return api.post(`/projects/${projectId}/threads/${threadId}/comments`, data);
+};
+
+export const useCreateComment = ({
+  config,
+  projectId,
+  threadId,
+}: {
+  config?: MutationConfig<typeof createComment>;
+  projectId: string;
+  threadId: string;
+}) => {
   const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: updateProjectComment,
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: ['project-thread', variables.projectId] 
+    ...config,
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries({
+        queryKey: ['projects', projectId, 'threads'],
       });
+      queryClient.invalidateQueries({
+        queryKey: getProjectThreadQueryOptions(threadId).queryKey,
+      });
+      config?.onSuccess?.(...args);
     },
+    mutationFn: createComment,
   });
 };
 
-export const useDeleteProjectComment = () => {
+// Helper function to get query options for a thread
+export const getProjectThreadQueryOptions = (threadId: string) => ({
+  queryKey: ['projects', 'threads', threadId],
+});
+
+// API function to update a comment
+export const updateComment = ({
+  threadId,
+  commentId,
+  data,
+}: {
+  threadId: string;
+  commentId: string;
+  data: UpdateCommentInput;
+}): Promise<Comment> => {
+  return api.patch(`/projects/threads/${threadId}/comments/${commentId}`, data);
+};
+
+export const useUpdateComment = ({
+  projectId,
+  config,
+}: {
+  projectId: string;
+  config?: MutationConfig<typeof updateComment>;
+}) => {
   const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: deleteProjectComment,
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: ['project-thread', variables.projectId] 
+    ...config,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: ['projects', projectId, 'threads'],
       });
+      config?.onSuccess?.(data, variables, context);
     },
+    mutationFn: updateComment,
+  });
+};
+
+// API function to delete a comment
+export const deleteComment = ({
+  threadId,
+  commentId,
+}: {
+  commentId: string;
+  threadId: string;
+}) => {
+  return api.delete(`/projects/threads/${threadId}/comments/${commentId}`);
+};
+
+export const useDeleteComment = ({
+  projectId,
+  config,
+}: {
+  projectId: string;
+  config?: MutationConfig<typeof deleteComment>;
+}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...config,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: ['projects', projectId, 'threads'],
+      });
+      config?.onSuccess?.(data, variables, context);
+    },
+    mutationFn: deleteComment,
   });
 };
