@@ -17,6 +17,11 @@ export type Meta = {
   totalPages: number;
 };
 
+export type Paginated<T> = {
+  data: T[];
+  meta: Meta;
+};
+
 export type User = Entity<{
   firstname: string;
   lastname: string;
@@ -35,18 +40,27 @@ export type Team = Entity<{
   description: string;
 }>;
 
-export type Discussion = Entity<{
+export type Comment = {
+  id: string;
+  body: string;
+  thread_id: string;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+  author: User;
+};
+
+export type ProjectThread = {
+  id: string;
   title: string;
   body: string;
-  teamId: string;
+  author_id: string;
+  project_id: string;
+  created_at: string;
+  updated_at: string;
   author: User;
-}>;
-
-export type Comment = Entity<{
-  body: string;
-  discussionId: string;
-  author: User;
-}>;
+  comments: Comment[];
+};
 
 /**
  * Project-related enums that match the backend models

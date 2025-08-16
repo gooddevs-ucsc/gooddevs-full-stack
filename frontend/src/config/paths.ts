@@ -12,6 +12,15 @@ export const paths = {
   projectDetail: {
     path: '/projects/:id',
     getHref: (id: string) => `/projects/${id}`,
+    threadList: {
+      path: '/projects/:id/threads',
+      getHref: (id: string) => `/projects/${id}/threads`,
+    },
+    threadDetail: {
+      path: '/projects/:id/threads/:threadId',
+      getHref: (id: string, threadId: string) =>
+        `/projects/${id}/threads/${threadId}`,
+    },
   },
 
   auth: {

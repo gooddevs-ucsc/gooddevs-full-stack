@@ -23,6 +23,7 @@ import { formatDate } from '@/utils/format';
 
 import { ProjectDescriptionTab } from './project-description-tab';
 import { ProjectThread } from './project-thread';
+import { ProjectThreadListRoute } from '@/app/routes/project-thread-list';
 
 const getProjectTypeColor = (type: ProjectType) => {
   return PROJECT_TYPE_STYLES[type] || PROJECT_TYPE_STYLES.OTHER;

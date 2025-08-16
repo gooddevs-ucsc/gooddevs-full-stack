@@ -11,6 +11,7 @@ import { formatDate } from '@/utils/format';
 import { useInfiniteComments } from '../api/get-comments';
 
 import { DeleteComment } from './delete-comment';
+import { UpdateComment } from './update-comment';
 
 type CommentsListProps = {
   discussionId: string;
@@ -60,7 +61,7 @@ export const CommentsList = ({ discussionId }: CommentsListProps) => {
               <div className="flex justify-between">
                 <div>
                   <span className="text-xs font-semibold">
-                    {formatDate(comment.createdAt)}
+                    {formatDate(new Date(comment.created_at).getTime())}
                   </span>
                   {comment.author && (
                     <span className="text-xs font-bold">
@@ -69,7 +70,14 @@ export const CommentsList = ({ discussionId }: CommentsListProps) => {
                     </span>
                   )}
                 </div>
-                <DeleteComment discussionId={discussionId} id={comment.id} />
+                <div className="flex items-center space-x-2">
+                  <UpdateComment
+                    discussionId={discussionId}
+                    commentId={comment.id}
+                    body={comment.body}
+                  />
+                  <DeleteComment discussionId={discussionId} id={comment.id} />
+                </div>
               </div>
             </Authorization>
 
