@@ -57,7 +57,7 @@ const CommentItem = ({
   const canEdit = currentUser?.id === comment.author_id;
 
   return (
-    <div className="p-6">
+    <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 shadow-sm">
       <div className="flex items-start gap-4">
         <div className="flex size-10 items-center justify-center rounded-full bg-slate-100">
           <User className="size-5 text-slate-500" />
@@ -278,7 +278,7 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
 
       <div className="rounded-xl border border-slate-200/60 bg-white shadow-sm">
         {/* Comments List */}
-        <div className="divide-y divide-slate-200/60">
+        <div className="space-y-4 p-4">
           {comments.length === 0 ? (
             <div className="p-12 text-center">
               <p className="text-slate-600">No comments yet.</p>
