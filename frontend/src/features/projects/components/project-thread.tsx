@@ -1,5 +1,13 @@
-import { MessageCircle, Send, User, Edit, Trash2 } from 'lucide-react';
+import {
+  MessageCircle,
+  Send,
+  User,
+  Edit,
+  Trash2,
+  ArrowLeft,
+} from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Form, Textarea } from '@/components/ui/form';
@@ -229,6 +237,11 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
       <div className="border-b border-slate-200/60 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <Link to={`/projects/${thread.project_id}`}>
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="size-5" />
+              </Button>
+            </Link>
             <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
               <MessageCircle className="size-5 text-white" />
             </div>
