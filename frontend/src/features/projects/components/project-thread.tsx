@@ -1,15 +1,4 @@
-import {
-  MessageCircle,
-  Send,
-  User,
-  Clock,
-  ThumbsUp,
-  Reply,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Plus,
-} from 'lucide-react';
+import { MessageCircle, Send, User, Edit, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { z } from 'zod';
 
@@ -19,9 +8,11 @@ import { useNotifications } from '@/components/ui/notifications';
 import { formatDate } from '@/utils/format';
 import { Spinner } from '@/components/ui/spinner';
 import { useUser } from '@/lib/auth';
+import { MDPreview } from '@/components/ui/md-preview';
 
 import {
   useProjectThreads,
+  useProjectThread,
   useCreateProjectThread,
   useCreateComment,
   useUpdateComment,
@@ -36,7 +27,7 @@ import {
 import { Comment as CommentType } from '@/types/api';
 
 type ProjectThreadProps = {
-  projectId: string;
+  threadId: string;
 };
 
 const CommentItem = ({
@@ -142,44 +133,25 @@ const CommentItem = ({
   );
 };
 
-export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
+export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
   const { addNotification } = useNotifications();
   const [isCommentFormOpen, setIsCommentFormOpen] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
 
-  const {
-    data: threadsData,
-    isLoading,
-    error,
-  } = useProjectThreads({ projectId });
-  const createThreadMutation = useCreateProjectThread({ projectId });
+  const { data: thread, isLoading, error } = useProjectThread({ threadId });
   const createCommentMutation = useCreateComment({
-    projectId,
-    threadId: threadsData?.data?.[0]?.id || '',
+    threadId: threadId,
   });
-  const updateCommentMutation = useUpdateComment({ projectId });
-  const deleteCommentMutation = useDeleteComment({ projectId });
+  const updateCommentMutation = useUpdateComment({ threadId });
+  const deleteCommentMutation = useDeleteComment({ threadId });
 
   const user = useUser();
 
-  const thread = threadsData?.data?.[0];
   const comments = thread?.comments || [];
-
-  const handleCreateThread = async (values: CreateThreadInput) => {
-    await createThreadMutation.mutateAsync({
-      projectId,
-      data: values,
-    });
-    addNotification({
-      type: 'success',
-      title: 'Discussion Started',
-    });
-  };
 
   const handleAddComment = async (values: CreateCommentInput) => {
     if (!thread) return;
     await createCommentMutation.mutateAsync({
-      projectId,
       threadId: thread.id,
       data: values,
     });
@@ -249,32 +221,8 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
           <MessageCircle className="size-8 text-slate-400" />
         </div>
         <h4 className="mb-4 text-lg font-medium text-slate-900">
-          Start the Project Discussion
+          Discussion thread not found.
         </h4>
-        <Form onSubmit={handleCreateThread} schema={createThreadInputSchema}>
-          {({ register, formState }) => (
-            <div className="mx-auto max-w-lg space-y-4">
-              <Input
-                label="Title"
-                registration={register('title')}
-                error={formState.errors.title}
-              />
-              <Textarea
-                label="Message"
-                registration={register('body')}
-                error={formState.errors.body}
-              />
-              <Button
-                type="submit"
-                isLoading={createThreadMutation.isPending}
-                className="bg-green-600 text-white hover:bg-green-700"
-              >
-                <Plus className="mr-2 size-4" />
-                Start Discussion
-              </Button>
-            </div>
-          )}
-        </Form>
       </div>
     );
   }
@@ -310,6 +258,11 @@ export const ProjectThread = ({ projectId }: ProjectThreadProps) => {
             </div>
           </Button>
         </div>
+      </div>
+
+      {/* Thread Body */}
+      <div className="prose max-w-none p-6">
+        <MDPreview value={thread.body} />
       </div>
 
       {/* Comments List */}

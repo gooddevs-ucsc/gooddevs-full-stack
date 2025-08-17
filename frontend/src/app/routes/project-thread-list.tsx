@@ -29,7 +29,7 @@ export const ProjectThreadListRoute = () => {
         <ul>
           {projectThreadsQuery.data.data.map((thread) => (
             <li key={thread.id} className="border-b py-4">
-              <Link to={`${thread.id}`} className="flex justify-between">
+              <Link to={thread.id} className="flex justify-between">
                 <div>
                   <h2 className="text-xl font-semibold">{thread.title}</h2>
                   <p className="text-sm text-gray-500">

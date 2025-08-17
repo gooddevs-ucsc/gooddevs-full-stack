@@ -105,11 +105,10 @@ def read_comments(
     )
 
 
-@router.post("/{project_id}/threads/{thread_id}/comments", response_model=CommentPublic)
+@router.post("/threads/{thread_id}/comments", response_model=CommentPublic)
 def create_comment(
     *,
     session: SessionDep,
-    project_id: uuid.UUID,
     thread_id: uuid.UUID,
     comment_in: CommentCreate,
     current_user: CurrentUser,

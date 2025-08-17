@@ -105,33 +105,26 @@ export const useCreateProjectThread = ({
 
 // API function to create a comment
 export const createComment = ({
-  projectId,
   threadId,
   data,
 }: {
-  projectId: string;
   threadId: string;
   data: CreateCommentInput;
 }): Promise<Comment> => {
-  return api.post(`/projects/${projectId}/threads/${threadId}/comments`, data);
+  return api.post(`/projects/threads/${threadId}/comments`, data);
 };
 
 export const useCreateComment = ({
   config,
-  projectId,
   threadId,
 }: {
   config?: MutationConfig<typeof createComment>;
-  projectId: string;
   threadId: string;
 }) => {
   const queryClient = useQueryClient();
   return useMutation({
     ...config,
     onSuccess: (...args) => {
-      queryClient.invalidateQueries({
-        queryKey: ['projects', projectId, 'threads'],
-      });
       queryClient.invalidateQueries({
         queryKey: getProjectThreadQueryOptions(threadId).queryKey,
       });
@@ -160,22 +153,22 @@ export const updateComment = ({
 };
 
 export const useUpdateComment = ({
-  projectId,
+  threadId,
   config,
 }: {
-  projectId: string;
+  threadId: string;
   config?: MutationConfig<typeof updateComment>;
 }) => {
   const queryClient = useQueryClient();
   return useMutation({
     ...config,
-    onSuccess: (data, variables, context) => {
-      queryClient.invalidateQueries({
-        queryKey: ['projects', projectId, 'threads'],
-      });
-      config?.onSuccess?.(data, variables, context);
-    },
     mutationFn: updateComment,
+    onSuccess: (data, ...args) => {
+      queryClient.invalidateQueries({
+        queryKey: getProjectThreadQueryOptions(threadId).queryKey,
+      });
+      config?.onSuccess?.(data, ...args);
+    },
   });
 };
 
@@ -191,21 +184,21 @@ export const deleteComment = ({
 };
 
 export const useDeleteComment = ({
-  projectId,
+  threadId,
   config,
 }: {
-  projectId: string;
+  threadId: string;
   config?: MutationConfig<typeof deleteComment>;
 }) => {
   const queryClient = useQueryClient();
   return useMutation({
     ...config,
-    onSuccess: (data, variables, context) => {
-      queryClient.invalidateQueries({
-        queryKey: ['projects', projectId, 'threads'],
-      });
-      config?.onSuccess?.(data, variables, context);
-    },
     mutationFn: deleteComment,
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries({
+        queryKey: getProjectThreadQueryOptions(threadId).queryKey,
+      });
+      config?.onSuccess?.(...args);
+    },
   });
 };

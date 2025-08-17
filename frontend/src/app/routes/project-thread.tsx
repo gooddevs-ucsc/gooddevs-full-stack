@@ -5,14 +5,10 @@ import { Footer } from '@/components/ui/footer/footer';
 import { Navbar } from '@/components/ui/navbar/navbar';
 import { ProjectThread } from '@/features/projects/components/project-thread';
 
-const ProjectThreadDetailRoute = () => {
+const ProjectThreadRoute = () => {
   const { threadId } = useParams<{ threadId: string }>();
 
-  if (!threadId) {
-    return <div>Thread not found.</div>;
-  }
-
-  return <ProjectThread threadId={threadId} />;
+  return <ProjectThread threadId={threadId!} />;
 };
 
-export default ProjectThreadDetailRoute;
+export default ProjectThreadRoute;

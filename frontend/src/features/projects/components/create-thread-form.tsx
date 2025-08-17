@@ -17,7 +17,7 @@ export const CreateThreadForm = ({ projectId }: { projectId: string }) => {
     projectId: projectId!,
     config: {
       onSuccess: (data) => {
-        navigate(`../${data.id}`);
+        navigate(`threads/${data.id}`);
       },
     },
   });
