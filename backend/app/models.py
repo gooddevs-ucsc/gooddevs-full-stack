@@ -1,6 +1,7 @@
 import uuid
 import enum
 from datetime import datetime
+from typing import Optional
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel, Column, Enum
@@ -42,8 +43,8 @@ class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     is_active: bool = True
     is_superuser: bool = False
-    firstname: str | None = Field(default=None, max_length=255)
-    lastname: str | None = Field(default=None, max_length=255)
+    firstname: Optional[str] = Field(default=None, max_length=255)
+    lastname: Optional[str] = Field(default=None, max_length=255)
     role: UserRole = Field(default=UserRole.VOLUNTEER,
                            sa_column=Column(Enum(UserRole)))
 
@@ -63,14 +64,14 @@ class UserRegister(SQLModel):
 
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
-    email: EmailStr | None = Field(
+    email: Optional[EmailStr] = Field(
         default=None, max_length=255)  # type: ignore
-    password: str | None = Field(default=None, min_length=8, max_length=40)
+    password: Optional[str] = Field(default=None, min_length=8, max_length=40)
 
 
 class UserUpdateMe(SQLModel):
-    full_name: str | None = Field(default=None, max_length=255)
-    email: EmailStr | None = Field(default=None, max_length=255)
+    full_name: Optional[str] = Field(default=None, max_length=255)
+    email: Optional[EmailStr] = Field(default=None, max_length=255)
 
 
 class UpdatePassword(SQLModel):
@@ -86,6 +87,8 @@ class User(UserBase, table=True):
         back_populates="owner", cascade_delete=True)
     projects: list["Project"] = Relationship(
         back_populates="requester", cascade_delete=True)
+    volunteer_profile: Optional["VolunteerProfile"] = Relationship(
+        back_populates="user", cascade_delete=True)
 
 
 # Properties to return via API, id is always required
@@ -106,7 +109,7 @@ class UsersPublic(SQLModel):
 # Shared properties
 class ItemBase(SQLModel):
     title: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=255)
 
 
 # Properties to receive on item creation
@@ -116,7 +119,7 @@ class ItemCreate(ItemBase):
 
 # Properties to receive on item update
 class ItemUpdate(ItemBase):
-    title: str | None = Field(
+    title: Optional[str] = Field(
         default=None, min_length=1, max_length=255)  # type: ignore
 
 
@@ -126,7 +129,7 @@ class Item(ItemBase, table=True):
     owner_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
-    owner: User | None = Relationship(back_populates="items")
+    owner: Optional[User] = Relationship(back_populates="items")
 
 
 # Properties to return via API, id is always required
@@ -145,8 +148,8 @@ class ProjectBase(SQLModel):
     title: str = Field(min_length=1, max_length=255)
     description: str = Field(min_length=10, max_length=2000)
     project_type: ProjectType = Field(sa_column=Column(Enum(ProjectType)))
-    preferred_technologies: str | None = Field(default=None, max_length=500)
-    estimated_timeline: EstimatedTimeline | None = Field(
+    preferred_technologies: Optional[str] = Field(default=None, max_length=500)
+    estimated_timeline: Optional[EstimatedTimeline] = Field(
         default=None, sa_column=Column(Enum(EstimatedTimeline)))
 
 
@@ -157,15 +160,15 @@ class ProjectCreate(ProjectBase):
 
 # Properties to receive via API on update
 class ProjectUpdate(SQLModel):
-    title: str | None = Field(default=None, min_length=1, max_length=255)
-    description: str | None = Field(
+    title: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = Field(
         default=None, min_length=10, max_length=2000)
-    project_type: ProjectType | None = Field(
+    project_type: Optional[ProjectType] = Field(
         default=None, sa_column=Column(Enum(ProjectType)))
-    preferred_technologies: str | None = Field(default=None, max_length=500)
-    estimated_timeline: EstimatedTimeline | None = Field(
+    preferred_technologies: Optional[str] = Field(default=None, max_length=500)
+    estimated_timeline: Optional[EstimatedTimeline] = Field(
         default=None, sa_column=Column(Enum(EstimatedTimeline)))
-    status: ProjectStatus | None
+    status: Optional[ProjectStatus]
 
 
 # Database model, database table inferred from class name
@@ -179,7 +182,7 @@ class Project(ProjectBase, table=True):
         default=ProjectStatus.PENDING, sa_column=Column(Enum(ProjectStatus)))
 
     # Relationships
-    requester: User | None = Relationship(back_populates="projects")
+    requester: Optional[User] = Relationship(back_populates="projects")
     tasks: list["Task"] = Relationship(back_populates="project", cascade_delete=True)
  
 
@@ -230,7 +233,7 @@ class AuthResponse(SQLModel):
 
 # Contents of JWT token
 class TokenPayload(SQLModel):
-    sub: str | None = None
+    sub: Optional[str] = None
 
 
 class NewPassword(SQLModel):
@@ -256,7 +259,7 @@ class ProjectCommentCreate(SQLModel):
     content: str
 
 class ProjectCommentUpdate(SQLModel):
-    content: str | None = None
+    content: Optional[str] = None
 
 class ProjectCommentPublic(SQLModel):
     id: uuid.UUID
@@ -290,25 +293,25 @@ class TaskPriority(str, enum.Enum):
 # Base Task model
 class TaskBase(SQLModel):
     title: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=1000)
+    description: Optional[str] = Field(default=None, max_length=1000)
     status: TaskStatus = Field(default= TaskStatus.TODO, sa_column=Column(Enum(TaskStatus)))
     priority: TaskPriority = Field(default= TaskPriority.MEDIUM, sa_column=Column(Enum(TaskPriority)))
-    estimated_hours: int | None = Field(default=None, ge=1)
-    actual_hours: int | None = Field(default=None, ge=0)
-    due_date: datetime | None = Field(default=None)
+    estimated_hours: Optional[int] = Field(default=None, ge=1)
+    actual_hours: Optional[int] = Field(default=None, ge=0)
+    due_date: Optional[datetime] = Field(default=None)
     
 # Api models
 class TaskCreate(TaskBase):
     pass
 
 class TaskUpdate(SQLModel):
-    title: str | None = Field(default=None, min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=1000)
-    status: TaskStatus | None = Field(default=None)
-    priority: TaskPriority | None = Field(default=None)
-    estimated_hours: int | None = Field(default=None, ge=1)
-    actual_hours: int | None = Field(default=None, ge=0)
-    due_date: datetime | None = Field(default=None)
+    title: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=1000)
+    status: Optional[TaskStatus] = Field(default=None)
+    priority: Optional[TaskPriority] = Field(default=None)
+    estimated_hours: Optional[int] = Field(default=None, ge=1)
+    actual_hours: Optional[int] = Field(default=None, ge=0)
+    due_date: Optional[datetime] = Field(default=None)
     
 # Database models
 class Task(TaskBase, table=True):
@@ -318,7 +321,7 @@ class Task(TaskBase, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
-    project: Project | None = Relationship(back_populates="tasks")
+    project: Optional[Project] = Relationship(back_populates="tasks")
     
 # Public Api models
 class TaskPublic(TaskBase):
@@ -334,5 +337,131 @@ class TasksPublic(SQLModel):
 # Response wrapper for single task
 class TaskResponse(SQLModel):   
     data: TaskPublic
+
+
+# Volunteer Profile Models
+class VolunteerProfileBase(SQLModel):
+    age: Optional[int] = Field(default=None, ge=18, le=100)
+    title: Optional[str] = Field(default=None, max_length=255)
+    bio: Optional[str] = Field(default=None, max_length=2000)
+    phone: Optional[str] = Field(default=None, max_length=20)
+    location: Optional[str] = Field(default=None, max_length=255)
+    profile_photo_url: Optional[str] = Field(default=None, max_length=500)
+    linkedin_profile_url: Optional[str] = Field(default=None, max_length=500)
+    github_profile_url: Optional[str] = Field(default=None, max_length=500)
+
+
+class VolunteerProfileCreate(VolunteerProfileBase):
+    pass
+
+
+class VolunteerProfileUpdate(SQLModel):
+    age: Optional[int] = Field(default=None, ge=18, le=100)
+    title: Optional[str] = Field(default=None, max_length=255)
+    bio: Optional[str] = Field(default=None, max_length=2000)
+    phone: Optional[str] = Field(default=None, max_length=20)
+    location: Optional[str] = Field(default=None, max_length=255)
+    profile_photo_url: Optional[str] = Field(default=None, max_length=500)
+    linkedin_profile_url: Optional[str] = Field(default=None, max_length=500)
+    github_profile_url: Optional[str] = Field(default=None, max_length=500)
+
+
+class VolunteerProfile(VolunteerProfileBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", unique=True, nullable=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
     
+    # Relationships
+    user: Optional[User] = Relationship(back_populates="volunteer_profile")
+    skills: list["VolunteerSkill"] = Relationship(back_populates="profile", cascade_delete=True)
+    experiences: list["VolunteerExperience"] = Relationship(back_populates="profile", cascade_delete=True)
+    projects: list["VolunteerProject"] = Relationship(back_populates="profile", cascade_delete=True)
+
+
+class VolunteerSkillBase(SQLModel):
+    name: str = Field(max_length=100)
+
+
+class VolunteerSkillCreate(VolunteerSkillBase):
+    pass
+
+
+class VolunteerSkill(VolunteerSkillBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    profile_id: uuid.UUID = Field(foreign_key="volunteerprofile.id", nullable=False)
     
+    # Relationships
+    profile: Optional[VolunteerProfile] = Relationship(back_populates="skills")
+
+
+class VolunteerExperienceBase(SQLModel):
+    title: str = Field(max_length=255)
+    company: str = Field(max_length=255)
+    years: str = Field(max_length=100)
+    description: Optional[str] = Field(default=None, max_length=1000)
+
+
+class VolunteerExperienceCreate(VolunteerExperienceBase):
+    pass
+
+
+class VolunteerExperience(VolunteerExperienceBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    profile_id: uuid.UUID = Field(foreign_key="volunteerprofile.id", nullable=False)
+    
+    # Relationships
+    profile: Optional[VolunteerProfile] = Relationship(back_populates="experiences")
+
+
+class VolunteerProjectBase(SQLModel):
+    title: str = Field(max_length=255)
+    description: Optional[str] = Field(default=None, max_length=1000)
+    link: Optional[str] = Field(default=None, max_length=500)
+
+
+class VolunteerProjectCreate(VolunteerProjectBase):
+    pass
+
+
+class VolunteerProject(VolunteerProjectBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    profile_id: uuid.UUID = Field(foreign_key="volunteerprofile.id", nullable=False)
+    
+    # Relationships
+    profile: Optional[VolunteerProfile] = Relationship(back_populates="projects")
+
+
+# Public API models
+class VolunteerSkillPublic(VolunteerSkillBase):
+    id: uuid.UUID
+
+
+class VolunteerExperiencePublic(VolunteerExperienceBase):
+    id: uuid.UUID
+
+
+class VolunteerProjectPublic(VolunteerProjectBase):
+    id: uuid.UUID
+
+
+class VolunteerProfilePublic(VolunteerProfileBase):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    user: UserPublic
+    skills: list[VolunteerSkillPublic] = []
+    experiences: list[VolunteerExperiencePublic] = []
+    projects: list[VolunteerProjectPublic] = []
+
+
+class VolunteerProfileResponse(SQLModel):
+    data: VolunteerProfilePublic
+
+
+class VolunteerProfileCreateRequest(SQLModel):
+    profile: VolunteerProfileCreate
+    skills: list[str] = []
+    experiences: list[VolunteerExperienceCreate] = []
+    projects: list[VolunteerProjectCreate] = []

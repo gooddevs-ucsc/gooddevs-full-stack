@@ -7,6 +7,7 @@ from sqlmodel import Session, select, func
 from app.core.security import get_password_hash, verify_password
 from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate
 from app.models import ProjectThread, ProjectComment, ProjectCommentCreate, ProjectCommentUpdate
+from app.models import VolunteerProfile, VolunteerProfileCreate, VolunteerProfileUpdate, VolunteerSkill, VolunteerSkillCreate, VolunteerExperience, VolunteerExperienceCreate, VolunteerProject, VolunteerProjectCreate
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -195,3 +196,98 @@ def get_tasks_by_project_id(*, session: Session, project_id: uuid.UUID, skip: in
 def count_tasks_by_project(*, session: Session, project_id: uuid.UUID)-> int:
     statement = select(func.count(Task.id)).where(Task.project_id == project_id)
     return session.exec(statement).one() or 0
+
+
+# Volunteer Profile CRUD operations
+def get_volunteer_profile_by_user_id(*, session: Session, user_id: uuid.UUID) -> VolunteerProfile | None:
+    statement = select(VolunteerProfile).where(VolunteerProfile.user_id == user_id)
+    return session.exec(statement).first()
+
+
+def create_volunteer_profile(*, session: Session, profile_in: VolunteerProfileCreate, user_id: uuid.UUID) -> VolunteerProfile:
+    db_profile = VolunteerProfile.model_validate(
+        profile_in, update={"user_id": user_id}
+    )
+    session.add(db_profile)
+    session.commit()
+    session.refresh(db_profile)
+    return db_profile
+
+
+def update_volunteer_profile(*, session: Session, db_profile: VolunteerProfile, profile_in: VolunteerProfileUpdate) -> VolunteerProfile:
+    profile_data = profile_in.model_dump(exclude_unset=True)
+    profile_data["updated_at"] = datetime.now(timezone.utc)
+    
+    db_profile.sqlmodel_update(profile_data)
+    session.add(db_profile)
+    session.commit()
+    session.refresh(db_profile)
+    return db_profile
+
+
+def delete_volunteer_profile(*, session: Session, profile_id: uuid.UUID) -> bool:
+    profile = session.get(VolunteerProfile, profile_id)
+    if profile:
+        session.delete(profile)
+        session.commit()
+        return True
+    return False
+
+
+def get_volunteer_profile_by_id(*, session: Session, profile_id: uuid.UUID) -> VolunteerProfile | None:
+    return session.get(VolunteerProfile, profile_id)
+
+
+# Volunteer Skills CRUD operations
+def create_volunteer_skill(*, session: Session, skill_name: str, profile_id: uuid.UUID) -> VolunteerSkill:
+    db_skill = VolunteerSkill(name=skill_name, profile_id=profile_id)
+    session.add(db_skill)
+    session.commit()
+    session.refresh(db_skill)
+    return db_skill
+
+
+def delete_volunteer_skills_by_profile(*, session: Session, profile_id: uuid.UUID) -> None:
+    statement = select(VolunteerSkill).where(VolunteerSkill.profile_id == profile_id)
+    skills = session.exec(statement).all()
+    for skill in skills:
+        session.delete(skill)
+    session.commit()
+
+
+# Volunteer Experience CRUD operations
+def create_volunteer_experience(*, session: Session, experience_in: VolunteerExperienceCreate, profile_id: uuid.UUID) -> VolunteerExperience:
+    db_experience = VolunteerExperience.model_validate(
+        experience_in, update={"profile_id": profile_id}
+    )
+    session.add(db_experience)
+    session.commit()
+    session.refresh(db_experience)
+    return db_experience
+
+
+def delete_volunteer_experiences_by_profile(*, session: Session, profile_id: uuid.UUID) -> None:
+    statement = select(VolunteerExperience).where(VolunteerExperience.profile_id == profile_id)
+    experiences = session.exec(statement).all()
+    for experience in experiences:
+        session.delete(experience)
+    session.commit()
+
+
+# Volunteer Project CRUD operations
+def create_volunteer_project(*, session: Session, project_in: VolunteerProjectCreate, profile_id: uuid.UUID) -> VolunteerProject:
+    db_project = VolunteerProject.model_validate(
+        project_in, update={"profile_id": profile_id}
+    )
+    session.add(db_project)
+    session.commit()
+    session.refresh(db_project)
+    return db_project
+
+
+def delete_volunteer_projects_by_profile(*, session: Session, profile_id: uuid.UUID) -> None:
+    statement = select(VolunteerProject).where(VolunteerProject.profile_id == profile_id)
+    projects = session.exec(statement).all()
+    for project in projects:
+        session.delete(project)
+    session.commit()
