@@ -117,9 +117,11 @@ export const createComment = ({
 export const useCreateComment = ({
   config,
   threadId,
+  projectId,
 }: {
   config?: MutationConfig<typeof createComment>;
   threadId: string;
+  projectId?: string;
 }) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -128,6 +130,11 @@ export const useCreateComment = ({
       queryClient.invalidateQueries({
         queryKey: getProjectThreadQueryOptions(threadId).queryKey,
       });
+      if (projectId) {
+        queryClient.invalidateQueries({
+          queryKey: ['projects', projectId, 'threads'],
+        });
+      }
       config?.onSuccess?.(...args);
     },
     mutationFn: createComment,

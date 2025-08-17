@@ -1,9 +1,8 @@
 import { MessageCircle, Send, User, Edit, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
-import { Form, Input, Textarea } from '@/components/ui/form';
+import { Form, Textarea } from '@/components/ui/form';
 import { useNotifications } from '@/components/ui/notifications';
 import { formatDate } from '@/utils/format';
 import { Spinner } from '@/components/ui/spinner';
@@ -11,18 +10,14 @@ import { useUser } from '@/lib/auth';
 import { MDPreview } from '@/components/ui/md-preview';
 
 import {
-  useProjectThreads,
   useProjectThread,
-  useCreateProjectThread,
   useCreateComment,
   useUpdateComment,
   useDeleteComment,
   createCommentInputSchema,
   updateCommentInputSchema,
-  createThreadInputSchema,
   type CreateCommentInput,
   type UpdateCommentInput,
-  type CreateThreadInput,
 } from '../api/get-project-thread';
 import { Comment as CommentType } from '@/types/api';
 
@@ -141,6 +136,7 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
   const { data: thread, isLoading, error } = useProjectThread({ threadId });
   const createCommentMutation = useCreateComment({
     threadId: threadId,
+    projectId: thread?.project_id,
   });
   const updateCommentMutation = useUpdateComment({ threadId });
   const deleteCommentMutation = useDeleteComment({ threadId });
