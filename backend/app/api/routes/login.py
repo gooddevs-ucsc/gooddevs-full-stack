@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app import crud
-from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
+from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser, OptionalCurrentUser
 from app.core import security
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
@@ -119,11 +119,11 @@ def login(
 
 
 @router.get("/auth/me", response_model=UserResponse)
-def get_current_user_info(current_user: CurrentUser) -> Any:
+def get_current_user_info(optional_current_user: OptionalCurrentUser) -> Any:
     """
     Get current user information (works with both cookie and bearer token auth)
     """
-    return UserResponse(data=current_user)
+    return UserResponse(data=optional_current_user)
 
 
 @router.post("/auth/logout")
