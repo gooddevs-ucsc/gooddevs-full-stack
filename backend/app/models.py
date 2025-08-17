@@ -317,7 +317,7 @@ class TaskBase(SQLModel):
 
 
 class TaskCreate(TaskBase):
-    pass
+    assignee_id: uuid.UUID | None = Field(default=None)
 
 
 class TaskUpdate(SQLModel):
@@ -336,11 +336,13 @@ class Task(TaskBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     project_id: uuid.UUID = Field(
         foreign_key="project.id", nullable=False, ondelete="CASCADE")
+    assignee_id: uuid.UUID | None = Field(default=None, foreign_key="user.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationships
     project: Project | None = Relationship(back_populates="tasks")
+    assignee: User | None = Relationship()
 
 # Public Api models
 
