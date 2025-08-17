@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useUser } from '@/lib/auth';
 import {
   Project,
   DeveloperRole,
@@ -19,6 +20,16 @@ import {
 
 import { useCreateProjectApplication } from '../api/create-project-application';
 
+// Helper function to validate URLs
+const isValidUrl = (string: string): boolean => {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+};
+
 interface ProjectApplicationFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -26,10 +37,6 @@ interface ProjectApplicationFormProps {
 }
 
 interface FormData {
-  firstname: string;
-  lastname: string;
-  email: string;
-  phone: string;
   linkedin: string;
   github: string;
   portfolio: string;
@@ -50,10 +57,6 @@ export default function ProjectApplicationForm({
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    firstname: '',
-    lastname: '',
-    email: '',
-    phone: '',
     linkedin: '',
     github: '',
     portfolio: '',
@@ -64,6 +67,9 @@ export default function ProjectApplicationForm({
     availability: '',
     preferred_technologies: '',
   });
+
+  // Get current user data
+  const { data: user } = useUser();
 
   const { mutate: createApplication, isPending: isSubmitting } =
     useCreateProjectApplication({
@@ -76,10 +82,6 @@ export default function ProjectApplicationForm({
             setShowSuccess(false);
             setCurrentStep(1);
             setFormData({
-              firstname: '',
-              lastname: '',
-              email: '',
-              phone: '',
               linkedin: '',
               github: '',
               portfolio: '',
@@ -94,13 +96,26 @@ export default function ProjectApplicationForm({
             onClose();
           }, 3000); // Show success message for 3 seconds
         },
-        onError: (error) => {
+        onError: (error: any) => {
           console.error('Failed to submit application:', error);
-          console.error(
-            'Error details:',
-            (error as any).response?.data || error.message,
-          );
-          // TODO: Show error notification
+          console.error('Error response:', error.response?.data);
+          console.error('Error status:', error.response?.status);
+          console.error('Validation errors:', error.response?.data?.detail);
+
+          // If it's a validation error, try to parse and display the specific issues
+          if (error.response?.status === 422 && error.response?.data?.detail) {
+            console.group('🔍 Validation Error Details:');
+            if (Array.isArray(error.response.data.detail)) {
+              error.response.data.detail.forEach((err: any) => {
+                console.error(
+                  `Field: ${err.loc?.join('.')} | Error: ${err.msg} | Input: ${err.input}`,
+                );
+              });
+            } else {
+              console.error('Detail:', error.response.data.detail);
+            }
+            console.groupEnd();
+          }
         },
       },
     });
@@ -119,29 +134,29 @@ export default function ProjectApplicationForm({
 
     switch (step) {
       case 1:
-        if (!formData.firstname.trim())
-          stepErrors.firstname = 'First name is required';
-        if (!formData.lastname.trim())
-          stepErrors.lastname = 'Last name is required';
-        if (!formData.email.trim()) stepErrors.email = 'Email is required';
-        if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
-          stepErrors.email = 'Please enter a valid email';
-        }
-        break;
-      case 2:
         if (!formData.github.trim())
           stepErrors.github = 'GitHub profile is required';
+        else if (formData.github.trim() && !isValidUrl(formData.github))
+          stepErrors.github = 'Please enter a valid GitHub URL';
+
+        if (formData.linkedin.trim() && !isValidUrl(formData.linkedin))
+          stepErrors.linkedin = 'Please enter a valid LinkedIn URL';
+
+        if (formData.portfolio.trim() && !isValidUrl(formData.portfolio))
+          stepErrors.portfolio = 'Please enter a valid portfolio URL';
         break;
-      case 3:
+      case 2:
         if (!formData.role) stepErrors.role = 'Please select a role';
         if (!formData.experience_level)
           stepErrors.experience_level = 'Please select experience level';
         if (!formData.availability)
           stepErrors.availability = 'Please select availability';
         break;
-      case 4:
+      case 3:
         if (!formData.motivation.trim())
           stepErrors.motivation = 'Motivation is required';
+        else if (formData.motivation.trim().length < 10)
+          stepErrors.motivation = 'Motivation must be at least 10 characters';
         break;
     }
 
@@ -158,15 +173,16 @@ export default function ProjectApplicationForm({
     const newErrors: Partial<FormData> = {};
 
     // Required fields validation
-    if (!formData.firstname.trim())
-      newErrors.firstname = 'First name is required';
-    if (!formData.lastname.trim()) newErrors.lastname = 'Last name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
     if (!formData.github.trim())
       newErrors.github = 'GitHub profile is required';
+    else if (formData.github.trim() && !isValidUrl(formData.github))
+      newErrors.github = 'Please enter a valid GitHub URL';
+
+    if (formData.linkedin.trim() && !isValidUrl(formData.linkedin))
+      newErrors.linkedin = 'Please enter a valid LinkedIn URL';
+
+    if (formData.portfolio.trim() && !isValidUrl(formData.portfolio))
+      newErrors.portfolio = 'Please enter a valid portfolio URL';
     if (!formData.role) newErrors.role = 'Please select a role';
     if (!formData.experience_level)
       newErrors.experience_level = 'Please select experience level';
@@ -174,13 +190,15 @@ export default function ProjectApplicationForm({
       newErrors.availability = 'Please select availability';
     if (!formData.motivation.trim())
       newErrors.motivation = 'Motivation is required';
+    else if (formData.motivation.trim().length < 10)
+      newErrors.motivation = 'Motivation must be at least 10 characters';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleNext = () => {
-    if (validateStep(currentStep) && currentStep < 4) {
+    if (validateStep(currentStep) && currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -193,9 +211,9 @@ export default function ProjectApplicationForm({
     console.log('Submit clicked!', { formData, project });
 
     if (!validateAllSteps()) {
-      console.log('Validation failed');
+      console.log('Validation failed, errors:', errors);
       // Find first step with errors
-      for (let step = 1; step <= 4; step++) {
+      for (let step = 1; step <= 3; step++) {
         if (!validateStep(step)) {
           setCurrentStep(step);
           break;
@@ -205,139 +223,51 @@ export default function ProjectApplicationForm({
     }
 
     console.log('Validation passed, submitting...');
+    console.log('Form data to submit:', {
+      linkedin: formData.linkedin || undefined,
+      github: formData.github,
+      portfolio: formData.portfolio || undefined,
+      role: formData.role,
+      experience_level: formData.experience_level,
+      motivation: formData.motivation,
+      relevant_experience: formData.relevant_experience || undefined,
+      availability: formData.availability,
+      preferred_technologies: formData.preferred_technologies || undefined,
+    });
 
     // Submit application using the API
-    createApplication({
-      data: {
-        firstname: formData.firstname,
-        lastname: formData.lastname,
-        email: formData.email,
-        phone: formData.phone || undefined,
-        linkedin: formData.linkedin || undefined,
+    try {
+      const submitData = {
+        firstname: user?.firstname || '',
+        lastname: user?.lastname || '',
+        email: user?.email || '',
+        phone: undefined, // We can add phone to user profile later
+        linkedin: formData.linkedin?.trim() || undefined,
         github: formData.github,
-        portfolio: formData.portfolio || undefined,
+        portfolio: formData.portfolio?.trim() || undefined,
         role: formData.role as DeveloperRole,
         experience_level: formData.experience_level as ExperienceLevel,
         motivation: formData.motivation,
-        relevant_experience: formData.relevant_experience || undefined,
+        relevant_experience: formData.relevant_experience?.trim() || undefined,
         availability: formData.availability as Availability,
-        preferred_technologies: formData.preferred_technologies || undefined,
-      },
-      projectId: project.id,
-    });
+        preferred_technologies:
+          formData.preferred_technologies?.trim() || undefined,
+      };
+
+      console.log('Final submit data:', submitData);
+
+      createApplication({
+        data: submitData,
+        projectId: project.id,
+      });
+    } catch (error) {
+      console.error('Error during submission:', error);
+    }
   };
 
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h3 className="text-xl font-semibold text-slate-900">
-                Personal Information
-              </h3>
-              <p className="mt-2 text-sm text-slate-600">
-                Tell us about yourself
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="firstname"
-                  className="mb-2 block text-sm font-medium text-slate-700"
-                >
-                  First Name *
-                </label>
-                <Input
-                  id="firstname"
-                  value={formData.firstname}
-                  onChange={(e) =>
-                    handleInputChange('firstname', e.target.value)
-                  }
-                  placeholder="Enter your first name"
-                  className={`w-full ${
-                    errors.firstname
-                      ? 'border-red-500 focus:border-red-500'
-                      : ''
-                  }`}
-                  required
-                />
-                {errors.firstname && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.firstname}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="lastname"
-                  className="mb-2 block text-sm font-medium text-slate-700"
-                >
-                  Last Name *
-                </label>
-                <Input
-                  id="lastname"
-                  value={formData.lastname}
-                  onChange={(e) =>
-                    handleInputChange('lastname', e.target.value)
-                  }
-                  placeholder="Enter your last name"
-                  className={`w-full ${
-                    errors.lastname ? 'border-red-500 focus:border-red-500' : ''
-                  }`}
-                  required
-                />
-                {errors.lastname && (
-                  <p className="mt-1 text-sm text-red-600">{errors.lastname}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
-                Email Address *
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="your.email@example.com"
-                className={`w-full ${
-                  errors.email ? 'border-red-500 focus:border-red-500' : ''
-                }`}
-                required
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="phone"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
-                Phone Number
-              </label>
-              <Input
-                id="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="+94 71 234 5678"
-                className="w-full"
-              />
-            </div>
-          </div>
-        );
-
-      case 2:
         return (
           <div className="space-y-6">
             <div className="text-center">
@@ -361,8 +291,13 @@ export default function ProjectApplicationForm({
                 value={formData.linkedin}
                 onChange={(e) => handleInputChange('linkedin', e.target.value)}
                 placeholder="https://linkedin.com/in/yourprofile"
-                className="w-full"
+                className={`w-full ${
+                  errors.linkedin ? 'border-red-500 focus:border-red-500' : ''
+                }`}
               />
+              {errors.linkedin && (
+                <p className="mt-1 text-sm text-red-600">{errors.linkedin}</p>
+              )}
             </div>
 
             <div>
@@ -399,13 +334,18 @@ export default function ProjectApplicationForm({
                 value={formData.portfolio}
                 onChange={(e) => handleInputChange('portfolio', e.target.value)}
                 placeholder="https://yourportfolio.com"
-                className="w-full"
+                className={`w-full ${
+                  errors.portfolio ? 'border-red-500 focus:border-red-500' : ''
+                }`}
               />
+              {errors.portfolio && (
+                <p className="mt-1 text-sm text-red-600">{errors.portfolio}</p>
+              )}
             </div>
           </div>
         );
 
-      case 3:
+      case 2:
         return (
           <div className="space-y-6">
             <div className="text-center">
@@ -545,7 +485,7 @@ export default function ProjectApplicationForm({
           </div>
         );
 
-      case 4:
+      case 3:
         return (
           <div className="space-y-6">
             <div className="text-center">
@@ -564,6 +504,9 @@ export default function ProjectApplicationForm({
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
                 Why are you interested in this project? *
+                <span className="ml-2 text-xs text-slate-500">
+                  ({formData.motivation.length}/10 min)
+                </span>
               </label>
               <Textarea
                 id="motivation"
@@ -621,23 +564,23 @@ export default function ProjectApplicationForm({
               <div className="mt-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-700">
-                    Step {currentStep} of 4
+                    Step {currentStep} of 3
                   </span>
                   <span className="text-sm text-slate-500">
-                    {Math.round((currentStep / 4) * 100)}% Complete
+                    {Math.round((currentStep / 3) * 100)}% Complete
                   </span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-200">
                   <div
                     className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-300 ease-out"
-                    style={{ width: `${(currentStep / 4) * 100}%` }}
+                    style={{ width: `${(currentStep / 3) * 100}%` }}
                   ></div>
                 </div>
               </div>
 
               {/* Step indicators */}
               <div className="mt-4 flex justify-between">
-                {[1, 2, 3, 4].map((step) => (
+                {[1, 2, 3].map((step) => (
                   <div
                     key={step}
                     className={`flex size-8 items-center justify-center rounded-full text-sm font-medium ${
@@ -692,10 +635,6 @@ export default function ProjectApplicationForm({
                   setShowSuccess(false);
                   setCurrentStep(1);
                   setFormData({
-                    firstname: '',
-                    lastname: '',
-                    email: '',
-                    phone: '',
                     linkedin: '',
                     github: '',
                     portfolio: '',
@@ -731,9 +670,12 @@ export default function ProjectApplicationForm({
               Previous
             </Button>
 
-            {currentStep === 4 ? (
+            {currentStep === 3 ? (
               <Button
-                onClick={handleSubmit}
+                onClick={() => {
+                  console.log('Submit button clicked!');
+                  handleSubmit();
+                }}
                 disabled={isSubmitting}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 text-white hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
               >
