@@ -232,122 +232,126 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200/60 bg-white shadow-sm">
-      {/* Header */}
-      <div className="border-b border-slate-200/60 p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link to={`/projects/${thread.project_id}`}>
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="size-5" />
-              </Button>
-            </Link>
-            <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
-              <MessageCircle className="size-5 text-white" />
+    <>
+      <div className="mb-8 rounded-xl border border-slate-200/60 bg-white shadow-sm">
+        {/* Header */}
+        <div className="border-b border-slate-200/60 p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Link to={`/projects/${thread.project_id}`}>
+                <Button variant="ghost" size="icon">
+                  <ArrowLeft className="size-5" />
+                </Button>
+              </Link>
+              <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
+                <MessageCircle className="size-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-slate-900">
+                  {thread.title}
+                </h3>
+                <p className="text-sm text-slate-600">
+                  {comments.length}{' '}
+                  {comments.length === 1 ? 'comment' : 'comments'}
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-semibold text-slate-900">
-                {thread.title}
-              </h3>
-              <p className="text-sm text-slate-600">
-                {comments.length}{' '}
-                {comments.length === 1 ? 'comment' : 'comments'}
-              </p>
-            </div>
+            <Button
+              size="sm"
+              onClick={() => setIsCommentFormOpen(!isCommentFormOpen)}
+              className="bg-green-600 text-white hover:bg-green-700"
+              disabled={createCommentMutation.isPending}
+            >
+              <div className="flex items-center gap-2">
+                <MessageCircle className="mr-2 size-4" />
+                {isCommentFormOpen ? 'Cancel' : 'Join Discussion'}
+              </div>
+            </Button>
           </div>
-          <Button
-            size="sm"
-            onClick={() => setIsCommentFormOpen(!isCommentFormOpen)}
-            className="bg-green-600 text-white hover:bg-green-700"
-            disabled={createCommentMutation.isPending}
-          >
-            <div className="flex items-center gap-2">
-              <MessageCircle className="mr-2 size-4" />
-              {isCommentFormOpen ? 'Cancel' : 'Join Discussion'}
-            </div>
-          </Button>
+        </div>
+
+        {/* Thread Body */}
+        <div className="prose max-w-none p-6">
+          <MDPreview value={thread.body} />
         </div>
       </div>
 
-      {/* Thread Body */}
-      <div className="prose max-w-none p-6">
-        <MDPreview value={thread.body} />
-      </div>
+      <div className="rounded-xl border border-slate-200/60 bg-white shadow-sm">
+        {/* Comments List */}
+        <div className="divide-y divide-slate-200/60">
+          {comments.length === 0 ? (
+            <div className="p-12 text-center">
+              <p className="text-slate-600">No comments yet.</p>
+            </div>
+          ) : (
+            comments.map((comment: CommentType) => (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                currentUser={user.data}
+                isEditing={editingCommentId === comment.id}
+                onEdit={() => setEditingCommentId(comment.id)}
+                onCancelEdit={() => setEditingCommentId(null)}
+                onUpdate={(values) => handleUpdateComment(comment.id, values)}
+                onDelete={() => handleDeleteComment(comment.id)}
+                isUpdating={updateCommentMutation.isPending}
+                isDeleting={deleteCommentMutation.isPending}
+              />
+            ))
+          )}
+        </div>
 
-      {/* Comments List */}
-      <div className="divide-y divide-slate-200/60">
-        {comments.length === 0 ? (
-          <div className="p-12 text-center">
-            <p className="text-slate-600">No comments yet.</p>
+        {/* Add Comment Form */}
+        {isCommentFormOpen && (
+          <div className="border-t border-slate-200/60 bg-gradient-to-br from-slate-50/30 to-white p-6">
+            <Form onSubmit={handleAddComment} schema={createCommentInputSchema}>
+              {({ register, formState, reset }) => (
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-200">
+                      <User className="size-5 text-green-700" />
+                    </div>
+                    <div className="flex-1">
+                      <Textarea
+                        placeholder="Add your comment..."
+                        registration={register('body')}
+                        error={formState.errors.body}
+                        rows={4}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <div className="flex items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIsCommentFormOpen(false);
+                          reset();
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        size="sm"
+                        isLoading={createCommentMutation.isPending}
+                        className="bg-green-600 text-white hover:bg-green-700"
+                      >
+                        <Send className="mr-2 size-4" />
+                        {createCommentMutation.isPending
+                          ? 'Posting...'
+                          : 'Post Comment'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Form>
           </div>
-        ) : (
-          comments.map((comment: CommentType) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              currentUser={user.data}
-              isEditing={editingCommentId === comment.id}
-              onEdit={() => setEditingCommentId(comment.id)}
-              onCancelEdit={() => setEditingCommentId(null)}
-              onUpdate={(values) => handleUpdateComment(comment.id, values)}
-              onDelete={() => handleDeleteComment(comment.id)}
-              isUpdating={updateCommentMutation.isPending}
-              isDeleting={deleteCommentMutation.isPending}
-            />
-          ))
         )}
       </div>
-
-      {/* Add Comment Form */}
-      {isCommentFormOpen && (
-        <div className="border-t border-slate-200/60 bg-gradient-to-br from-slate-50/30 to-white p-6">
-          <Form onSubmit={handleAddComment} schema={createCommentInputSchema}>
-            {({ register, formState, reset }) => (
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-200">
-                    <User className="size-5 text-green-700" />
-                  </div>
-                  <div className="flex-1">
-                    <Textarea
-                      placeholder="Add your comment..."
-                      registration={register('body')}
-                      error={formState.errors.body}
-                      rows={4}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <div className="flex items-center gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setIsCommentFormOpen(false);
-                        reset();
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      size="sm"
-                      isLoading={createCommentMutation.isPending}
-                      className="bg-green-600 text-white hover:bg-green-700"
-                    >
-                      <Send className="mr-2 size-4" />
-                      {createCommentMutation.isPending
-                        ? 'Posting...'
-                        : 'Post Comment'}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </Form>
-        </div>
-      )}
-    </div>
+    </>
   );
 };
