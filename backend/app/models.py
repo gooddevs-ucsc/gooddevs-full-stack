@@ -200,16 +200,8 @@ class Project(ProjectBase, table=True):
         default=ProjectStatus.PENDING, sa_column=Column(Enum(ProjectStatus)))
 
     # Relationships
-<<<<<<< HEAD
     requester: Optional[User] = Relationship(back_populates="projects")
     tasks: list["Task"] = Relationship(back_populates="project", cascade_delete=True)
- 
-=======
-    requester: User | None = Relationship(back_populates="projects")
-    tasks: list["Task"] = Relationship(
-        back_populates="project", cascade_delete=True)
-
->>>>>>> 82a38844c40efd408017a4e26a1925b674c5b7c6
 
 # Properties to return via API, id is always required
 class ProjectPublic(ProjectBase):
@@ -331,25 +323,14 @@ class TaskPriority(str, enum.Enum):
 
 class TaskBase(SQLModel):
     title: str = Field(min_length=1, max_length=255)
-<<<<<<< HEAD
     description: Optional[str] = Field(default=None, max_length=1000)
-    status: TaskStatus = Field(default= TaskStatus.TODO, sa_column=Column(Enum(TaskStatus)))
-    priority: TaskPriority = Field(default= TaskPriority.MEDIUM, sa_column=Column(Enum(TaskPriority)))
+    status: TaskStatus = Field(default=TaskStatus.TODO, sa_column=Column(Enum(TaskStatus)))
+    priority: TaskPriority = Field(default=TaskPriority.MEDIUM, sa_column=Column(Enum(TaskPriority)))
     estimated_hours: Optional[int] = Field(default=None, ge=1)
     actual_hours: Optional[int] = Field(default=None, ge=0)
     due_date: Optional[datetime] = Field(default=None)
-    
-=======
-    description: str | None = Field(default=None, max_length=1000)
-    status: TaskStatus = Field(
-        default=TaskStatus.TODO, sa_column=Column(Enum(TaskStatus)))
-    priority: TaskPriority = Field(
-        default=TaskPriority.MEDIUM, sa_column=Column(Enum(TaskPriority)))
-    estimated_hours: int | None = Field(default=None, ge=1)
-    actual_hours: int | None = Field(default=None, ge=0)
-    due_date: datetime | None = Field(default=None)
 
->>>>>>> 82a38844c40efd408017a4e26a1925b674c5b7c6
+    
 # Api models
 
 
@@ -358,7 +339,6 @@ class TaskCreate(TaskBase):
 
 
 class TaskUpdate(SQLModel):
-<<<<<<< HEAD
     title: Optional[str] = Field(default=None, min_length=1, max_length=255)
     description: Optional[str] = Field(default=None, max_length=1000)
     status: Optional[TaskStatus] = Field(default=None)
@@ -366,17 +346,6 @@ class TaskUpdate(SQLModel):
     estimated_hours: Optional[int] = Field(default=None, ge=1)
     actual_hours: Optional[int] = Field(default=None, ge=0)
     due_date: Optional[datetime] = Field(default=None)
-    
-=======
-    title: str | None = Field(default=None, min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=1000)
-    status: TaskStatus | None = Field(default=None)
-    priority: TaskPriority | None = Field(default=None)
-    estimated_hours: int | None = Field(default=None, ge=1)
-    actual_hours: int | None = Field(default=None, ge=0)
-    due_date: datetime | None = Field(default=None)
-
->>>>>>> 82a38844c40efd408017a4e26a1925b674c5b7c6
 # Database models
 
 
@@ -388,13 +357,7 @@ class Task(TaskBase, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationships
-<<<<<<< HEAD
     project: Optional[Project] = Relationship(back_populates="tasks")
-    
-=======
-    project: Project | None = Relationship(back_populates="tasks")
-
->>>>>>> 82a38844c40efd408017a4e26a1925b674c5b7c6
 # Public Api models
 
 
@@ -414,7 +377,6 @@ class TasksPublic(SQLModel):
 
 class TaskResponse(SQLModel):
     data: TaskPublic
-<<<<<<< HEAD
 
 
 # Volunteer Profile Models
@@ -543,5 +505,3 @@ class VolunteerProfileCreateRequest(SQLModel):
     skills: list[str] = []
     experiences: list[VolunteerExperienceCreate] = []
     projects: list[VolunteerProjectCreate] = []
-=======
->>>>>>> 82a38844c40efd408017a4e26a1925b674c5b7c6
