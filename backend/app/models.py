@@ -349,7 +349,7 @@ class CommentBase(SQLModel):
 
 
 class CommentCreate(CommentBase):
-    pass
+    parent_id: uuid.UUID | None = None
 
 
 class CommentUpdate(SQLModel):
@@ -360,11 +360,16 @@ class Comment(CommentBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     author_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
     thread_id: uuid.UUID = Field(foreign_key="projectthread.id", nullable=False)
+    parent_id: uuid.UUID | None = Field(default=None, foreign_key="comment.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
 
     author: "User" = Relationship()
     thread: ProjectThread = Relationship(back_populates="comments")
+    parent: "Comment" = Relationship(
+        back_populates="replies", sa_relationship_kwargs=dict(remote_side="Comment.id")
+    )
+    replies: list["Comment"] = Relationship(back_populates="parent")
 
 
 class CommentPublic(CommentBase):
@@ -374,6 +379,7 @@ class CommentPublic(CommentBase):
     created_at: datetime
     updated_at: datetime
     author: UserPublic
+    replies: list["CommentPublic"] = []
 
 
 class CommentsPublic(SQLModel):

@@ -41,8 +41,17 @@ const CommentItem = ({
   onCancelEdit,
   onUpdate,
   onDelete,
+  onReply,
   isUpdating,
   isDeleting,
+  editingCommentId,
+  setEditingCommentId,
+  handleUpdateComment,
+  handleDeleteComment,
+  handleAddComment,
+  updateCommentMutation,
+  deleteCommentMutation,
+  createCommentMutation,
 }: {
   comment: CommentType;
   currentUser: any;
@@ -51,10 +60,23 @@ const CommentItem = ({
   onCancelEdit: () => void;
   onUpdate: (values: UpdateCommentInput) => void;
   onDelete: () => void;
+  onReply: (values: CreateCommentInput) => Promise<void>;
   isUpdating: boolean;
   isDeleting: boolean;
+  editingCommentId: string | null;
+  setEditingCommentId: (id: string | null) => void;
+  handleUpdateComment: (
+    commentId: string,
+    values: UpdateCommentInput,
+  ) => Promise<void>;
+  handleDeleteComment: (commentId: string) => Promise<void>;
+  handleAddComment: (values: CreateCommentInput) => Promise<void>;
+  updateCommentMutation: any;
+  deleteCommentMutation: any;
+  createCommentMutation: any;
 }) => {
   const canEdit = currentUser?.id === comment.author_id;
+  const [isReplying, setIsReplying] = useState(false);
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 shadow-sm">
@@ -128,10 +150,89 @@ const CommentItem = ({
               )}
             </Form>
           ) : (
-            <p className="mt-2 text-slate-700">{comment.body}</p>
+            <div>
+              <MDPreview value={comment.body} />
+              <div className="mt-2 flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsReplying(!isReplying)}
+                >
+                  Reply
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       </div>
+
+      {isReplying && (
+        <div className="ml-14 mt-4">
+          <Form
+            onSubmit={async (values) => {
+              await onReply({ ...values, parentId: comment.id });
+              setIsReplying(false);
+            }}
+            schema={createCommentInputSchema}
+          >
+            {({ register, formState, reset }) => (
+              <div className="space-y-2">
+                <Textarea
+                  registration={register('body')}
+                  error={formState.errors.body}
+                  placeholder="Write a reply..."
+                  rows={3}
+                />
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setIsReplying(false);
+                      reset();
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" size="sm" isLoading={isUpdating}>
+                    Submit Reply
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Form>
+        </div>
+      )}
+
+      {comment.replies && comment.replies.length > 0 && (
+        <div className="ml-8 mt-4 space-y-4 border-l-2 border-slate-200 pl-4">
+          {comment.replies.map((reply) => (
+            <CommentItem
+              key={reply.id}
+              comment={reply}
+              currentUser={currentUser}
+              isEditing={editingCommentId === reply.id}
+              onEdit={() => setEditingCommentId(reply.id)}
+              onCancelEdit={() => setEditingCommentId(null)}
+              onUpdate={(values) => handleUpdateComment(reply.id, values)}
+              onDelete={() => handleDeleteComment(reply.id)}
+              onReply={handleAddComment}
+              isUpdating={updateCommentMutation.isPending}
+              isDeleting={deleteCommentMutation.isPending}
+              editingCommentId={editingCommentId}
+              setEditingCommentId={setEditingCommentId}
+              handleUpdateComment={handleUpdateComment}
+              handleDeleteComment={handleDeleteComment}
+              handleAddComment={handleAddComment}
+              updateCommentMutation={updateCommentMutation}
+              deleteCommentMutation={deleteCommentMutation}
+              createCommentMutation={createCommentMutation}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -159,7 +260,9 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
       threadId: thread.id,
       data: values,
     });
-    setIsCommentFormOpen(false);
+    if (!values.parentId) {
+      setIsCommentFormOpen(false);
+    }
     addNotification({
       type: 'success',
       title: 'Comment posted',
@@ -294,8 +397,17 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
                 onCancelEdit={() => setEditingCommentId(null)}
                 onUpdate={(values) => handleUpdateComment(comment.id, values)}
                 onDelete={() => handleDeleteComment(comment.id)}
+                onReply={handleAddComment}
                 isUpdating={updateCommentMutation.isPending}
                 isDeleting={deleteCommentMutation.isPending}
+                editingCommentId={editingCommentId}
+                setEditingCommentId={setEditingCommentId}
+                handleUpdateComment={handleUpdateComment}
+                handleDeleteComment={handleDeleteComment}
+                handleAddComment={handleAddComment}
+                updateCommentMutation={updateCommentMutation}
+                deleteCommentMutation={deleteCommentMutation}
+                createCommentMutation={createCommentMutation}
               />
             ))
           )}

@@ -5,8 +5,9 @@ from datetime import datetime, timezone
 from sqlmodel import Session, select, func
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, ProjectThreadCreate, Comment, CommentCreate, CommentUpdate
+from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic
 
+from sqlalchemy.orm import selectinload
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
@@ -171,7 +172,47 @@ def get_project_threads_by_project_id(
 def get_project_thread_by_id(
     *, session: Session, thread_id: uuid.UUID
 ) -> ProjectThread | None:
-    return session.get(ProjectThread, thread_id)
+    # Step 1: Fetch the thread itself.
+    thread = session.get(ProjectThread, thread_id)
+    if not thread:
+        return None
+
+    # Step 2: Fetch all comments for this thread, with their authors, in one query.
+    all_comments = session.exec(
+        select(Comment)
+        .where(Comment.thread_id == thread_id)
+        .options(selectinload(Comment.author))
+    ).all()
+
+    # Step 3: Build a dictionary of the database models for easy look-up.
+    comment_map = {comment.id: comment for comment in all_comments}
+    
+    # Step 4: Create the nested structure.
+    # First, ensure every comment has a 'replies' list attribute.
+    for comment in all_comments:
+        comment.replies = []
+
+    # Then, build the tree.
+    top_level_comments = []
+    for comment in all_comments:
+        if comment.parent_id:
+            # If it's a reply, find its parent in the map and append it.
+            parent = comment_map.get(comment.parent_id)
+            if parent:
+                parent.replies.append(comment)
+        else:
+            # If it has no parent, it's a top-level comment.
+            top_level_comments.append(comment)
+
+    # Step 5: Sort comments and their replies by creation date for correct order.
+    top_level_comments.sort(key=lambda c: c.created_at)
+    for comment in top_level_comments:
+        comment.replies.sort(key=lambda r: r.created_at)
+
+    # Step 6: Assign the correctly structured list of comments back to the thread.
+    thread.comments = top_level_comments
+
+    return thread
 
 
 def create_project_thread(
@@ -220,8 +261,12 @@ def create_comment(
     thread_id: uuid.UUID,
     author_id: uuid.UUID,
 ) -> Comment:
-    db_comment = Comment.model_validate(
-        comment_in, update={"thread_id": thread_id, "author_id": author_id}
+    
+    db_comment = Comment(
+        body=comment_in.body,
+        parent_id=comment_in.parent_id,
+        thread_id=thread_id,
+        author_id=author_id,
     )
     session.add(db_comment)
     session.commit()

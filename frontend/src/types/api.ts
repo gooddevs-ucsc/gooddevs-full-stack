@@ -48,6 +48,7 @@ export type Comment = {
   created_at: string;
   updated_at: string;
   author: User;
+  replies: Comment[];
 };
 
 export type ProjectThread = {
