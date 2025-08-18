@@ -13,7 +13,6 @@ type ProjectThreadListProps = {
 export const ProjectThreadList = ({ projectId }: ProjectThreadListProps) => {
   const { data, isLoading, error } = useProjectThreads({ projectId });
   const match = useMatch('/projects/:id/threads/:threadId');
-
   if (match) {
     return null;
   }

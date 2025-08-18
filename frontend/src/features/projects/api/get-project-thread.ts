@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { api } from '@/lib/api-client';
 import { MutationConfig, QueryConfig } from '@/lib/react-query';
-import { Paginated, ProjectThread, Comment } from '@/types/api';
+import { Paginated, ProjectThread, Comment, Reply } from '@/types/api';
 
 // Schema for creating a new thread
 export const createThreadInputSchema = z.object({
@@ -12,11 +12,24 @@ export const createThreadInputSchema = z.object({
 });
 export type CreateThreadInput = z.infer<typeof createThreadInputSchema>;
 
-// Schema for creating a new comment
+// Schema for creating a new comment (no parent_id)
 export const createCommentInputSchema = z.object({
   body: z.string().min(1, 'Required'),
 });
 export type CreateCommentInput = z.infer<typeof createCommentInputSchema>;
+
+// Schema for creating a new reply
+export const createReplyInputSchema = z.object({
+  body: z.string().min(1, 'Required'),
+  parent_id: z.string().min(1, 'Parent comment ID is required'),
+});
+export type CreateReplyInput = z.infer<typeof createReplyInputSchema>;
+
+// Schema for updating a reply
+export const updateReplyInputSchema = z.object({
+  body: z.string().min(1, 'Required'),
+});
+export type UpdateReplyInput = z.infer<typeof updateReplyInputSchema>;
 
 // Schema for updating a comment
 export const updateCommentInputSchema = z.object({
@@ -103,7 +116,7 @@ export const useCreateProjectThread = ({
   });
 };
 
-// API function to create a comment
+// API function to create a comment (no parent_id)
 export const createComment = ({
   threadId,
   data,
@@ -138,6 +151,44 @@ export const useCreateComment = ({
       config?.onSuccess?.(...args);
     },
     mutationFn: createComment,
+  });
+};
+
+// API function to create a reply
+export const createReply = ({
+  commentId,
+  data,
+}: {
+  commentId: string;
+  data: CreateReplyInput;
+}): Promise<Reply> => {
+  return api.post(`/projects/comments/${commentId}/replies`, data);
+};
+
+export const useCreateReply = ({
+  config,
+  threadId,
+  projectId,
+}: {
+  config?: MutationConfig<typeof createReply>;
+  threadId: string;
+  projectId?: string;
+}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...config,
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries({
+        queryKey: getProjectThreadQueryOptions(threadId).queryKey,
+      });
+      if (projectId) {
+        queryClient.invalidateQueries({
+          queryKey: ['projects', projectId, 'threads'],
+        });
+      }
+      config?.onSuccess?.(...args);
+    },
+    mutationFn: createReply,
   });
 };
 
@@ -179,6 +230,37 @@ export const useUpdateComment = ({
   });
 };
 
+// API function to update a reply
+export const updateReply = ({
+  replyId,
+  data,
+}: {
+  replyId: string;
+  data: UpdateReplyInput;
+}): Promise<Reply> => {
+  return api.patch(`/projects/replies/${replyId}`, data);
+};
+
+export const useUpdateReply = ({
+  threadId,
+  config,
+}: {
+  threadId: string;
+  config?: MutationConfig<typeof updateReply>;
+}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...config,
+    mutationFn: updateReply,
+    onSuccess: (data, ...args) => {
+      queryClient.invalidateQueries({
+        queryKey: getProjectThreadQueryOptions(threadId).queryKey,
+      });
+      config?.onSuccess?.(data, ...args);
+    },
+  });
+};
+
 // API function to delete a comment
 export const deleteComment = ({
   threadId,
@@ -201,6 +283,31 @@ export const useDeleteComment = ({
   return useMutation({
     ...config,
     mutationFn: deleteComment,
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries({
+        queryKey: getProjectThreadQueryOptions(threadId).queryKey,
+      });
+      config?.onSuccess?.(...args);
+    },
+  });
+};
+
+// API function to delete a reply
+export const deleteReply = ({ replyId }: { replyId: string }) => {
+  return api.delete(`/projects/replies/${replyId}`);
+};
+
+export const useDeleteReply = ({
+  threadId,
+  config,
+}: {
+  threadId: string;
+  config?: MutationConfig<typeof deleteReply>;
+}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...config,
+    mutationFn: deleteReply,
     onSuccess: (...args) => {
       queryClient.invalidateQueries({
         queryKey: getProjectThreadQueryOptions(threadId).queryKey,

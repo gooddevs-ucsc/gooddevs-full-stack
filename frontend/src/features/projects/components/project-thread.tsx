@@ -22,12 +22,19 @@ import {
   useCreateComment,
   useUpdateComment,
   useDeleteComment,
+  useCreateReply,
+  useUpdateReply,
+  useDeleteReply,
   createCommentInputSchema,
   updateCommentInputSchema,
+  createReplyInputSchema,
+  updateReplyInputSchema,
   type CreateCommentInput,
   type UpdateCommentInput,
+  type CreateReplyInput,
+  type UpdateReplyInput,
 } from '../api/get-project-thread';
-import { Comment as CommentType } from '@/types/api';
+import { Comment as CommentType, Reply as ReplyType } from '@/types/api';
 
 type ProjectThreadProps = {
   threadId: string;
@@ -41,8 +48,20 @@ const CommentItem = ({
   onCancelEdit,
   onUpdate,
   onDelete,
+  onReply,
   isUpdating,
   isDeleting,
+  editingCommentId,
+  setEditingCommentId,
+  handleUpdateComment,
+  handleDeleteComment,
+  handleAddComment,
+  handleAddReply,
+  handleUpdateReply,
+  handleDeleteReply,
+  updateCommentMutation,
+  deleteCommentMutation,
+  createCommentMutation,
 }: {
   comment: CommentType;
   currentUser: any;
@@ -51,10 +70,29 @@ const CommentItem = ({
   onCancelEdit: () => void;
   onUpdate: (values: UpdateCommentInput) => void;
   onDelete: () => void;
+  onReply: (values: CreateReplyInput) => Promise<void>;
   isUpdating: boolean;
   isDeleting: boolean;
+  editingCommentId: string | null;
+  setEditingCommentId: (id: string | null) => void;
+  handleUpdateComment: (
+    commentId: string,
+    values: UpdateCommentInput,
+  ) => Promise<void>;
+  handleDeleteComment: (commentId: string) => Promise<void>;
+  handleAddComment: (values: CreateCommentInput) => Promise<void>;
+  handleAddReply: (values: CreateReplyInput) => Promise<void>;
+  handleUpdateReply: (
+    replyId: string,
+    values: UpdateReplyInput,
+  ) => Promise<void>;
+  handleDeleteReply: (replyId: string) => Promise<void>;
+  updateCommentMutation: any;
+  deleteCommentMutation: any;
+  createCommentMutation: any;
 }) => {
   const canEdit = currentUser?.id === comment.author_id;
+  const [isReplying, setIsReplying] = useState(false);
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 shadow-sm">
@@ -128,7 +166,243 @@ const CommentItem = ({
               )}
             </Form>
           ) : (
-            <p className="mt-2 text-slate-700">{comment.body}</p>
+            <div>
+              <MDPreview value={comment.body} />
+              <div className="mt-2 flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsReplying(!isReplying)}
+                >
+                  Reply
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isReplying && (
+        <div className="ml-14 mt-4">
+          <Form
+            onSubmit={async (values) => {
+              console.log('Submitting reply with parent_id:', comment.id);
+              // Create a CreateReplyInput object with the parent_id
+              const replyData: CreateReplyInput = {
+                ...values,
+                parent_id: comment.id,
+              };
+              await onReply(replyData);
+              setIsReplying(false);
+            }}
+            schema={createCommentInputSchema}
+          >
+            {({ register, formState, reset }) => (
+              <div className="space-y-2">
+                <Textarea
+                  registration={register('body')}
+                  error={formState.errors.body}
+                  placeholder="Write a reply..."
+                  rows={3}
+                />
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setIsReplying(false);
+                      reset();
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    isLoading={createCommentMutation.isPending}
+                  >
+                    Submit Reply
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Form>
+        </div>
+      )}
+
+      {comment.replies && comment.replies.length > 0 && (
+        <div className="ml-6 mt-3 space-y-3 border-l-2 border-slate-100 pl-3">
+          {comment.replies.map((reply) => (
+            <ReplyItem
+              key={reply.id}
+              reply={reply}
+              currentUser={currentUser}
+              isEditing={editingCommentId === reply.id}
+              onEdit={() => setEditingCommentId(reply.id)}
+              onCancelEdit={() => setEditingCommentId(null)}
+              onUpdate={(values) =>
+                handleUpdateReply?.(reply.id, values) || Promise.resolve()
+              }
+              onDelete={() =>
+                handleDeleteReply?.(reply.id) || Promise.resolve()
+              }
+              onReply={
+                async (values) => await handleAddReply(values) // values already contains parent_id from the form
+              }
+              isUpdating={updateCommentMutation.isPending}
+              isDeleting={deleteCommentMutation.isPending}
+              editingCommentId={editingCommentId}
+              setEditingCommentId={setEditingCommentId}
+              handleUpdateComment={handleUpdateComment}
+              handleDeleteComment={handleDeleteComment}
+              handleAddComment={handleAddComment}
+              handleAddReply={handleAddReply}
+              handleUpdateReply={handleUpdateReply}
+              handleDeleteReply={handleDeleteReply}
+              updateCommentMutation={updateCommentMutation}
+              deleteCommentMutation={deleteCommentMutation}
+              createCommentMutation={createCommentMutation}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ReplyItem = ({
+  reply,
+  currentUser,
+  isEditing,
+  onEdit,
+  onCancelEdit,
+  onUpdate,
+  onDelete,
+  onReply,
+  isUpdating,
+  isDeleting,
+  editingCommentId,
+  setEditingCommentId,
+  handleUpdateComment,
+  handleDeleteComment,
+  handleAddComment,
+  handleAddReply,
+  handleUpdateReply,
+  handleDeleteReply,
+  updateCommentMutation,
+  deleteCommentMutation,
+  createCommentMutation,
+}: {
+  reply: ReplyType;
+  currentUser: any;
+  isEditing: boolean;
+  onEdit: () => void;
+  onCancelEdit: () => void;
+  onUpdate: (values: UpdateReplyInput) => void;
+  onDelete: () => void;
+  onReply: (values: CreateReplyInput) => Promise<void>;
+  isUpdating: boolean;
+  isDeleting: boolean;
+  editingCommentId: string | null;
+  setEditingCommentId: (id: string | null) => void;
+  handleUpdateComment: (
+    commentId: string,
+    values: UpdateCommentInput,
+  ) => Promise<void>;
+  handleDeleteComment: (commentId: string) => Promise<void>;
+  handleAddComment: (values: CreateCommentInput) => Promise<void>;
+  handleAddReply: (values: CreateReplyInput) => Promise<void>;
+  handleUpdateReply: (
+    replyId: string,
+    values: UpdateReplyInput,
+  ) => Promise<void>;
+  handleDeleteReply: (replyId: string) => Promise<void>;
+  updateCommentMutation: any;
+  deleteCommentMutation: any;
+  createCommentMutation: any;
+}) => {
+  const canEdit = currentUser?.id === reply.author_id;
+  const [isReplying, setIsReplying] = useState(false);
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="flex size-8 items-center justify-center rounded-full bg-slate-100">
+          <User className="size-4 text-slate-500" />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="font-medium text-slate-900">
+                {reply.author.firstname} {reply.author.lastname}
+              </span>
+              <span className="ml-2 text-xs text-slate-500">
+                {formatDate(new Date(reply.created_at).getTime())}
+              </span>
+            </div>
+            {canEdit && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onEdit}
+                  disabled={isEditing}
+                  className="h-7 w-7 p-0"
+                >
+                  <Edit className="size-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onDelete}
+                  isLoading={isDeleting}
+                  className="h-7 w-7 p-0"
+                >
+                  <Trash2 className="size-3" />
+                </Button>
+              </div>
+            )}
+          </div>
+          {isEditing ? (
+            <Form
+              onSubmit={onUpdate}
+              schema={updateReplyInputSchema}
+              options={{ defaultValues: { body: reply.body } }}
+            >
+              {({ register, formState }) => (
+                <div className="mt-2 space-y-2">
+                  <Textarea
+                    registration={register('body')}
+                    error={formState.errors.body}
+                    rows={2}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={onCancelEdit}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      isLoading={isUpdating}
+                      className="bg-green-600 text-white hover:bg-green-700"
+                    >
+                      Update
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </Form>
+          ) : (
+            <div>
+              <MDPreview value={reply.body} />
+            </div>
           )}
         </div>
       </div>
@@ -146,15 +420,23 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
     threadId: threadId,
     projectId: thread?.project_id,
   });
+  const createReplyMutation = useCreateReply({
+    threadId: threadId,
+    projectId: thread?.project_id,
+  });
   const updateCommentMutation = useUpdateComment({ threadId });
+  const updateReplyMutation = useUpdateReply({ threadId });
   const deleteCommentMutation = useDeleteComment({ threadId });
+  const deleteReplyMutation = useDeleteReply({ threadId });
 
   const user = useUser();
 
   const comments = thread?.comments || [];
-
+  console.log(thread);
   const handleAddComment = async (values: CreateCommentInput) => {
     if (!thread) return;
+    console.log('handleAddComment called with:', values);
+
     await createCommentMutation.mutateAsync({
       threadId: thread.id,
       data: values,
@@ -166,6 +448,19 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
     });
   };
 
+  const handleAddReply = async (values: CreateReplyInput) => {
+    if (!thread) return;
+    console.log('handleAddReply called with:', values);
+
+    await createReplyMutation.mutateAsync({
+      commentId: values.parent_id,
+      data: values,
+    });
+    addNotification({
+      type: 'success',
+      title: 'Reply posted',
+    });
+  };
   const handleUpdateComment = async (
     commentId: string,
     values: UpdateCommentInput,
@@ -189,6 +484,31 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
     addNotification({
       type: 'success',
       title: 'Comment deleted',
+    });
+  };
+
+  const handleUpdateReply = async (
+    replyId: string,
+    values: UpdateReplyInput,
+  ) => {
+    if (!thread) return;
+    await updateReplyMutation.mutateAsync({
+      replyId,
+      data: values,
+    });
+    setEditingCommentId(null);
+    addNotification({
+      type: 'success',
+      title: 'Reply updated',
+    });
+  };
+
+  const handleDeleteReply = async (replyId: string) => {
+    if (!thread) return;
+    await deleteReplyMutation.mutateAsync({ replyId });
+    addNotification({
+      type: 'success',
+      title: 'Reply deleted',
     });
   };
 
@@ -294,8 +614,20 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
                 onCancelEdit={() => setEditingCommentId(null)}
                 onUpdate={(values) => handleUpdateComment(comment.id, values)}
                 onDelete={() => handleDeleteComment(comment.id)}
+                onReply={handleAddReply}
                 isUpdating={updateCommentMutation.isPending}
                 isDeleting={deleteCommentMutation.isPending}
+                editingCommentId={editingCommentId}
+                setEditingCommentId={setEditingCommentId}
+                handleUpdateComment={handleUpdateComment}
+                handleDeleteComment={handleDeleteComment}
+                handleAddComment={handleAddComment}
+                handleAddReply={handleAddReply}
+                handleUpdateReply={handleUpdateReply}
+                handleDeleteReply={handleDeleteReply}
+                updateCommentMutation={updateCommentMutation}
+                deleteCommentMutation={deleteCommentMutation}
+                createCommentMutation={createCommentMutation}
               />
             ))
           )}

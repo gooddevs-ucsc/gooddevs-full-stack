@@ -16,6 +16,10 @@ from app.models import (
     ProjectThreadCreate,
     ProjectThreadPublic,
     ProjectThreadsPublic,
+    ReplyCreate,
+    ReplyPublic,
+    RepliesPublic,
+    ReplyUpdate,
 )
 
 router = APIRouter()
@@ -116,6 +120,8 @@ def create_comment(
     """
     Create a new comment for a thread.
     """
+    print(f"Received comment data: {comment_in}")
+    
     thread = crud.get_project_thread_by_id(session=session, thread_id=thread_id)
     if not thread:
         raise HTTPException(status_code=404, detail="Thread not found")
@@ -127,6 +133,60 @@ def create_comment(
         author_id=current_user.id,
     )
     return comment
+
+
+@router.post("/comments/{comment_id}/replies", response_model=ReplyPublic)
+def create_reply(
+    *,
+    session: SessionDep,
+    comment_id: uuid.UUID,
+    reply_in: ReplyCreate,
+    current_user: CurrentUser,
+) -> Any:
+    """
+    Create a new reply for a comment.
+    """
+    print(f"Received reply data: {reply_in}")
+    
+    # Verify the comment exists
+    comment = crud.get_comment_by_id(session=session, comment_id=comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Ensure the parent_id matches the comment_id
+    if reply_in.parent_id != comment_id:
+        raise HTTPException(status_code=400, detail="Parent ID must match comment ID")
+
+    reply = crud.create_reply(
+        session=session,
+        reply_in=reply_in,
+        author_id=current_user.id,
+    )
+    return reply
+
+
+@router.get("/comments/{comment_id}/replies", response_model=RepliesPublic)
+def read_replies(
+    *,
+    session: SessionDep,
+    comment_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """
+    Retrieve replies for a comment.
+    """
+    comment = crud.get_comment_by_id(session=session, comment_id=comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    replies, count = crud.get_replies_by_comment_id(
+        session=session, comment_id=comment_id, skip=skip, limit=limit
+    )
+    return RepliesPublic(
+        data=replies,
+        meta=Meta(total=count, page=skip // limit + 1, totalPages=(count + limit - 1) // limit),
+    )
 
 
 @router.patch("/threads/{thread_id}/comments/{comment_id}", response_model=CommentPublic)
@@ -166,3 +226,41 @@ def delete_comment(
         raise HTTPException(status_code=403, detail="Not enough permissions")
     crud.delete_comment(session=session, db_comment=comment)
     return Message(message="Comment deleted successfully")
+
+
+@router.patch("/replies/{reply_id}", response_model=ReplyPublic)
+def update_reply(
+    *,
+    session: SessionDep,
+    reply_id: uuid.UUID,
+    reply_in: ReplyUpdate,
+    current_user: CurrentUser,
+) -> Any:
+    """
+    Update a reply.
+    """
+    reply = crud.get_reply_by_id(session=session, reply_id=reply_id)
+    if not reply:
+        raise HTTPException(status_code=404, detail="Reply not found")
+    if reply.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    reply = crud.update_reply(
+        session=session, db_reply=reply, reply_in=reply_in
+    )
+    return reply
+
+
+@router.delete("/replies/{reply_id}", response_model=Message)
+def delete_reply(
+    *, session: SessionDep, reply_id: uuid.UUID, current_user: CurrentUser
+) -> Any:
+    """
+    Delete a reply.
+    """
+    reply = crud.get_reply_by_id(session=session, reply_id=reply_id)
+    if not reply:
+        raise HTTPException(status_code=404, detail="Reply not found")
+    if reply.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    crud.delete_reply(session=session, db_reply=reply)
+    return Message(message="Reply deleted successfully")

@@ -5,8 +5,9 @@ from datetime import datetime, timezone
 from sqlmodel import Session, select, func
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, ProjectThreadCreate, Comment, CommentCreate, CommentUpdate
+from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic
 
+from sqlalchemy.orm import selectinload
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
@@ -171,7 +172,29 @@ def get_project_threads_by_project_id(
 def get_project_thread_by_id(
     *, session: Session, thread_id: uuid.UUID
 ) -> ProjectThread | None:
-    return session.get(ProjectThread, thread_id)
+    # Step 1: Fetch the thread itself.
+    thread = session.get(ProjectThread, thread_id)
+    if not thread:
+        return None
+
+    # Step 2: Fetch all comments for this thread, with their authors and replies.
+    all_comments = session.exec(
+        select(Comment)
+        .where(Comment.thread_id == thread_id)
+        .options(selectinload(Comment.author), selectinload(Comment.replies).selectinload(Reply.author))
+    ).all()
+
+    # Step 3: Sort comments by creation date for correct order.
+    all_comments.sort(key=lambda c: c.created_at)
+    
+    # Step 4: Sort replies within each comment by creation date.
+    for comment in all_comments:
+        comment.replies.sort(key=lambda r: r.created_at)
+
+    # Step 5: Assign the correctly structured list of comments back to the thread.
+    thread.comments = all_comments
+
+    return thread
 
 
 def create_project_thread(
@@ -220,13 +243,80 @@ def create_comment(
     thread_id: uuid.UUID,
     author_id: uuid.UUID,
 ) -> Comment:
-    db_comment = Comment.model_validate(
-        comment_in, update={"thread_id": thread_id, "author_id": author_id}
+    print(f"Creating comment for thread: {thread_id}")
+    db_comment = Comment(
+        body=comment_in.body,
+        thread_id=thread_id,
+        author_id=author_id,
     )
     session.add(db_comment)
     session.commit()
     session.refresh(db_comment)
+    print(f"Created comment with ID: {db_comment.id}")
     return db_comment
+
+
+# Reply CRUD operations
+def get_reply_by_id(*, session: Session, reply_id: uuid.UUID) -> Reply | None:
+    return session.get(Reply, reply_id)
+
+
+def get_replies_by_comment_id(
+    *, session: Session, comment_id: uuid.UUID, skip: int = 0, limit: int = 10
+) -> tuple[list[Reply], int]:
+    statement = (
+        select(Reply)
+        .where(Reply.parent_id == comment_id)
+        .offset(skip)
+        .limit(limit)
+        .order_by(Reply.created_at.asc())
+    )
+    replies = session.exec(statement).all()
+    count_statement = select(func.count(Reply.id)).where(
+        Reply.parent_id == comment_id
+    )
+    count = session.exec(count_statement).one()
+    return replies, count
+
+
+def create_reply(
+    *,
+    session: Session,
+    reply_in: ReplyCreate,
+    author_id: uuid.UUID,
+) -> Reply:
+    print(f"Creating reply for comment: {reply_in.parent_id}")
+    # Verify the parent comment exists
+    parent_comment = session.get(Comment, reply_in.parent_id)
+    if not parent_comment:
+        raise ValueError("Parent comment not found")
+    
+    db_reply = Reply(
+        body=reply_in.body,
+        parent_id=reply_in.parent_id,
+        author_id=author_id,
+    )
+    session.add(db_reply)
+    session.commit()
+    session.refresh(db_reply)
+    print(f"Created reply with ID: {db_reply.id}")
+    return db_reply
+
+
+def update_reply(
+    *, session: Session, db_reply: Reply, reply_in: ReplyUpdate
+) -> Reply:
+    reply_data = reply_in.model_dump(exclude_unset=True)
+    db_reply.sqlmodel_update(reply_data)
+    session.add(db_reply)
+    session.commit()
+    session.refresh(db_reply)
+    return db_reply
+
+
+def delete_reply(*, session: Session, db_reply: Reply) -> None:
+    session.delete(db_reply)
+    session.commit()
 
 
 def update_comment(

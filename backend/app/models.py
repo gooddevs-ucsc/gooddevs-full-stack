@@ -343,13 +343,13 @@ class ProjectThreadsPublic(SQLModel):
     meta: Meta
 
 
-# Refactored Comment models
+# Refactored Comment models - now without parent_id
 class CommentBase(SQLModel):
     body: str = Field(min_length=1, max_length=10000)
 
 
 class CommentCreate(CommentBase):
-    pass
+    pass  # Remove parent_id from here
 
 
 class CommentUpdate(SQLModel):
@@ -365,6 +365,7 @@ class Comment(CommentBase, table=True):
 
     author: "User" = Relationship()
     thread: ProjectThread = Relationship(back_populates="comments")
+    replies: list["Reply"] = Relationship(back_populates="comment", cascade_delete=True)
 
 
 class CommentPublic(CommentBase):
@@ -374,8 +375,47 @@ class CommentPublic(CommentBase):
     created_at: datetime
     updated_at: datetime
     author: UserPublic
+    replies: list["ReplyPublic"] = []
 
 
 class CommentsPublic(SQLModel):
     data: list[CommentPublic]
+    meta: Meta
+
+
+# New Reply models
+class ReplyBase(SQLModel):
+    body: str = Field(min_length=1, max_length=10000)
+
+
+class ReplyCreate(ReplyBase):
+    parent_id: uuid.UUID  # This is the comment ID this reply belongs to
+
+
+class ReplyUpdate(SQLModel):
+    body: str | None = Field(default=None, min_length=1, max_length=10000)
+
+
+class Reply(ReplyBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    author_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
+    parent_id: uuid.UUID = Field(foreign_key="comment.id", nullable=False)  # References comment.id
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
+
+    author: "User" = Relationship()
+    comment: Comment = Relationship(back_populates="replies")
+
+
+class ReplyPublic(ReplyBase):
+    id: uuid.UUID
+    author_id: uuid.UUID
+    parent_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    author: UserPublic
+
+
+class RepliesPublic(SQLModel):
+    data: list[ReplyPublic]
     meta: Meta
