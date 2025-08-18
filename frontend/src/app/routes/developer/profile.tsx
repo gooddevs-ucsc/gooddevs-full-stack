@@ -145,10 +145,45 @@ const DeveloperProfilePage: React.FC = () => {
   ) {
     const handleCreateProfile = async () => {
       try {
-        await createProfile.mutateAsync(formData);
+        console.log('=== PROFILE CREATION DEBUG ===');
+        console.log(
+          'Form data before sending:',
+          JSON.stringify(formData, null, 2),
+        );
+        console.log('Create profile mutation status:', createProfile.status);
+        console.log('=== END DEBUG INFO ===');
+
+        const result = await createProfile.mutateAsync(formData);
+        console.log('Profile created successfully:', result);
         setShowCreateForm(false);
       } catch (error) {
         console.error('Failed to create profile:', error);
+        // Show more detailed error information
+        if (error && typeof error === 'object' && 'response' in error) {
+          const apiError = error as any;
+          console.error('API Error details:', {
+            status: apiError.response?.status,
+            statusText: apiError.response?.statusText,
+            data: apiError.response?.data,
+            url: apiError.response?.config?.url,
+            method: apiError.response?.config?.method,
+          });
+
+          // Show user-friendly error message
+          if (apiError.response?.status === 403) {
+            alert(
+              'Access denied. Please ensure you have the correct permissions to create a developer profile.',
+            );
+          } else if (apiError.response?.status === 400) {
+            alert('Invalid data provided. Please check your form inputs.');
+          } else {
+            alert(
+              'Failed to create profile. Please try again or contact support.',
+            );
+          }
+        } else {
+          alert('An unexpected error occurred. Please try again.');
+        }
       }
     };
 
@@ -579,6 +614,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        console.log('Form submitted, calling onSubmit...');
         onSubmit();
       }}
     >
@@ -961,6 +997,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
         <button
           type="submit"
           disabled={isSubmitting}
+          onClick={() =>
+            console.log('Submit button clicked, isSubmitting:', isSubmitting)
+          }
           className="rounded-lg bg-blue-500 px-6 py-2 font-semibold text-white hover:bg-blue-600 disabled:bg-blue-300"
         >
           {isSubmitting ? 'Saving...' : submitButtonText}

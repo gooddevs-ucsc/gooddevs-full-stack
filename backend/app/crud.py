@@ -3,6 +3,7 @@ from typing import Any
 from datetime import datetime, timezone
 
 from sqlmodel import Session, select, func
+from sqlalchemy.orm import selectinload
 
 from app.core.security import get_password_hash, verify_password
 from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate
@@ -200,7 +201,12 @@ def count_tasks_by_project(*, session: Session, project_id: uuid.UUID)-> int:
 
 # Volunteer Profile CRUD operations
 def get_volunteer_profile_by_user_id(*, session: Session, user_id: uuid.UUID) -> VolunteerProfile | None:
-    statement = select(VolunteerProfile).where(VolunteerProfile.user_id == user_id)
+    statement = select(VolunteerProfile).options(
+        selectinload(VolunteerProfile.user),
+        selectinload(VolunteerProfile.skills),
+        selectinload(VolunteerProfile.experiences),
+        selectinload(VolunteerProfile.projects)
+    ).where(VolunteerProfile.user_id == user_id)
     return session.exec(statement).first()
 
 
@@ -211,7 +217,15 @@ def create_volunteer_profile(*, session: Session, profile_in: VolunteerProfileCr
     session.add(db_profile)
     session.commit()
     session.refresh(db_profile)
-    return db_profile
+    
+    # Reload with relationships
+    statement = select(VolunteerProfile).options(
+        selectinload(VolunteerProfile.user),
+        selectinload(VolunteerProfile.skills),
+        selectinload(VolunteerProfile.experiences),
+        selectinload(VolunteerProfile.projects)
+    ).where(VolunteerProfile.id == db_profile.id)
+    return session.exec(statement).first()
 
 
 def update_volunteer_profile(*, session: Session, db_profile: VolunteerProfile, profile_in: VolunteerProfileUpdate) -> VolunteerProfile:
@@ -235,7 +249,13 @@ def delete_volunteer_profile(*, session: Session, profile_id: uuid.UUID) -> bool
 
 
 def get_volunteer_profile_by_id(*, session: Session, profile_id: uuid.UUID) -> VolunteerProfile | None:
-    return session.get(VolunteerProfile, profile_id)
+    statement = select(VolunteerProfile).options(
+        selectinload(VolunteerProfile.user),
+        selectinload(VolunteerProfile.skills),
+        selectinload(VolunteerProfile.experiences),
+        selectinload(VolunteerProfile.projects)
+    ).where(VolunteerProfile.id == profile_id)
+    return session.exec(statement).first()
 
 
 # Volunteer Skills CRUD operations
