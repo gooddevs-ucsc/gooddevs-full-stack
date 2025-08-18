@@ -4,6 +4,9 @@ import { api } from '@/lib/api-client';
 export interface UpdateUserProfileRequest {
   full_name?: string;
   email?: string;
+  email_notifications?: boolean;
+  sms_notifications?: boolean;
+  push_notifications?: boolean;
 }
 
 export interface UpdatePasswordRequest {
@@ -29,6 +32,9 @@ export interface UserProfile {
   role: string;
   is_active: boolean;
   is_superuser: boolean;
+  email_notifications: boolean;
+  sms_notifications: boolean;
+  push_notifications: boolean;
 }
 
 export interface ApiResponse<T> {

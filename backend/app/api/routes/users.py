@@ -91,7 +91,24 @@ def update_user_me(
             raise HTTPException(
                 status_code=409, detail="User with this email already exists"
             )
+    
     user_data = user_in.model_dump(exclude_unset=True)
+    
+    # Check if user is trying to update notification settings
+    notification_fields = ['email_notifications', 'sms_notifications', 'push_notifications']
+    has_notification_updates = any(field in user_data for field in notification_fields)
+    
+    if has_notification_updates and current_user.role not in ['VOLUNTEER', 'REQUESTER']:
+        # Remove notification fields for unauthorized users
+        for field in notification_fields:
+            user_data.pop(field, None)
+        
+        # Optionally raise an exception instead:
+        # raise HTTPException(
+        #     status_code=403, 
+        #     detail="Notification settings are only available for volunteers and requesters"
+        # )
+    
     current_user.sqlmodel_update(user_data)
     session.add(current_user)
     session.commit()

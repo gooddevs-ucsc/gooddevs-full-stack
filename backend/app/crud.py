@@ -12,9 +12,26 @@ from app.models import VolunteerProfile, VolunteerProfileCreate, VolunteerProfil
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
+    # Set notification defaults based on user role
+    notification_defaults = {}
+    if user_create.role in ['VOLUNTEER', 'REQUESTER']:
+        notification_defaults = {
+            "email_notifications": True,
+            "sms_notifications": False,
+            "push_notifications": True
+        }
+    else:  # ADMIN, SPONSOR, or other roles
+        notification_defaults = {
+            "email_notifications": False,
+            "sms_notifications": False,
+            "push_notifications": False
+        }
+    
     db_obj = User.model_validate(
         user_create, update={
-            "hashed_password": get_password_hash(user_create.password)}
+            "hashed_password": get_password_hash(user_create.password),
+            **notification_defaults
+        }
     )
     session.add(db_obj)
     session.commit()

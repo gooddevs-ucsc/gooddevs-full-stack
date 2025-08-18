@@ -47,6 +47,10 @@ class UserBase(SQLModel):
     lastname: Optional[str] = Field(default=None, max_length=255)
     role: UserRole = Field(default=UserRole.VOLUNTEER,
                            sa_column=Column(Enum(UserRole)))
+    # Notification settings - defaults will be set based on user role
+    email_notifications: bool = Field(default=False)
+    sms_notifications: bool = Field(default=False)
+    push_notifications: bool = Field(default=False)
 
 
 # Properties to receive via API on creation
@@ -72,6 +76,9 @@ class UserUpdate(UserBase):
 class UserUpdateMe(SQLModel):
     full_name: Optional[str] = Field(default=None, max_length=255)
     email: Optional[EmailStr] = Field(default=None, max_length=255)
+    email_notifications: Optional[bool] = Field(default=None)
+    sms_notifications: Optional[bool] = Field(default=None)
+    push_notifications: Optional[bool] = Field(default=None)
 
 
 class UpdatePassword(SQLModel):

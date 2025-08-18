@@ -14,8 +14,7 @@ const DeveloperSettingsRoute = () => {
 
   // Form states
   const [emailForm, setEmailForm] = useState({
-    oldEmail: '',
-    newEmail: '',
+    email: '',
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -24,28 +23,12 @@ const DeveloperSettingsRoute = () => {
     confirmPassword: '',
   });
 
-  const [notificationForm, setNotificationForm] = useState({
-    email_notifications: true,
-    sms_notifications: false,
-    push_notifications: true,
-  });
-
   // Initialize form with user data
   useEffect(() => {
     if (userProfile) {
       setEmailForm({
-        oldEmail: userProfile.email,
-        newEmail: '',
+        email: userProfile.email,
       });
-
-      // Only initialize notification settings for eligible roles
-      if (['VOLUNTEER', 'REQUESTER'].includes(userProfile.role)) {
-        setNotificationForm({
-          email_notifications: userProfile.email_notifications ?? false,
-          sms_notifications: userProfile.sms_notifications ?? false,
-          push_notifications: userProfile.push_notifications ?? false,
-        });
-      }
     }
   }, [userProfile]);
 
@@ -58,21 +41,12 @@ const DeveloperSettingsRoute = () => {
     setPasswordForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleNotificationChange = (field: string, value: boolean) => {
-    setNotificationForm((prev) => ({ ...prev, [field]: value }));
-  };
-
   // Submit handlers
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await updateProfile.mutateAsync({ email: emailForm.newEmail });
+      await updateProfile.mutateAsync(emailForm);
       alert('Email updated successfully!');
-      // Update the old email to the new email after successful update
-      setEmailForm((prev) => ({
-        oldEmail: prev.newEmail,
-        newEmail: '',
-      }));
     } catch (error: any) {
       console.error('Failed to update email:', error);
       const errorMessage =
@@ -109,20 +83,6 @@ const DeveloperSettingsRoute = () => {
       console.error('Failed to update password:', error);
       const errorMessage =
         error?.response?.data?.detail || 'Failed to update password';
-      alert(errorMessage);
-    }
-  };
-
-  const handleNotificationSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await updateProfile.mutateAsync(notificationForm);
-      alert('Notification settings updated successfully!');
-    } catch (error: any) {
-      console.error('Failed to update notification settings:', error);
-      const errorMessage =
-        error?.response?.data?.detail ||
-        'Failed to update notification settings';
       alert(errorMessage);
     }
   };
@@ -224,36 +184,17 @@ const DeveloperSettingsRoute = () => {
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div>
                 <label
-                  htmlFor="old_email"
+                  htmlFor="email"
                   className="mb-2 block text-sm font-medium text-gray-700"
                 >
-                  Current Email
+                  Email Address
                 </label>
                 <input
-                  id="old_email"
+                  id="email"
                   type="email"
-                  value={emailForm.oldEmail}
-                  readOnly
-                  placeholder="Current email address"
-                  className="w-full cursor-not-allowed rounded border border-gray-300 bg-gray-50 px-3 py-2 text-gray-600"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="new_email"
-                  className="mb-2 block text-sm font-medium text-gray-700"
-                >
-                  New Email Address
-                </label>
-                <input
-                  id="new_email"
-                  type="email"
-                  value={emailForm.newEmail}
-                  onChange={(e) =>
-                    handleEmailChange('newEmail', e.target.value)
-                  }
-                  placeholder="Enter new email address"
+                  value={emailForm.email}
+                  onChange={(e) => handleEmailChange('email', e.target.value)}
+                  placeholder="Enter your email"
                   className="w-full rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
@@ -267,80 +208,6 @@ const DeveloperSettingsRoute = () => {
               </button>
             </form>
           </div>
-
-          {/* Notification Settings Section - Only for VOLUNTEER and REQUESTER */}
-          {userProfile &&
-            ['VOLUNTEER', 'REQUESTER'].includes(userProfile.role) && (
-              <div className="mt-6 border-t pt-6">
-                <h3 className="mb-4 text-lg font-medium text-gray-800">
-                  Notification Settings
-                </h3>
-                <form onSubmit={handleNotificationSubmit} className="space-y-4">
-                  <div className="space-y-3">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={notificationForm.email_notifications}
-                        onChange={(e) =>
-                          handleNotificationChange(
-                            'email_notifications',
-                            e.target.checked,
-                          )
-                        }
-                        className="mr-3 size-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700">
-                        Email Notifications
-                      </span>
-                    </label>
-
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={notificationForm.sms_notifications}
-                        onChange={(e) =>
-                          handleNotificationChange(
-                            'sms_notifications',
-                            e.target.checked,
-                          )
-                        }
-                        className="mr-3 size-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700">
-                        SMS Notifications
-                      </span>
-                    </label>
-
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={notificationForm.push_notifications}
-                        onChange={(e) =>
-                          handleNotificationChange(
-                            'push_notifications',
-                            e.target.checked,
-                          )
-                        }
-                        className="mr-3 size-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700">
-                        Push Notifications
-                      </span>
-                    </label>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={updateProfile.isPending}
-                    className="w-full rounded bg-purple-600 py-2 text-white transition hover:bg-purple-700 disabled:bg-purple-300"
-                  >
-                    {updateProfile.isPending
-                      ? 'Updating...'
-                      : 'Update Notifications'}
-                  </button>
-                </form>
-              </div>
-            )}
         </div>
       </div>
     </div>
