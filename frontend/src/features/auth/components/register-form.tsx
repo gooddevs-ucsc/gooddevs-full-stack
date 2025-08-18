@@ -50,9 +50,12 @@ export const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
     <div>
       <Form
         onSubmit={(values) => {
-          // You can access selectedDevRoles here if needed for future backend integration
-          // const submissionData = { ...values, developmentRoles: selectedDevRoles };
-          registering.mutate(values);
+          // Include developer roles in the submission data
+          const submissionData = { 
+            ...values, 
+            developer_roles: selectedRole === 'VOLUNTEER' ? selectedDevRoles : undefined 
+          };
+          registering.mutate(submissionData);
         }}
         schema={registerInputSchema}
         options={{

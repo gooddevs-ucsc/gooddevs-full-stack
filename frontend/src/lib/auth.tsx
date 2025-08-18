@@ -42,6 +42,7 @@ export const registerInputSchema = z.object({
   lastname: z.string().min(1, 'Required'),
   password: z.string().min(8, 'Should be at least 8 characters'),
   role: z.enum([ROLES.ADMIN, ROLES.SPONSOR, ROLES.VOLUNTEER, ROLES.REQUESTER]),
+  developer_roles: z.array(z.string()).optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerInputSchema>;

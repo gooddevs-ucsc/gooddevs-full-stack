@@ -1,10 +1,10 @@
 import uuid
 import enum
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import EmailStr
-from sqlmodel import Field, Relationship, SQLModel, Column, Enum
+from sqlmodel import Field, Relationship, SQLModel, Column, Enum, JSON
 
 
 class UserRole(str, enum.Enum):
@@ -12,6 +12,15 @@ class UserRole(str, enum.Enum):
     VOLUNTEER = "VOLUNTEER"
     REQUESTER = "REQUESTER"
     SPONSOR = "SPONSOR"
+
+
+class DeveloperRole(str, enum.Enum):
+    FRONTEND = "frontend"
+    BACKEND = "backend"
+    FULLSTACK = "fullstack"
+    UIUX = "uiux"
+    PROJECT_MANAGER = "projectmanager"
+    QA = "qa"
 
 
 class ProjectType(str, enum.Enum):
@@ -47,6 +56,7 @@ class UserBase(SQLModel):
     lastname: Optional[str] = Field(default=None, max_length=255)
     role: UserRole = Field(default=UserRole.VOLUNTEER,
                            sa_column=Column(Enum(UserRole)))
+    developer_roles: Optional[List[str]] = Field(default=None, sa_column=Column(JSON))
     # Notification settings - defaults will be set based on user role
     email_notifications: bool = Field(default=False)
     sms_notifications: bool = Field(default=False)
@@ -64,6 +74,7 @@ class UserRegister(SQLModel):
     firstname: str = Field(max_length=255)
     lastname: str = Field(max_length=255)
     role: UserRole
+    developer_roles: Optional[List[str]] = Field(default=None)
 
 
 # Properties to receive via API on update, all are optional
