@@ -6,6 +6,19 @@ import { useUser } from '@/lib/auth';
 const DashboardRoute = () => {
   const user = useUser();
 
+  // Function to format developer roles for professional display
+  const formatDeveloperRole = (role: string): string => {
+    const roleMapping: Record<string, string> = {
+      frontend: 'Frontend Developer',
+      backend: 'Backend Developer',
+      fullstack: 'Full Stack Developer',
+      uiux: 'UI/UX Designer',
+      projectmanager: 'Project Manager',
+      qa: 'Quality Assurance Engineer',
+    };
+    return roleMapping[role.toLowerCase()] || role;
+  };
+
   const stats = [
     {
       title: 'Applied Projects',
@@ -91,11 +104,27 @@ const DashboardRoute = () => {
             </span>
           </h1>
           <p className="mt-2 text-lg text-slate-600">
-            Your role:{' '}
+            Your Role:{' '}
             <span className="font-semibold text-primary">
               {user.data?.role}
             </span>
           </p>
+          {user.data?.developer_roles &&
+            user.data.developer_roles.length > 0 && (
+              <p className="mt-2 text-lg text-slate-600">
+                {' '}
+                <span className="font-semibold text-primary">
+                  {user.data.developer_roles.map((role, index) => (
+                    <span key={role}>
+                      {formatDeveloperRole(role)}
+                      {user.data?.developer_roles &&
+                        index < user.data.developer_roles.length - 1 &&
+                        ', '}
+                    </span>
+                  ))}
+                </span>
+              </p>
+            )}
           <p className="mt-4 text-slate-600">
             Here&apos;s an overview of your contributions and activities.
           </p>
