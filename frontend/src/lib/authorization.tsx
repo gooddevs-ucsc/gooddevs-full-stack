@@ -22,22 +22,17 @@ export const POLICIES = {
 export const useAuthorization = () => {
   const user = useUser();
 
-  if (!user.data) {
-    throw Error('User does not exist!');
-  }
-
   const checkAccess = React.useCallback(
     ({ allowedRoles }: { allowedRoles: RoleTypes[] }) => {
-      if (allowedRoles && allowedRoles.length > 0 && user.data) {
-        return allowedRoles?.includes(user.data.role);
+      if (!user.data) {
+        return false;
       }
-
-      return true;
+      return allowedRoles?.includes(user.data.role);
     },
     [user.data],
   );
 
-  return { checkAccess, role: user.data.role };
+  return { checkAccess, role: user.data?.role };
 };
 
 type AuthorizationProps = {
