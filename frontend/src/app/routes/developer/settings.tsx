@@ -1,132 +1,194 @@
-import React, { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
+import { Form, Input, Label } from '@/components/ui/form';
+import { api } from '@/lib/api-client';
+import { useUser } from '@/lib/auth';
+
+// Validation schemas
+const emailUpdateSchema = z.object({
+  newEmail: z
+    .string()
+    .min(1, 'Email is required')
+    .email('Invalid email address'),
+});
+
+const passwordUpdateSchema = z
+  .object({
+    oldPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z
+      .string()
+      .min(8, 'Password must be at least 8 characters long'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
+
+type EmailUpdateInput = z.infer<typeof emailUpdateSchema>;
+type PasswordUpdateInput = z.infer<typeof passwordUpdateSchema>;
 
 const DeveloperSettingsRoute = () => {
-  const [email, setEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [notifications, setNotifications] = useState({
-    email: true,
-    sms: false,
-    push: true,
+  // Get current user data
+  const { data: userProfile, refetch: refetchUser } = useUser();
+
+  // Form states
+  const [emailForm, setEmailForm] = useState({
+    currentEmail: '',
   });
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setEmail(e.target.value);
-  const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setNewPassword(e.target.value);
+  // Initialize form with user data
+  useEffect(() => {
+    if (userProfile) {
+      setEmailForm({
+        currentEmail: userProfile.email,
+      });
+    }
+  }, [userProfile]);
 
-  const handleNotificationsChange = (type: string) => {
-    setNotifications((prev) => ({
-      ...prev,
-      [type]: !prev[type as keyof typeof prev],
-    }));
-  };
+  // Mutation for updating email
+  const updateEmailMutation = useMutation({
+    mutationFn: async (email: string) => {
+      return api.patch('/users/me', { email });
+    },
+    onSuccess: () => {
+      alert('Email updated successfully!');
+      refetchUser();
+    },
+    onError: (error: any) => {
+      const errorMessage =
+        error?.response?.data?.detail || 'Failed to update email';
+      alert(errorMessage);
+    },
+  });
 
-  const handleNotificationsToggle = () => {
-    setNotificationsEnabled((prev) => !prev);
-  };
+  // Mutation for updating password
+  const updatePasswordMutation = useMutation({
+    mutationFn: async (data: {
+      current_password: string;
+      new_password: string;
+    }) => {
+      return api.patch('/users/me/password', data);
+    },
+    onSuccess: () => {
+      alert('Password updated successfully!');
+    },
+    onError: (error: any) => {
+      const errorMessage =
+        error?.response?.data?.detail || 'Failed to update password';
+      alert(errorMessage);
+    },
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle save logic here
-  };
+  if (!userProfile) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="flex items-center">
+          <div className="size-8 animate-spin rounded-full border-b-2 border-blue-500"></div>
+          <span className="ml-3">Loading settings...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-xl rounded-lg bg-white p-8 shadow-lg">
-        <h1 className="mb-6 text-center text-2xl font-bold">Settings</h1>
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Change Email */}
-          <div>
-            <label
-              htmlFor="change-email"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
-              Change Email
-            </label>
-            <input
-              id="change-email"
-              type="email"
-              value={email}
-              onChange={handleEmailChange}
-              placeholder="Enter new email"
-              className="w-full rounded border border-gray-300 px-3 py-2"
-            />
-          </div>
-          {/* Change Password */}
-          <div>
-            <label
-              htmlFor="new-password"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
-              Change Password
-            </label>
-            <input
-              id="new-password"
-              type="password"
-              value={newPassword}
-              onChange={handleNewPasswordChange}
-              placeholder="Enter new password"
-              className="w-full rounded border border-gray-300 px-3 py-2"
-            />
-          </div>
-          {/* Notification Settings */}
-          <div>
-            <label
-              htmlFor="notification-settings-group"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
-              Notification Settings
-            </label>
-            <button
-              type="button"
-              onClick={handleNotificationsToggle}
-              className={`mb-4 rounded px-4 py-2 ${notificationsEnabled ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'}`}
-            >
-              {notificationsEnabled
-                ? 'Disable Notifications'
-                : 'Enable Notifications'}
-            </button>
-            <div id="notification-settings-group" className="space-y-2">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={notifications.email && notificationsEnabled}
-                  onChange={() => handleNotificationsChange('email')}
-                  disabled={!notificationsEnabled}
-                  className="mr-2"
-                />
-                Email Notifications
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={notifications.sms && notificationsEnabled}
-                  onChange={() => handleNotificationsChange('sms')}
-                  disabled={!notificationsEnabled}
-                  className="mr-2"
-                />
-                SMS Notifications
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={notifications.push && notificationsEnabled}
-                  onChange={() => handleNotificationsChange('push')}
-                  disabled={!notificationsEnabled}
-                  className="mr-2"
-                />
-                Push Notifications
-              </label>
-            </div>
-          </div>
-          <button
-            type="submit"
-            className="w-full rounded bg-blue-600 py-2 text-white transition hover:bg-blue-700"
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-md">
+        <h1 className="mb-6 text-center text-3xl font-bold text-gray-900">
+          Account Settings
+        </h1>
+
+        <div className="rounded-lg bg-white p-6 shadow-lg">
+          {/* Password Change Section */}
+          <h2 className="mb-4 text-xl font-semibold text-gray-800">
+            Change Password
+          </h2>
+          <Form
+            onSubmit={(values: PasswordUpdateInput) => {
+              updatePasswordMutation.mutate({
+                current_password: values.oldPassword,
+                new_password: values.newPassword,
+              });
+            }}
+            schema={passwordUpdateSchema}
+            options={{
+              shouldUnregister: true,
+            }}
           >
-            Save Changes
-          </button>
-        </form>
+            {({ register, formState }) => (
+              <>
+                <Input
+                  type="password"
+                  label="Current Password"
+                  error={formState.errors['oldPassword']}
+                  registration={register('oldPassword')}
+                />
+                <Input
+                  type="password"
+                  label="New Password"
+                  error={formState.errors['newPassword']}
+                  registration={register('newPassword')}
+                />
+                <Input
+                  type="password"
+                  label="Confirm Password"
+                  error={formState.errors['confirmPassword']}
+                  registration={register('confirmPassword')}
+                />
+                <Button
+                  isLoading={updatePasswordMutation.isPending}
+                  type="submit"
+                  className="w-full"
+                >
+                  Update Password
+                </Button>
+              </>
+            )}
+          </Form>
+
+          {/* Email Update Section */}
+          <div className="mt-6 border-t pt-6">
+            <h3 className="mb-4 text-lg font-medium text-gray-800">
+              Update Email
+            </h3>
+            <div className="mb-4">
+              <Label>Current Email</Label>
+              <div className="mt-1 rounded border border-gray-300 bg-gray-50 px-3 py-2 text-gray-600">
+                {emailForm.currentEmail}
+              </div>
+            </div>
+            <Form
+              onSubmit={(values: EmailUpdateInput) => {
+                updateEmailMutation.mutate(values.newEmail);
+              }}
+              schema={emailUpdateSchema}
+              options={{
+                shouldUnregister: true,
+              }}
+            >
+              {({ register, formState }) => (
+                <>
+                  <Input
+                    type="email"
+                    label="New Email Address"
+                    error={formState.errors['newEmail']}
+                    registration={register('newEmail')}
+                  />
+                  <Button
+                    isLoading={updateEmailMutation.isPending}
+                    type="submit"
+                    className="w-full"
+                  >
+                    Update Email
+                  </Button>
+                </>
+              )}
+            </Form>
+          </div>
+        </div>
       </div>
     </div>
   );
