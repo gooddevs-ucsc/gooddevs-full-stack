@@ -1,10 +1,45 @@
-import { Code, GitBranch, TrendingUp, Activity, Calendar } from 'lucide-react';
+import {
+  Code,
+  GitBranch,
+  TrendingUp,
+  Activity,
+  Calendar,
+  Layers,
+  Palette,
+  Settings,
+  Users,
+  Zap,
+  Monitor,
+} from 'lucide-react';
 
 import { ContentLayout } from '@/components/layouts';
 import { useUser } from '@/lib/auth';
 
 const DashboardRoute = () => {
   const user = useUser();
+
+  // Format development roles for display
+  const formatDevelopmentRoles = (roles?: string) => {
+    if (!roles) return [];
+    return roles
+      .split(',')
+      .map((role) => role.trim())
+      .filter((role) => role);
+  };
+
+  // Map development roles to icons (consistent blue styling)
+  const getRoleIcon = (role: string) => {
+    const roleMap: Record<string, any> = {
+      frontend: Monitor,
+      backend: Settings,
+      fullstack: Layers,
+      uiux: Palette,
+      projectmanager: Users,
+      qa: Zap,
+    };
+
+    return roleMap[role.toLowerCase()] || Code;
+  };
 
   const stats = [
     {
@@ -96,6 +131,42 @@ const DashboardRoute = () => {
               {user.data?.role}
             </span>
           </p>
+
+          {/* Development Roles Display */}
+          {user.data?.development_roles &&
+            formatDevelopmentRoles(user.data.development_roles).length > 0 && (
+              <div className="mt-3">
+                <div className="flex flex-wrap gap-3">
+                  {formatDevelopmentRoles(user.data.development_roles).map(
+                    (role, index) => {
+                      const IconComponent = getRoleIcon(role);
+                      return (
+                        <div
+                          key={index}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 px-2.5 py-1.5 shadow-sm transition-all hover:scale-105 hover:from-blue-100 hover:to-blue-200 hover:shadow-md"
+                        >
+                          <IconComponent className="size-3 text-blue-600" />
+                          <span className="text-xs font-medium text-blue-700">
+                            {role === 'uiux'
+                              ? 'UI/UX Designer'
+                              : role === 'projectmanager'
+                                ? 'Project Manager'
+                                : role === 'qa'
+                                  ? 'QA Engineer'
+                                  : role === 'fullstack'
+                                    ? 'Full Stack Developer'
+                                    : role.charAt(0).toUpperCase() +
+                                      role.slice(1) +
+                                      ' Developer'}
+                          </span>
+                        </div>
+                      );
+                    },
+                  )}
+                </div>
+              </div>
+            )}
+
           <p className="mt-4 text-slate-600">
             Here&apos;s an overview of your contributions and activities.
           </p>

@@ -28,6 +28,7 @@ export type User = Entity<{
   email: string;
   role: 'ADMIN' | 'SPONSOR' | 'VOLUNTEER' | 'REQUESTER';
   bio: string;
+  development_roles?: string;
 }>;
 
 export type AuthResponse = {
