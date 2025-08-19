@@ -1,18 +1,22 @@
-import { useMutation } from '@tanstack/react-query';
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Form, Input, Label } from '@/components/ui/form';
+import { useNotifications } from '@/components/ui/notifications';
+import {
+  useUpdateEmail,
+  useUpdatePassword,
+  updateEmailInputSchema,
+} from '@/features/users/api/update-user-settings';
 import { useUser } from '@/lib/auth';
 
-// Validation schemas
-const emailUpdateSchema = z.object({
-  newEmail: z
-    .string()
-    .min(1, 'Email is required')
-    .email('Invalid email address'),
-});
+// Validation schemas - using schemas from API file
+const emailUpdateSchema = updateEmailInputSchema
+  .extend({
+    newEmail: updateEmailInputSchema.shape.email,
+  })
+  .omit({ email: true });
 
 const passwordUpdateSchema = z
   .object({
@@ -33,6 +37,7 @@ type PasswordUpdateInput = z.infer<typeof passwordUpdateSchema>;
 const DeveloperSettingsRoute = () => {
   // Get current user data
   const { data: userProfile } = useUser();
+  const { addNotification } = useNotifications();
 
   // Form states
   const [emailForm, setEmailForm] = useState({
@@ -48,37 +53,47 @@ const DeveloperSettingsRoute = () => {
     }
   }, [userProfile]);
 
-  // Mock mutation for updating email (UI only - no API calls)
-  const updateEmailMutation = useMutation({
-    mutationFn: async (email: string) => {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return { data: { email } };
-    },
-    onSuccess: () => {
-      alert(
-        'UI Demo: Email would be updated! (Backend will be implemented in separate branch)',
-      );
-    },
-    onError: () => {
-      alert('UI Demo: Email update failed (this is just UI demo)');
+  // Real mutation for updating email
+  const updateEmailMutation = useUpdateEmail({
+    mutationConfig: {
+      onSuccess: () => {
+        addNotification({
+          type: 'success',
+          title: 'Email Updated',
+          message: 'Your email has been successfully updated!',
+        });
+      },
+      onError: (error: any) => {
+        addNotification({
+          type: 'error',
+          title: 'Email Update Failed',
+          message:
+            error?.response?.data?.detail ||
+            'Failed to update email. Please try again.',
+        });
+      },
     },
   });
 
-  // Mock mutation for updating password (UI only - no API calls)
-  const updatePasswordMutation = useMutation({
-    mutationFn: async () => {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return { data: { message: 'Password updated' } };
-    },
-    onSuccess: () => {
-      alert(
-        'UI Demo: Password would be updated! (Backend will be implemented in separate branch)',
-      );
-    },
-    onError: () => {
-      alert('UI Demo: Password update failed (this is just UI demo)');
+  // Real mutation for updating password
+  const updatePasswordMutation = useUpdatePassword({
+    mutationConfig: {
+      onSuccess: () => {
+        addNotification({
+          type: 'success',
+          title: 'Password Updated',
+          message: 'Your password has been successfully updated!',
+        });
+      },
+      onError: (error: any) => {
+        addNotification({
+          type: 'error',
+          title: 'Password Update Failed',
+          message:
+            error?.response?.data?.detail ||
+            'Failed to update password. Please try again.',
+        });
+      },
     },
   });
 
@@ -108,8 +123,10 @@ const DeveloperSettingsRoute = () => {
           <Form
             onSubmit={(values: PasswordUpdateInput) => {
               updatePasswordMutation.mutate({
-                current_password: values.oldPassword,
-                new_password: values.newPassword,
+                data: {
+                  current_password: values.oldPassword,
+                  new_password: values.newPassword,
+                },
               });
             }}
             schema={passwordUpdateSchema}
@@ -161,7 +178,9 @@ const DeveloperSettingsRoute = () => {
             </div>
             <Form
               onSubmit={(values: EmailUpdateInput) => {
-                updateEmailMutation.mutate(values.newEmail);
+                updateEmailMutation.mutate({
+                  data: { email: values.newEmail },
+                });
               }}
               schema={emailUpdateSchema}
               options={{
