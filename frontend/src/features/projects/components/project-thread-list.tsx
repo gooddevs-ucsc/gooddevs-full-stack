@@ -1,9 +1,11 @@
-import { Link, useMatch } from 'react-router';
 import { MessageCircle } from 'lucide-react';
+import { Link, useMatch } from 'react-router';
 
 import { Spinner } from '@/components/ui/spinner';
-import { useProjectThreads } from '../api/get-project-thread';
 import { formatDate } from '@/utils/format';
+
+import { useProjectThreads } from '../api/get-project-thread';
+
 import { CreateThreadForm } from './create-thread-form';
 
 type ProjectThreadListProps = {
