@@ -1,9 +1,7 @@
-import { QueryClient } from '@tanstack/react-query';
-
 import { ContentLayout } from '@/components/layouts';
 import { SponsorDonationsView } from '@/features/donations';
 
-export const clientLoader = (queryClient: QueryClient) => async () => {
+export const clientLoader = () => async () => {
   return {};
 };
 

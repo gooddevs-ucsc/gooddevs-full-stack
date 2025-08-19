@@ -41,6 +41,18 @@ export const createAppRouter = (queryClient: QueryClient) =>
     {
       path: paths.projectDetail.path,
       lazy: () => import('./routes/project-detail').then(convert(queryClient)),
+      children: [
+        {
+          path: paths.projectDetail.threadList.path,
+          lazy: () =>
+            import('./routes/project-thread-list').then(convert(queryClient)),
+        },
+        {
+          path: 'threads/:threadId',
+          lazy: () =>
+            import('./routes/project-thread-detail').then(convert(queryClient)),
+        },
+      ],
     },
     {
       path: paths.aboutUs.path,

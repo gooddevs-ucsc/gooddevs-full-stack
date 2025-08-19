@@ -1,182 +1,266 @@
 from typing import Any
 import uuid
-from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlmodel import select
 
 from app import crud
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
-    ProjectCommentCreate,
-    ProjectCommentUpdate,
-    ProjectCommentPublic,
-    ProjectThreadPublic,
-    UserPublic,
+    CommentCreate,
+    CommentPublic,
+    CommentsPublic,
+    CommentUpdate,
     Message,
+    Meta,
+    ProjectThreadCreate,
+    ProjectThreadPublic,
+    ProjectThreadsPublic,
+    ReplyCreate,
+    ReplyPublic,
+    RepliesPublic,
+    ReplyUpdate,
 )
 
-# Remove the path parameter from the prefix
-router = APIRouter(tags=["project-threads"])
+router = APIRouter(prefix="/projects", tags=["project-threads"])
 
-@router.get("/{project_id}/thread", response_model=ProjectThreadPublic)
-def get_project_thread(
-    project_id: uuid.UUID, 
+@router.get("/{project_id}/threads", response_model=ProjectThreadsPublic)
+def read_project_threads(
+    *,
     session: SessionDep,
-    current_user: CurrentUser,
+    project_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100,
 ) -> Any:
-    """Get project thread with comments."""
-    # Your existing implementation
+    """
+    Retrieve threads for a project.
+    """
     project = crud.get_project_by_id(session=session, project_id=project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
-    # Get or create thread
-    thread = crud.get_project_thread(session=session, project_id=project_id)
-    if not thread:
-        thread = crud.create_project_thread(session=session, project_id=project_id)
-    
-    # Get comments with authors
-    comments = crud.get_project_comments(session=session, project_id=project_id)
-    comments_with_authors = []
-    
-    for comment in comments:
-        author = crud.get_user_by_id(session=session, user_id=comment.author_id)
-        if author:
-            comment_public = ProjectCommentPublic(
-                id=comment.id,
-                content=comment.content,
-                project_id=comment.project_id,
-                author=UserPublic(
-                    id=author.id,
-                    email=author.email,
-                    is_active=author.is_active,
-                    is_superuser=author.is_superuser,
-                    firstname=author.firstname,
-                    lastname=author.lastname,
-                    role=author.role
-                ),
-                created_at=comment.created_at,
-                updated_at=comment.updated_at,
-            )
-            comments_with_authors.append(comment_public)
-    
-    return ProjectThreadPublic(
-        id=thread.id,
-        project_id=thread.project_id,
-        comments=comments_with_authors,
-        created_at=thread.created_at,
-        updated_at=thread.updated_at,
+
+    threads, count = crud.get_project_threads_by_project_id(
+        session=session, project_id=project_id, skip=skip, limit=limit
+    )
+    return ProjectThreadsPublic(
+        data=threads,
+        meta=Meta(total=count, page=skip // limit + 1, totalPages=(count + limit - 1) // limit),
     )
 
-@router.post("/{project_id}/thread/comments", response_model=ProjectCommentPublic)
-def create_project_comment(
-    project_id: uuid.UUID,
-    comment_data: ProjectCommentCreate,
+
+@router.post("/{project_id}/threads", response_model=ProjectThreadPublic)
+def create_project_thread(
+    *,
     session: SessionDep,
+    project_id: uuid.UUID,
+    thread_in: ProjectThreadCreate,
     current_user: CurrentUser,
 ) -> Any:
-    """Create a new comment in project thread."""
-    # Your existing implementation
+    """
+    Create new thread for a project.
+    """
     project = crud.get_project_by_id(session=session, project_id=project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
-    thread = crud.get_project_thread(session=session, project_id=project_id)
-    if not thread:
-        thread = crud.create_project_thread(session=session, project_id=project_id)
-    
-    comment = crud.create_project_comment(
+
+    thread = crud.create_project_thread(
         session=session,
-        comment_in=comment_data,
+        thread_in=thread_in,
+        author_id=current_user.id,
         project_id=project_id,
+    )
+    return thread
+
+
+@router.get("/threads/{thread_id}", response_model=ProjectThreadPublic)
+def read_project_thread(
+    *, session: SessionDep, thread_id: uuid.UUID
+) -> Any:
+    """
+    Get a specific thread by ID.
+    """
+    thread = crud.get_project_thread_by_id(session=session, thread_id=thread_id)
+    if not thread:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    return thread
+
+
+@router.get("/threads/{thread_id}/comments", response_model=CommentsPublic)
+def read_comments(
+    *,
+    session: SessionDep,
+    thread_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """
+    Retrieve comments for a thread.
+    """
+    thread = crud.get_project_thread_by_id(session=session, thread_id=thread_id)
+    if not thread:
+        raise HTTPException(status_code=404, detail="Thread not found")
+
+    comments, count = crud.get_comments_by_thread_id(
+        session=session, thread_id=thread_id, skip=skip, limit=limit
+    )
+    return CommentsPublic(
+        data=comments,
+        meta=Meta(total=count, page=skip // limit + 1, totalPages=(count + limit - 1) // limit),
+    )
+
+
+@router.post("/threads/{thread_id}/comments", response_model=CommentPublic)
+def create_comment(
+    *,
+    session: SessionDep,
+    thread_id: uuid.UUID,
+    comment_in: CommentCreate,
+    current_user: CurrentUser,
+) -> Any:
+    """
+    Create a new comment for a thread.
+    """
+    print(f"Received comment data: {comment_in}")
+    
+    thread = crud.get_project_thread_by_id(session=session, thread_id=thread_id)
+    if not thread:
+        raise HTTPException(status_code=404, detail="Thread not found")
+
+    comment = crud.create_comment(
+        session=session,
+        comment_in=comment_in,
+        thread_id=thread_id,
         author_id=current_user.id,
     )
-    
-    return ProjectCommentPublic(
-        id=comment.id,
-        content=comment.content,
-        project_id=comment.project_id,
-        author=UserPublic(
-            id=current_user.id,
-            email=current_user.email,
-            is_active=current_user.is_active,
-            is_superuser=current_user.is_superuser,
-            firstname=current_user.firstname,
-            lastname=current_user.lastname,
-            role=current_user.role
-        ),
-        created_at=comment.created_at,
-        updated_at=comment.updated_at,
-    )
+    return comment
 
-@router.patch("/{project_id}/thread/comments/{comment_id}", response_model=ProjectCommentPublic)
-def update_project_comment(
-    project_id: uuid.UUID,  # Add project_id parameter
-    comment_id: uuid.UUID,
-    comment_data: ProjectCommentUpdate,
+
+@router.post("/comments/{comment_id}/replies", response_model=ReplyPublic)
+def create_reply(
+    *,
     session: SessionDep,
+    comment_id: uuid.UUID,
+    reply_in: ReplyCreate,
     current_user: CurrentUser,
 ) -> Any:
-    """Update a project comment."""
-    comment = crud.get_project_comment_by_id(session=session, comment_id=comment_id)
+    """
+    Create a new reply for a comment.
+    """
+    print(f"Received reply data: {reply_in}")
+    
+    # Verify the comment exists
+    comment = crud.get_comment_by_id(session=session, comment_id=comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     
-    # Verify the comment belongs to the specified project
-    if comment.project_id != project_id:
-        raise HTTPException(status_code=404, detail="Comment not found")
-    
-    # Check if user owns the comment or is admin
-    if comment.author_id != current_user.id and not current_user.is_superuser:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-    
-    # Update comment in database
-    updated_comment = crud.update_project_comment(
-        session=session, db_comment=comment, comment_in=comment_data
-    )
-    
-    author = crud.get_user_by_id(session=session, user_id=updated_comment.author_id)
-    
-    return ProjectCommentPublic(
-        id=updated_comment.id,
-        content=updated_comment.content,
-        project_id=updated_comment.project_id,
-        author=UserPublic(
-            id=author.id,
-            email=author.email,
-            is_active=author.is_active,
-            is_superuser=author.is_superuser,
-            firstname=author.firstname,
-            lastname=author.lastname,
-            role=author.role
-        ),
-        created_at=updated_comment.created_at,
-        updated_at=updated_comment.updated_at,
-    )
+    # Ensure the parent_id matches the comment_id
+    if reply_in.parent_id != comment_id:
+        raise HTTPException(status_code=400, detail="Parent ID must match comment ID")
 
-@router.delete("/{project_id}/thread/comments/{comment_id}", response_model=Message)
-def delete_project_comment(
-    project_id: uuid.UUID,  # Add project_id parameter
-    comment_id: uuid.UUID,
+    reply = crud.create_reply(
+        session=session,
+        reply_in=reply_in,
+        author_id=current_user.id,
+    )
+    return reply
+
+
+@router.get("/comments/{comment_id}/replies", response_model=RepliesPublic)
+def read_replies(
+    *,
     session: SessionDep,
-    current_user: CurrentUser,
+    comment_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100,
 ) -> Any:
-    """Delete a project comment."""
-    comment = crud.get_project_comment_by_id(session=session, comment_id=comment_id)
+    """
+    Retrieve replies for a comment.
+    """
+    comment = crud.get_comment_by_id(session=session, comment_id=comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
-    
-    # Verify the comment belongs to the specified project
-    if comment.project_id != project_id:
+
+    replies, count = crud.get_replies_by_comment_id(
+        session=session, comment_id=comment_id, skip=skip, limit=limit
+    )
+    return RepliesPublic(
+        data=replies,
+        meta=Meta(total=count, page=skip // limit + 1, totalPages=(count + limit - 1) // limit),
+    )
+
+
+@router.patch("/threads/{thread_id}/comments/{comment_id}", response_model=CommentPublic)
+def update_comment(
+    *,
+    session: SessionDep,
+    thread_id: uuid.UUID,
+    comment_id: uuid.UUID,
+    comment_in: CommentUpdate,
+    current_user: CurrentUser,
+) -> Any:
+    """
+    Update a comment.
+    """
+    comment = crud.get_comment_by_id(session=session, comment_id=comment_id)
+    if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
-    
-    # Check if user owns the comment or is admin
-    if comment.author_id != current_user.id and not current_user.is_superuser:
+    if comment.author_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
-    success = crud.delete_project_comment(session=session, comment_id=comment_id)
-    if not success:
-        raise HTTPException(status_code=400, detail="Failed to delete comment")
-    
+    comment = crud.update_comment(
+        session=session, db_comment=comment, comment_in=comment_in
+    )
+    return comment
+
+
+@router.delete("/threads/{thread_id}/comments/{comment_id}", response_model=Message)
+def delete_comment(
+    *, session: SessionDep, comment_id: uuid.UUID, current_user: CurrentUser, thread_id: uuid.UUID
+) -> Any:
+    """
+    Delete a comment.
+    """
+    comment = crud.get_comment_by_id(session=session, comment_id=comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    if comment.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    crud.delete_comment(session=session, db_comment=comment)
     return Message(message="Comment deleted successfully")
+
+
+@router.patch("/replies/{reply_id}", response_model=ReplyPublic)
+def update_reply(
+    *,
+    session: SessionDep,
+    reply_id: uuid.UUID,
+    reply_in: ReplyUpdate,
+    current_user: CurrentUser,
+) -> Any:
+    """
+    Update a reply.
+    """
+    reply = crud.get_reply_by_id(session=session, reply_id=reply_id)
+    if not reply:
+        raise HTTPException(status_code=404, detail="Reply not found")
+    if reply.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    reply = crud.update_reply(
+        session=session, db_reply=reply, reply_in=reply_in
+    )
+    return reply
+
+
+@router.delete("/replies/{reply_id}", response_model=Message)
+def delete_reply(
+    *, session: SessionDep, reply_id: uuid.UUID, current_user: CurrentUser
+) -> Any:
+    """
+    Delete a reply.
+    """
+    reply = crud.get_reply_by_id(session=session, reply_id=reply_id)
+    if not reply:
+        raise HTTPException(status_code=404, detail="Reply not found")
+    if reply.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    crud.delete_reply(session=session, db_reply=reply)
+    return Message(message="Reply deleted successfully")

@@ -6,7 +6,6 @@ import {
   User,
   DollarSign,
 } from 'lucide-react';
-import { D } from 'node_modules/react-router/dist/development/fog-of-war-BkI3XFdx.mjs';
 import { Outlet, useLocation } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';

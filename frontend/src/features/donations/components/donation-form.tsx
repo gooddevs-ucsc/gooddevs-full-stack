@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { CreditCard, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Input = ({ ...props }: React.InputHTMLAttributes<HTMLInputElement>) => (
   <input
@@ -10,8 +11,12 @@ const Input = ({ ...props }: React.InputHTMLAttributes<HTMLInputElement>) => (
   />
 );
 
-const Label = ({ ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
+const Label = ({
+  htmlFor,
+  ...props
+}: React.LabelHTMLAttributes<HTMLLabelElement>) => (
   <label
+    htmlFor={htmlFor}
     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
     {...props}
   />
@@ -53,7 +58,6 @@ const SelectItem = ({
 
 // Simple Textarea component
 const Textarea = ({
-  className,
   ...props
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
   <textarea
@@ -98,7 +102,7 @@ export const DonationForm = ({ onSuccess, onCancel }: DonationFormProps) => {
   };
 
   return (
-    <Card className="w-full max-w-lg mx-auto">
+    <Card className="mx-auto w-full max-w-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CreditCard className="size-5 text-green-600" />
