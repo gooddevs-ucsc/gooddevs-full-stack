@@ -1,7 +1,7 @@
 import { ContentLayout } from '@/components/layouts';
 import { SponsorDonationsView } from '@/features/donations';
 
-export const clientLoader = async () => {
+export const clientLoader = () => async () => {
   return {};
 };
 
