@@ -64,11 +64,11 @@ export const SponsorshipCard: FC<SponsorshipCardProps> = ({ sponsorship }) => {
               <h3 className="text-lg font-semibold text-slate-900 transition-colors duration-200 group-hover:text-blue-600">
                 {sponsorship.sponsorName}
               </h3>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="mt-1 flex items-center gap-2">
                 <Badge className={getStatusColor(sponsorship.status)}>
                   {sponsorship.status}
                 </Badge>
-                <span className="text-xs px-2 py-1 rounded-full font-medium bg-indigo-100 text-indigo-800">
+                <span className="rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-800">
                   Volunteer Sponsor
                 </span>
               </div>
