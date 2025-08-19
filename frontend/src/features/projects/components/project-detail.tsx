@@ -22,8 +22,6 @@ import { ProjectType } from '@/types/api';
 import { formatDate } from '@/utils/format';
 
 import { ProjectDescriptionTab } from './project-description-tab';
-import { ProjectThread } from './project-thread';
-import { ProjectThreadListRoute } from '@/app/routes/project-thread-list';
 import { ProjectThreadList } from './project-thread-list';
 
 const getProjectTypeColor = (type: ProjectType) => {
