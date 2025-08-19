@@ -4,7 +4,6 @@ import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Form, Input, Label } from '@/components/ui/form';
-import { api } from '@/lib/api-client';
 import { useUser } from '@/lib/auth';
 
 // Validation schemas
@@ -33,7 +32,7 @@ type PasswordUpdateInput = z.infer<typeof passwordUpdateSchema>;
 
 const DeveloperSettingsRoute = () => {
   // Get current user data
-  const { data: userProfile, refetch: refetchUser } = useUser();
+  const { data: userProfile } = useUser();
 
   // Form states
   const [emailForm, setEmailForm] = useState({
@@ -49,37 +48,37 @@ const DeveloperSettingsRoute = () => {
     }
   }, [userProfile]);
 
-  // Mutation for updating email
+  // Mock mutation for updating email (UI only - no API calls)
   const updateEmailMutation = useMutation({
     mutationFn: async (email: string) => {
-      return api.patch('/users/me', { email });
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return { data: { email } };
     },
     onSuccess: () => {
-      alert('Email updated successfully!');
-      refetchUser();
+      alert(
+        'UI Demo: Email would be updated! (Backend will be implemented in separate branch)',
+      );
     },
-    onError: (error: any) => {
-      const errorMessage =
-        error?.response?.data?.detail || 'Failed to update email';
-      alert(errorMessage);
+    onError: () => {
+      alert('UI Demo: Email update failed (this is just UI demo)');
     },
   });
 
-  // Mutation for updating password
+  // Mock mutation for updating password (UI only - no API calls)
   const updatePasswordMutation = useMutation({
-    mutationFn: async (data: {
-      current_password: string;
-      new_password: string;
-    }) => {
-      return api.patch('/users/me/password', data);
+    mutationFn: async () => {
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return { data: { message: 'Password updated' } };
     },
     onSuccess: () => {
-      alert('Password updated successfully!');
+      alert(
+        'UI Demo: Password would be updated! (Backend will be implemented in separate branch)',
+      );
     },
-    onError: (error: any) => {
-      const errorMessage =
-        error?.response?.data?.detail || 'Failed to update password';
-      alert(errorMessage);
+    onError: () => {
+      alert('UI Demo: Password update failed (this is just UI demo)');
     },
   });
 
