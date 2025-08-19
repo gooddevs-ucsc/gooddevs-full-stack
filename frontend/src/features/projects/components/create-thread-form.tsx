@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate } from 'react-router';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
