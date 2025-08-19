@@ -11,11 +11,12 @@ import { Link } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Form, Textarea } from '@/components/ui/form';
+import { MDPreview } from '@/components/ui/md-preview';
 import { useNotifications } from '@/components/ui/notifications';
-import { formatDate } from '@/utils/format';
 import { Spinner } from '@/components/ui/spinner';
 import { useUser } from '@/lib/auth';
-import { MDPreview } from '@/components/ui/md-preview';
+import { Comment as CommentType, Reply as ReplyType } from '@/types/api';
+import { formatDate } from '@/utils/format';
 
 import {
   useProjectThread,
@@ -27,14 +28,12 @@ import {
   useDeleteReply,
   createCommentInputSchema,
   updateCommentInputSchema,
-  createReplyInputSchema,
   updateReplyInputSchema,
   type CreateCommentInput,
   type UpdateCommentInput,
   type CreateReplyInput,
   type UpdateReplyInput,
 } from '../api/get-project-thread';
-import { Comment as CommentType, Reply as ReplyType } from '@/types/api';
 
 type ProjectThreadProps = {
   threadId: string;
@@ -283,17 +282,6 @@ const ReplyItem = ({
   onReply,
   isUpdating,
   isDeleting,
-  editingCommentId,
-  setEditingCommentId,
-  handleUpdateComment,
-  handleDeleteComment,
-  handleAddComment,
-  handleAddReply,
-  handleUpdateReply,
-  handleDeleteReply,
-  updateCommentMutation,
-  deleteCommentMutation,
-  createCommentMutation,
 }: {
   reply: ReplyType;
   currentUser: any;
@@ -349,7 +337,7 @@ const ReplyItem = ({
                   size="sm"
                   onClick={onEdit}
                   disabled={isEditing}
-                  className="h-7 w-7 p-0"
+                  className="size-7 p-0"
                 >
                   <Edit className="size-3" />
                 </Button>
@@ -358,7 +346,7 @@ const ReplyItem = ({
                   size="sm"
                   onClick={onDelete}
                   isLoading={isDeleting}
-                  className="h-7 w-7 p-0"
+                  className="size-7 p-0"
                 >
                   <Trash2 className="size-3" />
                 </Button>
@@ -681,7 +669,7 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
               {({ register, formState, reset }) => (
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-200">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-200">
                       <User className="size-5 text-green-700" />
                     </div>
                     <div className="flex-1">
