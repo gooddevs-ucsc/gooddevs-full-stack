@@ -11,10 +11,10 @@ import {
   Plus,
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { paths } from '@/config/paths';
 
 import { ContentLayout } from '@/components/layouts';
 import { Button } from '@/components/ui/button';
+import { paths } from '@/config/paths';
 import { useUser } from '@/lib/auth';
 
 const RequestorDashboardRoute = () => {
@@ -204,7 +204,7 @@ const RequestorDashboardRoute = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start border-primary/20 text-primary h-10"
+                    className="h-10 w-full justify-start border-primary/20 text-primary"
                     onClick={() =>
                       navigate(paths.requester.createProject.getHref())
                     }
@@ -217,7 +217,7 @@ const RequestorDashboardRoute = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start h-10"
+                    className="h-10 w-full justify-start"
                     onClick={() => navigate(paths.requester.projects.getHref())}
                   >
                     <div className="flex items-center gap-6">
@@ -228,7 +228,7 @@ const RequestorDashboardRoute = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start h-10"
+                    className="h-10 w-full justify-start"
                   >
                     <div className="flex items-center gap-6">
                       <Users className="size-4" />

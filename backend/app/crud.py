@@ -5,9 +5,9 @@ from datetime import datetime, timezone
 from sqlmodel import Session, select, func
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate
-from app.models import ProjectThread, ProjectComment, ProjectCommentCreate, ProjectCommentUpdate
+from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic
 
+from sqlalchemy.orm import selectinload
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
@@ -110,53 +110,6 @@ def delete_project(*, session: Session, project_id: uuid.UUID) -> bool:
 def get_user_by_id(*, session: Session, user_id: uuid.UUID) -> User | None:
     return session.get(User, user_id)
 
-# Project Thread CRUD operations
-def get_project_thread(*, session: Session, project_id: uuid.UUID) -> ProjectThread | None:
-    statement = select(ProjectThread).where(ProjectThread.project_id == project_id)
-    return session.exec(statement).first()
-
-def create_project_thread(*, session: Session, project_id: uuid.UUID) -> ProjectThread:
-    db_thread = ProjectThread(project_id=project_id)
-    session.add(db_thread)
-    session.commit()
-    session.refresh(db_thread)
-    return db_thread
-
-def get_project_comments(*, session: Session, project_id: uuid.UUID, skip: int = 0, limit: int = 100) -> list[ProjectComment]:
-    statement = select(ProjectComment).where(
-        ProjectComment.project_id == project_id
-    ).offset(skip).limit(limit).order_by(ProjectComment.created_at)
-    return session.exec(statement).all()
-
-def create_project_comment(*, session: Session, comment_in: ProjectCommentCreate, project_id: uuid.UUID, author_id: uuid.UUID) -> ProjectComment:
-    db_comment = ProjectComment.model_validate(
-        comment_in, update={"project_id": project_id, "author_id": author_id}
-    )
-    session.add(db_comment)
-    session.commit()
-    session.refresh(db_comment)
-    return db_comment
-
-def update_project_comment(*, session: Session, db_comment: ProjectComment, comment_in: ProjectCommentUpdate) -> ProjectComment:
-    comment_data = comment_in.model_dump(exclude_unset=True)
-    comment_data["updated_at"] = datetime.now(timezone.utc)
-    
-    db_comment.sqlmodel_update(comment_data)
-    session.add(db_comment)
-    session.commit()
-    session.refresh(db_comment)
-    return db_comment
-
-def delete_project_comment(*, session: Session, comment_id: uuid.UUID) -> bool:
-    comment = session.get(ProjectComment, comment_id)
-    if comment:
-        session.delete(comment)
-        session.commit()
-        return True
-    return False
-
-def get_project_comment_by_id(*, session: Session, comment_id: uuid.UUID) -> ProjectComment | None:
-    return session.get(ProjectComment, comment_id)
 
 # Task CRUD operations
 def create_task(*, session: Session, task_in: TaskCreate, project_id: uuid.UUID)-> Task:
@@ -195,3 +148,188 @@ def get_tasks_by_project_id(*, session: Session, project_id: uuid.UUID, skip: in
 def count_tasks_by_project(*, session: Session, project_id: uuid.UUID)-> int:
     statement = select(func.count(Task.id)).where(Task.project_id == project_id)
     return session.exec(statement).one() or 0
+
+
+# Project Thread CRUD operations
+def get_project_threads_by_project_id(
+    *, session: Session, project_id: uuid.UUID, skip: int = 0, limit: int = 100
+) -> tuple[list[ProjectThread], int]:
+    statement = (
+        select(ProjectThread)
+        .where(ProjectThread.project_id == project_id)
+        .offset(skip)
+        .limit(limit)
+        .order_by(ProjectThread.created_at.desc())
+    )
+    threads = session.exec(statement).all()
+    count_statement = select(func.count(ProjectThread.id)).where(
+        ProjectThread.project_id == project_id
+    )
+    count = session.exec(count_statement).one()
+    return threads, count
+
+
+def get_project_thread_by_id(
+    *, session: Session, thread_id: uuid.UUID
+) -> ProjectThread | None:
+    # Step 1: Fetch the thread itself.
+    thread = session.get(ProjectThread, thread_id)
+    if not thread:
+        return None
+
+    # Step 2: Fetch all comments for this thread, with their authors and replies.
+    all_comments = session.exec(
+        select(Comment)
+        .where(Comment.thread_id == thread_id)
+        .options(selectinload(Comment.author), selectinload(Comment.replies).selectinload(Reply.author))
+    ).all()
+
+    # Step 3: Sort comments by creation date for correct order.
+    all_comments.sort(key=lambda c: c.created_at)
+    
+    # Step 4: Sort replies within each comment by creation date.
+    for comment in all_comments:
+        comment.replies.sort(key=lambda r: r.created_at)
+
+    # Step 5: Assign the correctly structured list of comments back to the thread.
+    thread.comments = all_comments
+
+    return thread
+
+
+def create_project_thread(
+    *,
+    session: Session,
+    thread_in: ProjectThreadCreate,
+    author_id: uuid.UUID,
+    project_id: uuid.UUID,
+) -> ProjectThread:
+    db_thread = ProjectThread.model_validate(
+        thread_in, update={"author_id": author_id, "project_id": project_id}
+    )
+    session.add(db_thread)
+    session.commit()
+    session.refresh(db_thread)
+    return db_thread
+
+
+# Comment CRUD operations
+def get_comment_by_id(*, session: Session, comment_id: uuid.UUID) -> Comment | None:
+    return session.get(Comment, comment_id)
+
+
+def get_comments_by_thread_id(
+    *, session: Session, thread_id: uuid.UUID, skip: int = 0, limit: int = 10
+) -> tuple[list[Comment], int]:
+    statement = (
+        select(Comment)
+        .where(Comment.thread_id == thread_id)
+        .offset(skip)
+        .limit(limit)
+        .order_by(Comment.created_at.asc())
+    )
+    comments = session.exec(statement).all()
+    count_statement = select(func.count(Comment.id)).where(
+        Comment.thread_id == thread_id
+    )
+    count = session.exec(count_statement).one()
+    return comments, count
+
+
+def create_comment(
+    *,
+    session: Session,
+    comment_in: CommentCreate,
+    thread_id: uuid.UUID,
+    author_id: uuid.UUID,
+) -> Comment:
+    print(f"Creating comment for thread: {thread_id}")
+    db_comment = Comment(
+        body=comment_in.body,
+        thread_id=thread_id,
+        author_id=author_id,
+    )
+    session.add(db_comment)
+    session.commit()
+    session.refresh(db_comment)
+    print(f"Created comment with ID: {db_comment.id}")
+    return db_comment
+
+
+# Reply CRUD operations
+def get_reply_by_id(*, session: Session, reply_id: uuid.UUID) -> Reply | None:
+    return session.get(Reply, reply_id)
+
+
+def get_replies_by_comment_id(
+    *, session: Session, comment_id: uuid.UUID, skip: int = 0, limit: int = 10
+) -> tuple[list[Reply], int]:
+    statement = (
+        select(Reply)
+        .where(Reply.parent_id == comment_id)
+        .offset(skip)
+        .limit(limit)
+        .order_by(Reply.created_at.asc())
+    )
+    replies = session.exec(statement).all()
+    count_statement = select(func.count(Reply.id)).where(
+        Reply.parent_id == comment_id
+    )
+    count = session.exec(count_statement).one()
+    return replies, count
+
+
+def create_reply(
+    *,
+    session: Session,
+    reply_in: ReplyCreate,
+    author_id: uuid.UUID,
+) -> Reply:
+    print(f"Creating reply for comment: {reply_in.parent_id}")
+    # Verify the parent comment exists
+    parent_comment = session.get(Comment, reply_in.parent_id)
+    if not parent_comment:
+        raise ValueError("Parent comment not found")
+    
+    db_reply = Reply(
+        body=reply_in.body,
+        parent_id=reply_in.parent_id,
+        author_id=author_id,
+    )
+    session.add(db_reply)
+    session.commit()
+    session.refresh(db_reply)
+    print(f"Created reply with ID: {db_reply.id}")
+    return db_reply
+
+
+def update_reply(
+    *, session: Session, db_reply: Reply, reply_in: ReplyUpdate
+) -> Reply:
+    reply_data = reply_in.model_dump(exclude_unset=True)
+    db_reply.sqlmodel_update(reply_data)
+    session.add(db_reply)
+    session.commit()
+    session.refresh(db_reply)
+    return db_reply
+
+
+def delete_reply(*, session: Session, db_reply: Reply) -> None:
+    session.delete(db_reply)
+    session.commit()
+
+
+def update_comment(
+    *, session: Session, db_comment: Comment, comment_in: CommentUpdate
+) -> Comment:
+    comment_data = comment_in.model_dump(exclude_unset=True)
+    db_comment.sqlmodel_update(comment_data)
+    session.add(db_comment)
+    session.commit()
+    session.refresh(db_comment)
+    return db_comment
+
+
+def delete_comment(*, session: Session, db_comment: Comment) -> None:
+    session.delete(db_comment)
+    session.commit()

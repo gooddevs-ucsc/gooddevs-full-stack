@@ -2,7 +2,6 @@ import { FC } from 'react';
 import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
-import { paths } from '@/config/paths';
 
 export const HeroSection: FC = () => {
   const navigate = useNavigate();

@@ -98,9 +98,9 @@ export const DonationCard: FC<DonationCardProps> = ({ donation }) => {
         </div>
 
         {donation.message && (
-          <div className="rounded-lg bg-slate-50 border-l-4 border-green-500 p-3">
-            <p className="text-sm text-slate-700 italic">
-              "{donation.message}"
+          <div className="rounded-lg border-l-4 border-green-500 bg-slate-50 p-3">
+            <p className="text-sm italic text-slate-700">
+              &quot;{donation.message}&quot;
             </p>
           </div>
         )}
