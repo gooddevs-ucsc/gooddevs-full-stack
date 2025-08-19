@@ -11,7 +11,7 @@ export const ProjectThreadListRoute = () => {
 
   if (projectThreadsQuery.isLoading) {
     return (
-      <div className="h-full w-full flex items-center justify-center">
+      <div className="flex size-full items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
@@ -21,7 +21,7 @@ export const ProjectThreadListRoute = () => {
 
   return (
     <>
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Project Threads</h1>
         <CreateThreadForm projectId={id!} />
       </div>
