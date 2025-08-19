@@ -15,6 +15,7 @@ export type CreateThreadInput = z.infer<typeof createThreadInputSchema>;
 // Schema for creating a new comment (no parent_id)
 export const createCommentInputSchema = z.object({
   body: z.string().min(1, 'Required'),
+  parentId: z.string().optional(),
 });
 export type CreateCommentInput = z.infer<typeof createCommentInputSchema>;
 

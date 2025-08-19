@@ -406,6 +406,45 @@ const ReplyItem = ({
           )}
         </div>
       </div>
+
+      {isReplying && (
+        <div className="ml-14 mt-4">
+          <Form
+            onSubmit={async (values) => {
+              await onReply({ ...values, parent_id: reply.id });
+              setIsReplying(false);
+            }}
+            schema={createCommentInputSchema}
+          >
+            {({ register, formState, reset }) => (
+              <div className="space-y-2">
+                <Textarea
+                  registration={register('body')}
+                  error={formState.errors.body}
+                  placeholder="Write a reply..."
+                  rows={3}
+                />
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setIsReplying(false);
+                      reset();
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" size="sm" isLoading={isUpdating}>
+                    Submit Reply
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Form>
+        </div>
+      )}
     </div>
   );
 };
@@ -441,7 +480,9 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
       threadId: thread.id,
       data: values,
     });
-    setIsCommentFormOpen(false);
+    if (!values.parentId) {
+      setIsCommentFormOpen(false);
+    }
     addNotification({
       type: 'success',
       title: 'Comment posted',
