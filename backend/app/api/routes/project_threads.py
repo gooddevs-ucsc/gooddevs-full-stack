@@ -22,7 +22,7 @@ from app.models import (
     ReplyUpdate,
 )
 
-router = APIRouter()
+router = APIRouter(prefix="/projects", tags=["project-threads"])
 
 @router.get("/{project_id}/threads", response_model=ProjectThreadsPublic)
 def read_project_threads(
