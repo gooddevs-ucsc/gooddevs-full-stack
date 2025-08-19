@@ -46,6 +46,7 @@ class UserBase(SQLModel):
     lastname: str | None = Field(default=None, max_length=255)
     role: UserRole = Field(default=UserRole.VOLUNTEER,
                            sa_column=Column(Enum(UserRole)))
+    development_roles: str | None = Field(default=None, max_length=500)
 
 
 # Properties to receive via API on creation
@@ -59,6 +60,7 @@ class UserRegister(SQLModel):
     firstname: str = Field(max_length=255)
     lastname: str = Field(max_length=255)
     role: UserRole
+    development_roles: str | None = Field(default=None, max_length=500)
 
 
 # Properties to receive via API on update, all are optional
