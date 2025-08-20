@@ -168,3 +168,11 @@ export interface TasksResponse {
 export interface TaskResponse {
   data: Task;
 }
+
+// Payment-related types
+export type PaymentDetails = {
+  orderId: string;
+  items: string;
+  currency: string;
+  amount: string;
+};
