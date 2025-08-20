@@ -1,5 +1,7 @@
 import secrets
 import warnings
+import os
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -26,8 +28,8 @@ def parse_cors(v: Any) -> list[str] | str:
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        # Use top level .env file (one level above ./backend/)
-        env_file="../.env",
+        # Use .env file from project root - absolute path to avoid issues
+        env_file=r"d:\GoodDevs\gooddevs-full-stack\.env",
         env_ignore_empty=True,
         extra="ignore",
     )
