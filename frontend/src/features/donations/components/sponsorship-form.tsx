@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Users, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Input = ({ ...props }: React.InputHTMLAttributes<HTMLInputElement>) => (
   <input
@@ -10,9 +11,13 @@ const Input = ({ ...props }: React.InputHTMLAttributes<HTMLInputElement>) => (
   />
 );
 
-const Label = ({ ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
+const Label = ({
+  htmlFor,
+  ...props
+}: React.LabelHTMLAttributes<HTMLLabelElement>) => (
   <label
     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+    htmlFor={htmlFor}
     {...props}
   />
 );
@@ -55,12 +60,6 @@ interface SponsorshipFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
 }
-
-const mockProjects = [
-  { id: 'proj-1', name: 'Community Website Redesign' },
-  { id: 'proj-2', name: 'Mobile App Development' },
-  { id: 'proj-3', name: 'Open Source Library' },
-];
 
 const mockVolunteers = [
   { id: 'vol-1', name: 'Jane Smith' },
@@ -109,7 +108,7 @@ export const SponsorshipForm = ({
   };
 
   return (
-    <Card className="w-full max-w-lg mx-auto">
+    <Card className="mx-auto w-full max-w-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="size-5 text-blue-600" />

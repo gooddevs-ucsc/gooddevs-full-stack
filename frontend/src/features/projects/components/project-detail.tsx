@@ -10,7 +10,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { Outlet, useNavigate, useParams } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -22,7 +22,7 @@ import { ProjectType } from '@/types/api';
 import { formatDate } from '@/utils/format';
 
 import { ProjectDescriptionTab } from './project-description-tab';
-import { ProjectThread } from './project-thread';
+import { ProjectThreadList } from './project-thread-list';
 
 const getProjectTypeColor = (type: ProjectType) => {
   return PROJECT_TYPE_STYLES[type] || PROJECT_TYPE_STYLES.OTHER;
@@ -172,7 +172,8 @@ export const ProjectDetail = () => {
 
           {/* Discussion Tab */}
           <TabsContent value="discussion" className="mt-6">
-            <ProjectThread projectId={id!} />
+            <ProjectThreadList projectId={id!} />
+            <Outlet />
           </TabsContent>
         </Tabs>
       </div>
