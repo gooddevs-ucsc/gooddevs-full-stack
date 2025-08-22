@@ -118,3 +118,27 @@ def delete_task(
         raise HTTPException(status_code=404, detail="Task not found")
     
     return {"message": "Task deleted successfully"}
+@router.put("/{task_id}/assign", response_model=TaskResponse)
+def assign_task(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    project_id: uuid.UUID,
+    task_id: uuid.UUID,
+    volunteer_id: uuid.UUID
+) -> Any:
+    """Assign a task to a volunteer."""
+    # Check if project exists and user has permission
+    project = crud.get_project_by_id(session=session, project_id=project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Check permissions
+    if current_user.role == UserRole.REQUESTER:
+        if project.requester_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+    elif current_user.role not in [UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    task = crud.assign_task_to_volunteer(session=session, task_id=task_id, volunteer_id=volunteer_id)
+    return TaskResponse(data=task)
