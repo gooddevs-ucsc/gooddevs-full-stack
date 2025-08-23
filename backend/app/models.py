@@ -440,3 +440,99 @@ class ReplyPublic(ReplyBase):
 class RepliesPublic(SQLModel):
     data: list[ReplyPublic]
     meta: Meta
+
+
+# Project Application Status enum
+class ApplicationStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    WITHDRAWN = "WITHDRAWN"
+
+
+# Volunteer roles for projects (matches existing database enum)
+class DeveloperRole(str, enum.Enum):
+    FRONTEND = "FRONTEND"
+    BACKEND = "BACKEND"
+    FULLSTACK = "FULLSTACK"
+    UIUX = "UIUX"
+    MOBILE = "MOBILE"
+    DEVOPS = "DEVOPS"
+    QA = "QA"
+    PM = "PM"
+
+
+# Base Application model
+class ProjectApplicationBase(SQLModel):
+    volunteer_role: DeveloperRole = Field(sa_column=Column(Enum(DeveloperRole)))
+    cover_letter: str | None = Field(default=None, max_length=2000)
+    skills: str | None = Field(default=None, max_length=1000)
+    experience_years: int | None = Field(default=None, ge=0, le=50)
+    portfolio_url: str | None = Field(default=None, max_length=500)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    github_url: str | None = Field(default=None, max_length=500)
+
+
+# API models for creating application
+class ProjectApplicationCreate(ProjectApplicationBase):
+    pass
+
+
+# API model for updating application  
+class ProjectApplicationUpdate(SQLModel):
+    volunteer_role: DeveloperRole | None = Field(default=None)
+    cover_letter: str | None = Field(default=None, max_length=2000)
+    skills: str | None = Field(default=None, max_length=1000)
+    experience_years: int | None = Field(default=None, ge=0, le=50)
+    portfolio_url: str | None = Field(default=None, max_length=500)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    github_url: str | None = Field(default=None, max_length=500)
+    status: ApplicationStatus | None = Field(default=None)
+
+
+# Database model
+class ProjectApplication(ProjectApplicationBase, table=True):
+    __table_args__ = (
+        # Unique constraint to prevent duplicate applications
+        {"sqlite_autoincrement": True},
+    )
+    
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    project_id: uuid.UUID = Field(
+        foreign_key="project.id", nullable=False, ondelete="CASCADE"
+    )
+    volunteer_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    status: ApplicationStatus = Field(
+        default=ApplicationStatus.PENDING, sa_column=Column(Enum(ApplicationStatus))
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationships
+    project: Project | None = Relationship()
+    volunteer: User | None = Relationship()
+
+
+# Public API model
+class ProjectApplicationPublic(ProjectApplicationBase):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    volunteer_id: uuid.UUID
+    status: ApplicationStatus
+    created_at: datetime
+    updated_at: datetime
+    volunteer: UserPublic | None = None
+    project: ProjectPublic | None = None
+
+
+# Response wrapper for single application
+class ProjectApplicationResponse(SQLModel):
+    data: ProjectApplicationPublic
+
+
+# Response wrapper for multiple applications
+class ProjectApplicationsPublic(SQLModel):
+    data: list[ProjectApplicationPublic]
+    meta: Meta
