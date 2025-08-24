@@ -1,16 +1,16 @@
 # In app/notifications_worker.py
 
-import redis
 import json
 from sqlmodel import Session, create_engine
 from app.models import Notification, NotificationType
 from app.core.config import settings
+from app.core.redis import get_redis_client
 
 # Set up DB connection for the worker
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 
 def main():
-    r = redis.from_url(str(settings.REDIS_URI))
+    r = get_redis_client()
     pubsub = r.pubsub()
     pubsub.subscribe("notifications")
 

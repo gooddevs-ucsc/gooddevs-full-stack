@@ -1,3 +1,4 @@
+import logging
 import uuid
 import json
 from typing import Any
@@ -9,6 +10,7 @@ from app.api.deps import CurrentUser, SessionDep
 from app.models import Task, TaskCreate, TaskPublic, TasksPublic, TaskUpdate, TaskResponse, UserRole, Meta
 from app import crud
 from app.utils import calculate_pagination_meta_from_page
+from app.core.redis import get_redis_client
 
 router = APIRouter(prefix="/projects/{project_id}/tasks", tags=["tasks"])
 
@@ -34,15 +36,22 @@ def create_task(
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
     task = crud.create_task(session=session, task_in=task_in, project_id=project_id)
-    event_payload = {
-        "event_type": "TASK_ASSIGNED",
-        "recipient_id": str(task.volunteer_id),
-        "message": f"A new task has been assigned to you: {task.title}",
-        "link": f"/projects/{project_id}/tasks/{task.id}"
-    }
-    redis_client.publish("notifications", json.dumps(event_payload))
+    if getattr(task, "assignee_id", None):
+        event_payload = {
+            "event_type": "TASK_ASSIGNED",
+            "recipient_id": str(task.assignee_id),
+            "message": f"A new task has been assigned to you: {task.title}",
+            "link": f"/projects/{project_id}/tasks/{task.id}"
+        }
+        try:
+            redis_client = get_redis_client()
+            # encode bytes for compatibility with worker which expects JSON bytes
+            redis_client.publish("notifications", json.dumps(event_payload))
+        except Exception:
+            # don't break task creation when Redis is unavailable; consider logging
+            logging.warning("Redis is not available for publishing notifications")
 
-    return TaskResponse(data=task)
+    return TaskResponse(data=task)  
 
 @router.get("/", response_model=TasksPublic)
 def read_tasks(
