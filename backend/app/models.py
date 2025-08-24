@@ -86,6 +86,7 @@ class User(UserBase, table=True):
         back_populates="owner", cascade_delete=True)
     projects: list["Project"] = Relationship(
         back_populates="requester", cascade_delete=True)
+    notifications: list["Notification"] = Relationship(back_populates="recipient")
 
 
 # Properties to return via API, id is always required
@@ -557,8 +558,5 @@ class Notification(SQLModel, table=True):
     recipient_id: uuid.UUID = Field(foreign_key="user.id")
     recipient: "User" = Relationship(back_populates="notifications")
 
-# Also, add the back-population relationship to your User model
-class User(UserBase, table=True):
-    # ... other fields
-    notifications: list["Notification"] = Relationship(back_populates="recipient")
+    
 

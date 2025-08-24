@@ -1,4 +1,5 @@
 import uuid
+import json
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Depends
@@ -33,6 +34,14 @@ def create_task(
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
     task = crud.create_task(session=session, task_in=task_in, project_id=project_id)
+    event_payload = {
+        "event_type": "TASK_ASSIGNED",
+        "recipient_id": str(task.volunteer_id),
+        "message": f"A new task has been assigned to you: {task.title}",
+        "link": f"/projects/{project_id}/tasks/{task.id}"
+    }
+    redis_client.publish("notifications", json.dumps(event_payload))
+
     return TaskResponse(data=task)
 
 @router.get("/", response_model=TasksPublic)
