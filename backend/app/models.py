@@ -536,3 +536,29 @@ class ProjectApplicationResponse(SQLModel):
 class ProjectApplicationsPublic(SQLModel):
     data: list[ProjectApplicationPublic]
     meta: Meta
+
+# Notification
+
+class NotificationType(str, enum.Enum):
+    PROJECT_APPROVED = "PROJECT_APPROVED"
+    NEW_APPLICATION = "NEW_APPLICATION"
+    TASK_ASSIGNED = "TASK_ASSIGNED"
+    # Add other types as needed
+
+class Notification(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    message: str
+    is_read: bool = Field(default=False)
+    link: str | None = Field(default=None) # e.g., /projects/{project_id}
+    type: NotificationType = Field(sa_column=Column(Enum(NotificationType)))
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Foreign key to the user who should receive the notification
+    recipient_id: uuid.UUID = Field(foreign_key="user.id")
+    recipient: "User" = Relationship(back_populates="notifications")
+
+# Also, add the back-population relationship to your User model
+class User(UserBase, table=True):
+    # ... other fields
+    notifications: list["Notification"] = Relationship(back_populates="recipient")
+
