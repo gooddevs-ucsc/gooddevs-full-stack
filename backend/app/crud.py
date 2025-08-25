@@ -149,6 +149,19 @@ def count_tasks_by_project(*, session: Session, project_id: uuid.UUID)-> int:
     statement = select(func.count(Task.id)).where(Task.project_id == project_id)
     return session.exec(statement).one() or 0
 
+def assign_task_to_volunteer(*, session: Session, task_id: uuid.UUID, volunteer_id: uuid.UUID) -> Task:
+    db_task = session.get(Task, task_id)
+    if not db_task:
+        raise ValueError("Task not found")
+
+    db_task.assignee_id = volunteer_id
+    db_task.updated_at = datetime.now(timezone.utc)
+
+    session.add(db_task)
+    session.commit()
+    session.refresh(db_task)
+    return db_task
+
 
 # Project Thread CRUD operations
 def get_project_threads_by_project_id(
