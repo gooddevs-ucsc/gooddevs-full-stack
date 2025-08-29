@@ -1,3 +1,10 @@
+from sqlalchemy.orm import selectinload
+from app.models import (
+    Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread,
+    ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate,
+    PaymentCurrency,  ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus
+)
+
 import uuid
 from typing import Any
 from datetime import datetime, timezone
@@ -5,9 +12,7 @@ from datetime import datetime, timezone
 from sqlmodel import Session, select, func
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus
 
-from sqlalchemy.orm import selectinload
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
@@ -520,3 +525,35 @@ def get_all_applications(
     count = session.exec(count_statement).one()
     
     return applications, count
+
+
+# Payment CRUD operations
+def create_payment(*, session: Session, payment_in: PaymentCreate, merchant_id: str) -> Payment:
+
+    # Convert PaymentCreate to dict and ensure all required fields have values
+    payment_data = payment_in.model_dump()
+
+    # Add merchant_id from config
+    payment_data["merchant_id"] = merchant_id
+
+    # Remove order_id from payment_data since it will be auto-generated
+    # Don't include order_id in the initial data
+
+    # Set default items description (will be updated after order_id is generated)
+    payment_data["items"] = "Payment Processing"
+
+    # Set default currency (you can modify this logic as needed)
+    # Default to LKR, can be made configurable
+    payment_data["currency"] = PaymentCurrency.LKR
+
+    # Create Payment object (order_id will be auto-generated)
+    db_payment = Payment(**payment_data)
+    session.add(db_payment)
+    session.flush()  # This generates the auto-increment order_id
+
+    # Now update items description with the actual order_id
+    db_payment.items = f"Payment for Order {db_payment.order_id}"
+
+    session.commit()
+    session.refresh(db_payment)
+    return db_payment
