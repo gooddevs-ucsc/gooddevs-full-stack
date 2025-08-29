@@ -31,12 +31,12 @@ const paymentFormSchema = z.object({
   billingDetails: billingDetailsSchema.optional(),
 });
 
-type PaymentFormData = z.infer<typeof paymentFormSchema> & {
+export type PaymentFormData = z.infer<typeof paymentFormSchema> & {
   paymentDetails: PaymentDetails;
 };
-type BillingDetails = z.infer<typeof billingDetailsSchema>;
+export type BillingDetails = z.infer<typeof billingDetailsSchema>;
 
-type PaymentFormProps = {
+export type PaymentFormProps = {
   merchantId: string;
   paymentDetails: PaymentDetails;
   returnUrl: string;
@@ -44,6 +44,7 @@ type PaymentFormProps = {
   notifyUrl: string;
   hash: string;
   allowBillingEdit?: boolean;
+  billingDetails?: BillingDetails;
   onSubmit?: (data: PaymentFormData) => void;
   className?: string;
   title: string;
@@ -52,7 +53,7 @@ type PaymentFormProps = {
   isLoading?: boolean;
 };
 
-const PaymentForm: React.FC<PaymentFormProps> = ({
+export const PaymentForm: React.FC<PaymentFormProps> = ({
   merchantId,
   paymentDetails,
   returnUrl,
@@ -60,6 +61,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   notifyUrl,
   hash,
   allowBillingEdit = true,
+  billingDetails,
   onSubmit,
   className,
   title,
@@ -68,8 +70,18 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   isLoading = false,
 }) => {
   const handleSubmit = (data: PaymentFormData) => {
+    // Use provided billing details if editing is not allowed, otherwise use form data
+    const finalBillingDetails = allowBillingEdit
+      ? data.billingDetails
+      : billingDetails;
+
+    const submitData = {
+      ...data,
+      billingDetails: finalBillingDetails,
+    };
+
     if (onSubmit) {
-      onSubmit(data);
+      onSubmit(submitData);
     } else {
       // Default behavior: submit to PayHere
       const formElement = document.createElement('form');
@@ -90,15 +102,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       };
 
       // Add billing details if provided
-      if (data.billingDetails) {
+      if (finalBillingDetails) {
         Object.assign(hiddenFields, {
-          first_name: data.billingDetails.firstName,
-          last_name: data.billingDetails.lastName,
-          email: data.billingDetails.email,
-          phone: data.billingDetails.phone,
-          address: data.billingDetails.address,
-          city: data.billingDetails.city,
-          country: data.billingDetails.country,
+          first_name: finalBillingDetails.firstName,
+          last_name: finalBillingDetails.lastName,
+          email: finalBillingDetails.email,
+          phone: finalBillingDetails.phone,
+          address: finalBillingDetails.address,
+          city: finalBillingDetails.city,
+          country: finalBillingDetails.country,
         });
       }
 
@@ -141,7 +153,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                     city: '',
                     country: '',
                   }
-                : undefined,
+                : billingDetails,
             },
           }}
         >
@@ -279,11 +291,4 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       </CardContent>
     </Card>
   );
-};
-
-export {
-  PaymentForm,
-  type PaymentFormProps,
-  type PaymentFormData,
-  type BillingDetails,
 };
