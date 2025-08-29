@@ -1,5 +1,6 @@
 import logging
 import math
+import hashlib
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -172,3 +173,29 @@ def calculate_pagination_meta_from_page(*, total: int, page: int, limit: int) ->
     """
     totalPages = math.ceil(total / limit) if limit > 0 else 1
     return Meta(page=page, total=total, totalPages=totalPages)
+
+
+def generate_payhere_hash(merchant_id: str, order_id: str, amount: float, currency: str, merchant_secret: str) -> str:
+    """
+    Generate MD5 hash for payment gateway verification.
+
+    Args:
+        merchant_id: Merchant ID
+        order_id: Order ID
+        amount: Payment amount
+        currency: Currency code
+        merchant_secret: Merchant secret key
+
+    Returns:
+        Uppercase MD5 hash string
+    """
+    # Inner hash (uppercase MD5 of merchant_secret)
+    inner_hash = hashlib.md5(merchant_secret.encode()).hexdigest().upper()
+
+    # Concatenate string
+    data = f"{merchant_id}{order_id}{amount:.2f}{currency}{inner_hash}"
+
+    # Outer hash (uppercase MD5 of the whole string)
+    final_hash = hashlib.md5(data.encode()).hexdigest().upper()
+
+    return final_hash
