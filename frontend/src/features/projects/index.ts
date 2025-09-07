@@ -8,3 +8,4 @@ export * from './components/project-action-buttons';
 export * from './components/project-detail';
 export * from './components/project-description-tab';
 export * from './components/project-create-form';
+export * from './components/edit-thread-form';
