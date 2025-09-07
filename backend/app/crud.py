@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from sqlmodel import Session, select, func
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic
+from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus
 
 from sqlalchemy.orm import selectinload
 
@@ -148,6 +148,19 @@ def get_tasks_by_project_id(*, session: Session, project_id: uuid.UUID, skip: in
 def count_tasks_by_project(*, session: Session, project_id: uuid.UUID)-> int:
     statement = select(func.count(Task.id)).where(Task.project_id == project_id)
     return session.exec(statement).one() or 0
+
+def assign_task_to_volunteer(*, session: Session, task_id: uuid.UUID, volunteer_id: uuid.UUID) -> Task:
+    db_task = session.get(Task, task_id)
+    if not db_task:
+        raise ValueError("Task not found")
+
+    db_task.assignee_id = volunteer_id
+    db_task.updated_at = datetime.now(timezone.utc)
+
+    session.add(db_task)
+    session.commit()
+    session.refresh(db_task)
+    return db_task
 
 
 # Project Thread CRUD operations
@@ -333,3 +346,177 @@ def update_comment(
 def delete_comment(*, session: Session, db_comment: Comment) -> None:
     session.delete(db_comment)
     session.commit()
+
+
+# Project Application CRUD operations
+def create_application(
+    *, 
+    session: Session, 
+    application_in: ProjectApplicationCreate, 
+    project_id: uuid.UUID, 
+    volunteer_id: uuid.UUID
+) -> ProjectApplication:
+    """Create a new project application"""
+    db_application = ProjectApplication.model_validate(
+        application_in, 
+        update={
+            "project_id": project_id, 
+            "volunteer_id": volunteer_id
+        }
+    )
+    session.add(db_application)
+    session.commit()
+    session.refresh(db_application)
+    return db_application
+
+
+def get_application_by_id(*, session: Session, application_id: uuid.UUID) -> ProjectApplication | None:
+    """Get application by ID"""
+    return session.get(ProjectApplication, application_id)
+
+
+def get_application_by_project_and_volunteer(
+    *, 
+    session: Session, 
+    project_id: uuid.UUID, 
+    volunteer_id: uuid.UUID
+) -> ProjectApplication | None:
+    """Check if volunteer has already applied to this project"""
+    statement = select(ProjectApplication).where(
+        ProjectApplication.project_id == project_id,
+        ProjectApplication.volunteer_id == volunteer_id
+    )
+    return session.exec(statement).first()
+
+
+def get_applications_by_project_id(
+    *, 
+    session: Session, 
+    project_id: uuid.UUID, 
+    skip: int = 0, 
+    limit: int = 100
+) -> tuple[list[ProjectApplication], int]:
+    """Get all applications for a specific project"""
+    statement = (
+        select(ProjectApplication)
+        .where(ProjectApplication.project_id == project_id)
+        .options(selectinload(ProjectApplication.volunteer))
+        .offset(skip)
+        .limit(limit)
+        .order_by(ProjectApplication.created_at.desc())
+    )
+    applications = session.exec(statement).all()
+    
+    count_statement = select(func.count(ProjectApplication.id)).where(
+        ProjectApplication.project_id == project_id
+    )
+    count = session.exec(count_statement).one()
+    
+    return applications, count
+
+
+def get_applications_by_volunteer_id(
+    *, 
+    session: Session, 
+    volunteer_id: uuid.UUID, 
+    skip: int = 0, 
+    limit: int = 100
+) -> tuple[list[ProjectApplication], int]:
+    """Get all applications by a specific volunteer"""
+    statement = (
+        select(ProjectApplication)
+        .where(ProjectApplication.volunteer_id == volunteer_id)
+        .options(selectinload(ProjectApplication.project))
+        .offset(skip)
+        .limit(limit)
+        .order_by(ProjectApplication.created_at.desc())
+    )
+    applications = session.exec(statement).all()
+    
+    count_statement = select(func.count(ProjectApplication.id)).where(
+        ProjectApplication.volunteer_id == volunteer_id
+    )
+    count = session.exec(count_statement).one()
+    
+    return applications, count
+
+
+def get_applications_by_status(
+    *, 
+    session: Session, 
+    status: ApplicationStatus, 
+    skip: int = 0, 
+    limit: int = 100
+) -> tuple[list[ProjectApplication], int]:
+    """Get applications by status"""
+    statement = (
+        select(ProjectApplication)
+        .where(ProjectApplication.status == status)
+        .options(
+            selectinload(ProjectApplication.volunteer),
+            selectinload(ProjectApplication.project)
+        )
+        .offset(skip)
+        .limit(limit)
+        .order_by(ProjectApplication.created_at.desc())
+    )
+    applications = session.exec(statement).all()
+    
+    count_statement = select(func.count(ProjectApplication.id)).where(
+        ProjectApplication.status == status
+    )
+    count = session.exec(count_statement).one()
+    
+    return applications, count
+
+
+def update_application(
+    *, 
+    session: Session, 
+    db_application: ProjectApplication, 
+    application_in: ProjectApplicationUpdate
+) -> ProjectApplication:
+    """Update an existing application"""
+    application_data = application_in.model_dump(exclude_unset=True)
+    application_data["updated_at"] = datetime.now(timezone.utc)
+    
+    db_application.sqlmodel_update(application_data)
+    session.add(db_application)
+    session.commit()
+    session.refresh(db_application)
+    return db_application
+
+
+def delete_application(*, session: Session, application_id: uuid.UUID) -> bool:
+    """Delete an application"""
+    application = session.get(ProjectApplication, application_id)
+    if application:
+        session.delete(application)
+        session.commit()
+        return True
+    return False
+
+
+def get_all_applications(
+    *, 
+    session: Session, 
+    skip: int = 0, 
+    limit: int = 100
+) -> tuple[list[ProjectApplication], int]:
+    """Get all applications (admin only)"""
+    statement = (
+        select(ProjectApplication)
+        .options(
+            selectinload(ProjectApplication.volunteer),
+            selectinload(ProjectApplication.project)
+        )
+        .offset(skip)
+        .limit(limit)
+        .order_by(ProjectApplication.created_at.desc())
+    )
+    applications = session.exec(statement).all()
+    
+    count_statement = select(func.count(ProjectApplication.id))
+    count = session.exec(count_statement).one()
+    
+    return applications, count
