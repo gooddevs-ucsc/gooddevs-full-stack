@@ -96,6 +96,7 @@ const CommentItem = ({
 }) => {
   const canEdit = currentUser?.id === comment.author_id;
   const [isReplying, setIsReplying] = useState(false);
+  const [showAllReplies, setShowAllReplies] = useState(false);
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 shadow-sm">
@@ -237,38 +238,49 @@ const CommentItem = ({
 
       {comment.replies && comment.replies.length > 0 && (
         <div className="ml-6 mt-3 space-y-3 border-l-2 border-slate-100 pl-3">
-          {comment.replies.map((reply) => (
-            <ReplyItem
-              key={reply.id}
-              reply={reply}
-              currentUser={currentUser}
-              isEditing={editingCommentId === reply.id}
-              onEdit={() => setEditingCommentId(reply.id)}
-              onCancelEdit={() => setEditingCommentId(null)}
-              onUpdate={(values) =>
-                handleUpdateReply?.(reply.id, values) || Promise.resolve()
-              }
-              onDelete={() =>
-                handleDeleteReply?.(reply.id) || Promise.resolve()
-              }
-              onReply={
-                async (values) => await handleAddReply(values) // values already contains parent_id from the form
-              }
-              isUpdating={updateCommentMutation.isPending}
-              isDeleting={deleteCommentMutation.isPending}
-              editingCommentId={editingCommentId}
-              setEditingCommentId={setEditingCommentId}
-              handleUpdateComment={handleUpdateComment}
-              handleDeleteComment={handleDeleteComment}
-              handleAddComment={handleAddComment}
-              handleAddReply={handleAddReply}
-              handleUpdateReply={handleUpdateReply}
-              handleDeleteReply={handleDeleteReply}
-              updateCommentMutation={updateCommentMutation}
-              deleteCommentMutation={deleteCommentMutation}
-              createCommentMutation={createCommentMutation}
-            />
-          ))}
+          {(showAllReplies ? comment.replies : comment.replies.slice(0, 5)).map(
+            (reply) => (
+              <ReplyItem
+                key={reply.id}
+                reply={reply}
+                currentUser={currentUser}
+                isEditing={editingCommentId === reply.id}
+                onEdit={() => setEditingCommentId(reply.id)}
+                onCancelEdit={() => setEditingCommentId(null)}
+                onUpdate={(values) =>
+                  handleUpdateReply?.(reply.id, values) || Promise.resolve()
+                }
+                onDelete={() =>
+                  handleDeleteReply?.(reply.id) || Promise.resolve()
+                }
+                onReply={
+                  async (values) => await handleAddReply(values) // values already contains parent_id from the form
+                }
+                isUpdating={updateCommentMutation.isPending}
+                isDeleting={deleteCommentMutation.isPending}
+                editingCommentId={editingCommentId}
+                setEditingCommentId={setEditingCommentId}
+                handleUpdateComment={handleUpdateComment}
+                handleDeleteComment={handleDeleteComment}
+                handleAddComment={handleAddComment}
+                handleAddReply={handleAddReply}
+                handleUpdateReply={handleUpdateReply}
+                handleDeleteReply={handleDeleteReply}
+                updateCommentMutation={updateCommentMutation}
+                deleteCommentMutation={deleteCommentMutation}
+                createCommentMutation={createCommentMutation}
+              />
+            ),
+          )}
+          {comment.replies.length > 5 && !showAllReplies && (
+            <Button
+              variant="link"
+              className="p-0 text-sm"
+              onClick={() => setShowAllReplies(true)}
+            >
+              View all {comment.replies.length} replies
+            </Button>
+          )}
         </div>
       )}
     </div>
