@@ -1,4 +1,11 @@
-import { Calendar, Clock, Edit, MoreVertical, Trash2 } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  Edit,
+  MoreVertical,
+  Trash2,
+  User,
+} from 'lucide-react';
 import { FC } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -90,6 +97,12 @@ export const TaskCard: FC<TaskCardProps> = ({ task, onEdit, onDelete }) => {
 
       {/* Meta Information */}
       <div className="space-y-2">
+        {task.assignee && (
+          <div className="flex items-center text-xs text-slate-500">
+            <User className="mr-1 size-3" />
+            Assigned to {task.assignee.firstname} {task.assignee.lastname}
+          </div>
+        )}
         {task.estimated_hours && (
           <div className="flex items-center text-xs text-slate-500">
             <Clock className="mr-1 size-3" />

@@ -11,6 +11,17 @@ import {
 import { Form, Input, Select, Textarea } from '@/components/ui/form';
 import { Task, TaskPriority, TaskStatus } from '@/types/api';
 
+import { useVolunteers } from '../api/get-volunteers';
+
+const getVolunteerFullName = (volunteer: {
+  firstname?: string;
+  lastname?: string;
+}) => {
+  if (volunteer.firstname && volunteer.lastname)
+    return `${volunteer.firstname} ${volunteer.lastname}`;
+  return volunteer.firstname || volunteer.lastname || '';
+};
+
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -27,6 +38,7 @@ const taskFormInputSchema = z.object({
   priority: z.nativeEnum(TaskPriority),
   estimated_hours: z.string().optional(),
   due_date: z.string().optional(),
+  assignee_id: z.string().optional(),
 });
 
 // Define the output type manually
@@ -37,6 +49,7 @@ export interface TaskFormData {
   priority: TaskPriority;
   estimated_hours?: number;
   due_date?: string;
+  assignee_id?: string;
 }
 
 const statusOptions = [
@@ -61,6 +74,8 @@ export const TaskModal: FC<TaskModalProps> = ({
   isLoading = false,
 }) => {
   const isEditing = !!task;
+  const { data: volunteersData, isLoading: isLoadingVolunteers } =
+    useVolunteers();
 
   const getTodayDate = () => {
     const today = new Date();
@@ -75,6 +90,7 @@ export const TaskModal: FC<TaskModalProps> = ({
         formData.estimated_hours && formData.estimated_hours !== ''
           ? Number(formData.estimated_hours)
           : undefined,
+      assignee_id: formData.assignee_id || undefined,
     };
 
     // Validate the transformed data
@@ -83,7 +99,6 @@ export const TaskModal: FC<TaskModalProps> = ({
         isNaN(transformedData.estimated_hours) ||
         transformedData.estimated_hours < 0
       ) {
-        // Handle validation error - you could show an error message here
         return;
       }
     }
@@ -100,6 +115,7 @@ export const TaskModal: FC<TaskModalProps> = ({
       priority: TaskPriority.MEDIUM as TaskPriority,
       estimated_hours: '',
       due_date: '',
+      assignee_id: '',
     };
 
     if (task) {
@@ -110,11 +126,25 @@ export const TaskModal: FC<TaskModalProps> = ({
         priority: task.priority,
         estimated_hours: task.estimated_hours?.toString() || '',
         due_date: task.due_date ? task.due_date.split('T')[0] : '',
+        assignee_id: task.assignee_id || '',
       };
     }
 
     return baseValues;
   };
+
+  // Create volunteer options for the dropdown
+  const volunteerOptions =
+    volunteersData?.data?.map((volunteer) => ({
+      label: `${getVolunteerFullName(volunteer)} (${volunteer.role})`,
+      value: volunteer.id,
+    })) || [];
+
+  // Add "Select Assignee" option at the beginning
+  const assigneeOptions = [
+    { label: '- Select Assignee -', value: '' },
+    ...volunteerOptions,
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -122,14 +152,6 @@ export const TaskModal: FC<TaskModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             {isEditing ? 'Edit Task' : 'Create New Task'}
-            {/* <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="size-8 p-0"
-            >
-              <X className="size-4" />
-            </Button> */}
           </DialogTitle>
         </DialogHeader>
 
@@ -179,6 +201,15 @@ export const TaskModal: FC<TaskModalProps> = ({
                     options={priorityOptions}
                     registration={register('priority')}
                     error={formState.errors.priority}
+                  />
+
+                  {/* Assignee */}
+                  <Select
+                    label="Assign to Volunteer"
+                    options={assigneeOptions}
+                    registration={register('assignee_id')}
+                    error={formState.errors.assignee_id}
+                    disabled={isLoadingVolunteers}
                   />
 
                   {/* Estimated Hours */}
