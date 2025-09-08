@@ -161,6 +161,8 @@ export interface Task {
   estimated_hours?: number;
   actual_hours?: number;
   due_date?: string;
+  assignee_id?: string;
+  assignee?: User;
   created_at: string;
   updated_at: string;
 }
@@ -173,6 +175,7 @@ export interface TaskCreate {
   estimated_hours?: number;
   actual_hours?: number;
   due_date?: string;
+  assignee_id?: string;
 }
 
 export interface TaskUpdate {
@@ -183,6 +186,7 @@ export interface TaskUpdate {
   estimated_hours?: number;
   actual_hours?: number;
   due_date?: string;
+  assignee_id?: string;
 }
 
 export interface TasksResponse {
