@@ -447,6 +447,7 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
   const [isCommentFormOpen, setIsCommentFormOpen] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [isEditingThread, setIsEditingThread] = useState(false);
+  const [sortOrder, setSortOrder] = useState('newest');
 
   const { data: thread, isLoading, error } = useProjectThread({ threadId });
   const createCommentMutation = useCreateComment({
@@ -477,6 +478,14 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
   const user = useUser();
 
   const comments = thread?.comments || [];
+  const sortedComments = [...comments].sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
+    if (sortOrder === 'newest') {
+      return dateB - dateA;
+    }
+    return dateA - dateB;
+  });
   console.log(thread);
 
   const handleDeleteThread = async () => {
@@ -705,15 +714,94 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
         </div>
       </div>
 
+      {/* Add Comment Form */}
+      {isCommentFormOpen && (
+        <div className="border-t border-slate-200/60 bg-gradient-to-br from-slate-50/30 to-white p-6">
+          <Form onSubmit={handleAddComment} schema={createCommentInputSchema}>
+            {({ register, formState, reset }) => (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-200">
+                    <User className="size-5 text-green-700" />
+                  </div>
+                  <div className="flex-1">
+                    <Textarea
+                      placeholder="Add your comment..."
+                      registration={register('body')}
+                      error={formState.errors.body}
+                      rows={4}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setIsCommentFormOpen(false);
+                        reset();
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      isLoading={createCommentMutation.isPending}
+                      className="flex items-center bg-green-600 text-white hover:bg-green-700"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Send className="mr-2 size-4" />
+                        {createCommentMutation.isPending
+                          ? 'Posting...'
+                          : 'Post Comment'}
+                      </span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </Form>
+        </div>
+      )}
+
       <div className="rounded-xl border border-slate-200/60 bg-white shadow-sm">
+        {/* Comments Header */}
+        <div className="flex items-center justify-between border-b border-slate-200/60 p-4">
+          <h2 className="text-xl font-semibold text-slate-800">
+            Comments ({comments.length})
+          </h2>
+          {comments.length > 1 && (
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="sort-comments"
+                className="text-sm font-medium text-slate-600"
+              >
+                Sort by:
+              </label>
+              <select
+                id="sort-comments"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="rounded-md border-slate-300 py-1 pl-2 pr-8 text-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+              </select>
+            </div>
+          )}
+        </div>
+
         {/* Comments List */}
         <div className="space-y-4 p-4">
-          {comments.length === 0 ? (
+          {sortedComments.length === 0 ? (
             <div className="p-12 text-center">
               <p className="text-slate-600">No comments yet.</p>
             </div>
           ) : (
-            comments.map((comment: CommentType) => (
+            sortedComments.map((comment: CommentType) => (
               <CommentItem
                 key={comment.id}
                 comment={comment}
@@ -741,57 +829,6 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
             ))
           )}
         </div>
-
-        {/* Add Comment Form */}
-        {isCommentFormOpen && (
-          <div className="border-t border-slate-200/60 bg-gradient-to-br from-slate-50/30 to-white p-6">
-            <Form onSubmit={handleAddComment} schema={createCommentInputSchema}>
-              {({ register, formState, reset }) => (
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-200">
-                      <User className="size-5 text-green-700" />
-                    </div>
-                    <div className="flex-1">
-                      <Textarea
-                        placeholder="Add your comment..."
-                        registration={register('body')}
-                        error={formState.errors.body}
-                        rows={4}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <div className="flex items-center gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setIsCommentFormOpen(false);
-                          reset();
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        size="sm"
-                        isLoading={createCommentMutation.isPending}
-                        className="bg-green-600 text-white hover:bg-green-700"
-                      >
-                        <Send className="mr-2 size-4" />
-                        {createCommentMutation.isPending
-                          ? 'Posting...'
-                          : 'Post Comment'}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Form>
-          </div>
-        )}
       </div>
     </>
   );
