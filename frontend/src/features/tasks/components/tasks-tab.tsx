@@ -118,6 +118,7 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }) => {
       priority: data.priority,
       estimated_hours: data.estimated_hours,
       due_date: data.due_date || undefined,
+      assignee_id: data.assignee_id || undefined,
       ...(editingTask && { status: data.status }),
     };
 

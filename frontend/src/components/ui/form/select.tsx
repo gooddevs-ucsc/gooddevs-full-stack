@@ -14,6 +14,7 @@ type SelectFieldProps = FieldWrapperPassThroughProps & {
   options: Option[];
   className?: string;
   defaultValue?: string;
+  disabled?: boolean;
   registration: Partial<UseFormRegisterReturn>;
 };
 
