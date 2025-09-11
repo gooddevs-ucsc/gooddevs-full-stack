@@ -2,6 +2,7 @@ export * from './api/create-project';
 export * from './api/get-project';
 export * from './api/get-project-thread';
 export * from './api/get-applications';
+export * from './api/delete-application';
 export { ProjectThread as ProjectThreadComponent } from './components/project-thread';
 export * from './components/projects-list';
 export * from './components/project-approvals-list';
