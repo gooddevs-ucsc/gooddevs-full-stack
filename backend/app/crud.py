@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from sqlmodel import Session, select, func
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus
+from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, ProjectThreadCreate, ProjectThreadUpdate,Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus
 
 from sqlalchemy.orm import selectinload
 
@@ -223,6 +223,23 @@ def create_project_thread(
     session.add(db_thread)
     session.commit()
     session.refresh(db_thread)
+    return db_thread
+
+
+def update_project_thread(
+    *, session: Session, db_thread: ProjectThread, thread_in: ProjectThreadUpdate
+) -> ProjectThread:
+    """
+    Update a project thread with new data.
+    """
+    thread_data = thread_in.model_dump(exclude_unset=True)
+    if thread_data:
+        # Update the updated_at timestamp
+        thread_data["updated_at"] = datetime.utcnow()
+        db_thread.sqlmodel_update(thread_data)
+        session.add(db_thread)
+        session.commit()
+        session.refresh(db_thread)
     return db_thread
 
 

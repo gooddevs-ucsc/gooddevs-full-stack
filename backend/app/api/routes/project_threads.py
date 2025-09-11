@@ -14,6 +14,7 @@ from app.models import (
     Message,
     Meta,
     ProjectThreadCreate,
+    ProjectThreadUpdate,
     ProjectThreadPublic,
     ProjectThreadsPublic,
     ReplyCreate,
@@ -84,6 +85,30 @@ def read_project_thread(
         raise HTTPException(status_code=404, detail="Thread not found")
     return thread
 
+@router.patch("/threads/{thread_id}", response_model=ProjectThreadPublic)
+def update_thread(
+    *,
+    session: SessionDep,
+    thread_id: uuid.UUID,
+    thread_in: ProjectThreadUpdate,
+    current_user: CurrentUser,
+) -> Any:
+    """
+    Update a project thread.
+    """
+    thread = crud.get_project_thread_by_id(session=session, thread_id=thread_id)
+    if not thread:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    
+    # Check if the current user is the author of the thread
+    if thread.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    # Update the thread
+    thread = crud.update_project_thread(
+        session=session, db_thread=thread, thread_in=thread_in
+    )
+    return thread
 
 @router.get("/threads/{thread_id}/comments", response_model=CommentsPublic)
 def read_comments(
