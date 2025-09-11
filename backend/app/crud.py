@@ -243,6 +243,16 @@ def update_project_thread(
     return db_thread
 
 
+def delete_project_thread(*, session: Session, db_thread: ProjectThread) -> None:
+    """
+    Delete a project thread.
+    This will cascade delete all associated comments and replies due to the 
+    cascade="all, delete-orphan" relationship defined in the model.
+    """
+    session.delete(db_thread)
+    session.commit()
+    
+    
 # Comment CRUD operations
 def get_comment_by_id(*, session: Session, comment_id: uuid.UUID) -> Comment | None:
     return session.get(Comment, comment_id)
