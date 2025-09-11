@@ -123,14 +123,25 @@ const CommentItem = ({
                 >
                   <Edit className="size-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onDelete}
-                  isLoading={isDeleting}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
+                <ConfirmationDialog
+                  icon="danger"
+                  title="Delete Comment"
+                  body="Are you sure you want to delete this comment? This action cannot be undone and will also delete all replies."
+                  triggerButton={
+                    <Button variant="ghost" size="sm" isLoading={isDeleting}>
+                      <Trash2 className="size-4" />
+                    </Button>
+                  }
+                  confirmButton={
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={onDelete}
+                    >
+                      Delete Comment
+                    </Button>
+                  }
+                />
               </div>
             )}
           </div>
@@ -408,15 +419,30 @@ const ReplyItem = ({
                 >
                   <Edit className="size-3" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onDelete}
-                  isLoading={isDeleting}
-                  className="size-7 p-0"
-                >
-                  <Trash2 className="size-3" />
-                </Button>
+                <ConfirmationDialog
+                  icon="danger"
+                  title="Delete Reply"
+                  body="Are you sure you want to delete this reply? This action cannot be undone."
+                  triggerButton={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      isLoading={isDeleting}
+                      className="size-7 p-0"
+                    >
+                      <Trash2 className="size-3" />
+                    </Button>
+                  }
+                  confirmButton={
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={onDelete}
+                    >
+                      Delete Reply
+                    </Button>
+                  }
+                />
               </div>
             )}
           </div>
