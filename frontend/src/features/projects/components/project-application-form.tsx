@@ -193,11 +193,17 @@ export const ProjectApplicationForm = ({
             <div className="space-y-6">
               {/* Role Selection */}
               <Select
-                label="Your Role *"
+                label="What role do you want to play? *"
                 options={DEVELOPER_ROLE_OPTIONS}
                 registration={register('volunteer_role')}
                 error={formState.errors.volunteer_role}
+                className="border-2 border-gray-300 bg-white shadow-sm transition-all duration-200 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               />
+              <p className="text-xs text-gray-500">
+                Choose the role you&apos;re most excited about! For example:
+                Frontend Developer, UI/UX Designer, Project Manager, or suggest
+                your own.
+              </p>
 
               {/* Experience */}
               <Input
@@ -286,33 +292,6 @@ export const ProjectApplicationForm = ({
                         error={formState.errors.linkedin_url}
                       />
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Help Text */}
-              <div className="rounded-lg bg-blue-50 p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex size-6 items-center justify-center rounded-full bg-blue-100">
-                    <FileText className="size-4 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-blue-900">
-                      Tips for a successful application:
-                    </h3>
-                    <ul className="mt-2 space-y-1 text-sm text-blue-800">
-                      <li>• Be specific about your relevant experience</li>
-                      <li>
-                        • Explain why you&apos;re passionate about this project
-                      </li>
-                      <li>
-                        • Mention any similar projects you&apos;ve worked on
-                      </li>
-                      <li>
-                        • Include your GitHub profile to showcase your code
-                      </li>
-                      <li>• Add portfolio and LinkedIn links if available</li>
-                    </ul>
                   </div>
                 </div>
               </div>
