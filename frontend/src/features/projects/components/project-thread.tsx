@@ -805,17 +805,46 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
                   />
                 </>
               )}
-              <Button
-                size="sm"
-                onClick={() => setIsCommentFormOpen(!isCommentFormOpen)}
-                className="bg-green-600 text-white hover:bg-green-700"
-                disabled={createCommentMutation.isPending}
-              >
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="mr-2 size-4" />
-                  {isCommentFormOpen ? 'Cancel' : 'Join Discussion'}
-                </div>
-              </Button>
+              {isCommentFormOpen ? (
+                <ConfirmationDialog
+                  icon="danger"
+                  title="Cancel Discussion"
+                  body="You have an open comment form. Are you sure you want to cancel?"
+                  triggerButton={
+                    <Button
+                      size="sm"
+                      className="bg-green-600 text-white hover:bg-green-700"
+                      disabled={createCommentMutation.isPending}
+                    >
+                      <div className="flex items-center gap-2">
+                        <MessageCircle className="mr-2 size-4" />
+                        Cancel
+                      </div>
+                    </Button>
+                  }
+                  confirmButton={
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => setIsCommentFormOpen(false)}
+                    >
+                      Cancel Discussion
+                    </Button>
+                  }
+                />
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => setIsCommentFormOpen(true)}
+                  className="bg-green-600 text-white hover:bg-green-700"
+                  disabled={createCommentMutation.isPending}
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="mr-2 size-4" />
+                    Join Discussion
+                  </div>
+                </Button>
+              )}
             </div>
           </div>
         </div>
