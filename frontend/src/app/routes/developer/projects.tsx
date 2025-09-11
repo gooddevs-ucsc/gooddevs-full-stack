@@ -1,4 +1,4 @@
-import { Search, Heart, Calendar, Users, Clock } from 'lucide-react';
+import { Search, Heart, Calendar, Users, Clock, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
@@ -6,7 +6,9 @@ import { ContentLayout } from '@/components/layouts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useNotifications } from '@/components/ui/notifications';
 import { Spinner } from '@/components/ui/spinner';
+import { useDeleteApplication } from '@/features/projects/api/delete-application';
 import { useApplications } from '@/features/projects/api/get-applications';
 import { useApprovedProjects } from '@/features/projects/api/get-approved-projects';
 import { PROJECT_TYPE_STYLES } from '@/lib/constants/ui';
@@ -22,8 +24,41 @@ const ProjectsRoute = () => {
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get('search') || '',
   );
+  const { addNotification } = useNotifications();
 
-  // Fetch approved projects for "Available Projects" tab
+  // Delete application mutation
+  const deleteApplicationMutation = useDeleteApplication({
+    mutationConfig: {
+      onSuccess: () => {
+        addNotification({
+          type: 'success',
+          title: 'Application Deleted',
+          message: 'Your application has been successfully deleted.',
+        });
+      },
+      onError: (error: any) => {
+        addNotification({
+          type: 'error',
+          title: 'Failed to Delete',
+          message:
+            error.response?.data?.detail ||
+            'Failed to delete application. Please try again.',
+        });
+      },
+    },
+  });
+
+  const handleDeleteApplication = (applicationId: string) => {
+    if (
+      window.confirm(
+        'Are you sure you want to delete this application? This action cannot be undone.',
+      )
+    ) {
+      deleteApplicationMutation.mutate({ applicationId });
+    }
+  };
+
+  // Fetch approved projects for "Browse Projects" tab
   const approvedProjectsQuery = useApprovedProjects({
     page: 1,
     limit: 100,
@@ -32,12 +67,12 @@ const ProjectsRoute = () => {
     },
   });
 
-  // Fetch user's applications for other tabs
+  // Fetch user's applications (needed for all tabs except available, but also needed for available to filter out applied projects)
   const applicationsQuery = useApplications({
     page: 1,
     limit: 100,
     queryConfig: {
-      enabled: activeTab !== 'available',
+      enabled: true, // Always fetch to filter applied projects from available tab
     },
   });
 
@@ -47,27 +82,42 @@ const ProjectsRoute = () => {
     return applicationsQuery.data.data.filter((app) => app.status === status);
   };
 
+  const getAllApplications = () => {
+    if (!applicationsQuery.data?.data) return [];
+    return applicationsQuery.data.data;
+  };
+
   const getProjectsForTab = () => {
     let items: (Project | ProjectApplication)[] = [];
 
     switch (activeTab) {
-      case 'available':
-        items = approvedProjectsQuery.data?.data || [];
+      case 'available': {
+        // Show only approved projects that user hasn't applied to yet
+        const approvedProjects = approvedProjectsQuery.data?.data || [];
+        const appliedProjectIds = new Set(
+          (applicationsQuery.data?.data || []).map((app) => app.project_id),
+        );
+
+        items = approvedProjects.filter(
+          (project) => !appliedProjectIds.has(project.id),
+        );
         break;
+      }
       case 'applied':
         items = getApplicationsByStatus(APPLICATION_STATUS.PENDING);
         break;
       case 'accepted':
         items = getApplicationsByStatus(APPLICATION_STATUS.APPROVED);
         break;
+      case 'rejected':
+        items = getApplicationsByStatus(APPLICATION_STATUS.REJECTED);
+        break;
+      case 'all':
+        items = getAllApplications();
+        break;
       case 'workspace':
         // For active projects, show approved applications
         items = getApplicationsByStatus(APPLICATION_STATUS.APPROVED);
-        break;
-      case 'completed':
-        // For now, we'll show an empty array as there's no completed status
-        // This could be enhanced later with a COMPLETED status or project status
-        items = [];
         break;
       default:
         items = [];
@@ -110,31 +160,53 @@ const ProjectsRoute = () => {
     updateSearchParams('search', value);
   };
 
+  // Calculate available projects count (excluding already applied projects)
+  const getAvailableProjectsCount = () => {
+    const approvedProjects = approvedProjectsQuery.data?.data || [];
+    const appliedProjectIds = new Set(
+      (applicationsQuery.data?.data || []).map((app) => app.project_id),
+    );
+    return approvedProjects.filter(
+      (project) => !appliedProjectIds.has(project.id),
+    ).length;
+  };
+
   const tabs = [
     {
       id: 'available',
-      label: 'Available Projects',
-      count: approvedProjectsQuery.data?.data?.length || 0,
+      label: 'Browse Projects',
+      count: getAvailableProjectsCount(),
+      description: 'New projects you can apply to (excluding already applied)',
     },
     {
       id: 'applied',
-      label: 'Applied Projects',
+      label: 'Pending',
       count: getApplicationsByStatus(APPLICATION_STATUS.PENDING).length,
+      description: 'Applications waiting for review',
     },
     {
       id: 'accepted',
-      label: 'Accepted Projects',
+      label: 'Accepted',
       count: getApplicationsByStatus(APPLICATION_STATUS.APPROVED).length,
+      description: 'Applications that were approved',
+    },
+    {
+      id: 'rejected',
+      label: 'Rejected',
+      count: getApplicationsByStatus(APPLICATION_STATUS.REJECTED).length,
+      description: 'Applications that were declined',
+    },
+    {
+      id: 'all',
+      label: 'All My Applications',
+      count: getAllApplications().length,
+      description: 'All your applications combined',
     },
     {
       id: 'workspace',
       label: 'Active Projects',
       count: getApplicationsByStatus(APPLICATION_STATUS.APPROVED).length,
-    },
-    {
-      id: 'completed',
-      label: 'Completed Projects',
-      count: 0, // No completed status yet
+      description: 'Projects you are working on',
     },
   ];
 
@@ -167,9 +239,16 @@ const ProjectsRoute = () => {
     <ContentLayout title="Projects">
       <div className="space-y-8">
         {/* Short Description */}
-        <p className="text-sm text-slate-600">
-          Browse and manage your projects across different categories.
-        </p>
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <h2 className="mb-2 text-lg font-medium text-blue-900">
+            Project Dashboard
+          </h2>
+          <p className="text-sm text-blue-700">
+            Manage your project applications and discover new opportunities. Use
+            the tabs below to view different categories of projects and
+            applications.
+          </p>
+        </div>
 
         {/* Search Bar */}
         <div className="relative max-w-md flex-1">
@@ -198,6 +277,13 @@ const ProjectsRoute = () => {
               <span className="text-xs text-slate-400">({tab.count})</span>
             </button>
           ))}
+        </div>
+
+        {/* Tab Description */}
+        <div className="rounded-lg bg-slate-50 p-4">
+          <p className="text-sm text-slate-600">
+            {tabs.find((tab) => tab.id === activeTab)?.description}
+          </p>
         </div>
 
         {/* Loading State */}
@@ -263,7 +349,9 @@ const ProjectsRoute = () => {
                         variant={
                           application.status === APPLICATION_STATUS.APPROVED
                             ? 'default'
-                            : 'secondary'
+                            : application.status === APPLICATION_STATUS.REJECTED
+                              ? 'destructive'
+                              : 'secondary'
                         }
                         className="text-xs"
                       >
@@ -316,6 +404,27 @@ const ProjectsRoute = () => {
                     >
                       View Details
                     </Button>
+
+                    {/* Delete button for pending applications */}
+                    {application &&
+                      application.status === APPLICATION_STATUS.PENDING && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteApplication(application.id);
+                          }}
+                          disabled={deleteApplicationMutation.isPending}
+                        >
+                          <Trash2 className="size-4" />
+                          {deleteApplicationMutation.isPending
+                            ? 'Deleting...'
+                            : 'Delete'}
+                        </Button>
+                      )}
+
+                    {/* Heart button for available projects */}
                     {activeTab === 'available' && (
                       <Button
                         size="sm"
