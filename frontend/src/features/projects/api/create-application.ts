@@ -53,10 +53,9 @@ export const createApplicationInputSchema = z.object({
     .or(z.literal('')),
   github_url: z
     .string()
+    .min(1, 'GitHub profile is required')
     .url('Please enter a valid GitHub URL')
-    .max(500, 'URL must not exceed 500 characters')
-    .optional()
-    .or(z.literal('')),
+    .max(500, 'URL must not exceed 500 characters'),
 });
 
 export type CreateApplicationInput = z.infer<

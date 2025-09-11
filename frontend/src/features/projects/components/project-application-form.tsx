@@ -81,9 +81,9 @@ export const ProjectApplicationForm = ({
         ...data,
         portfolio_url: data.portfolio_url || undefined,
         linkedin_url: data.linkedin_url || undefined,
-        github_url: data.github_url || undefined,
         cover_letter: data.cover_letter || undefined,
         skills: data.skills || undefined,
+        // github_url is required, so don't convert to undefined
       };
 
       console.log('Submitting application data:', applicationData);
@@ -236,7 +236,7 @@ export const ProjectApplicationForm = ({
                   Portfolio & Social Links
                 </h3>
                 <p className="text-sm text-slate-600">
-                  Share your work and professional profiles (optional)
+                  Share your work and professional profiles
                 </p>
 
                 <div className="grid gap-4 md:grid-cols-1">
@@ -264,7 +264,7 @@ export const ProjectApplicationForm = ({
                     <div className="flex-1">
                       <Input
                         type="url"
-                        label="GitHub Profile"
+                        label="GitHub Profile *"
                         placeholder="https://github.com/yourusername"
                         registration={register('github_url')}
                         error={formState.errors.github_url}
@@ -308,7 +308,10 @@ export const ProjectApplicationForm = ({
                       <li>
                         • Mention any similar projects you&apos;ve worked on
                       </li>
-                      <li>• Include links to relevant work examples</li>
+                      <li>
+                        • Include your GitHub profile to showcase your code
+                      </li>
+                      <li>• Add portfolio and LinkedIn links if available</li>
                     </ul>
                   </div>
                 </div>
