@@ -140,33 +140,66 @@ const CommentItem = ({
               schema={updateCommentInputSchema}
               options={{ defaultValues: { body: comment.body } }}
             >
-              {({ register, formState }) => (
-                <div className="mt-2 space-y-2">
-                  <Textarea
-                    registration={register('body')}
-                    error={formState.errors.body}
-                    rows={3}
-                  />
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={onCancelEdit}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      size="sm"
-                      isLoading={isUpdating}
-                      className="bg-green-600 text-white hover:bg-green-700"
-                    >
-                      Update
-                    </Button>
+              {({ register, formState, watch, reset }) => {
+                const currentBody = watch('body');
+                const hasChanges = currentBody !== comment.body;
+
+                return (
+                  <div className="mt-2 space-y-2">
+                    <Textarea
+                      registration={register('body')}
+                      error={formState.errors.body}
+                      rows={3}
+                    />
+                    <div className="flex items-center gap-2">
+                      {hasChanges && currentBody?.trim() ? (
+                        <ConfirmationDialog
+                          icon="danger"
+                          title="Discard Changes"
+                          body="You have unsaved changes. Are you sure you want to discard them?"
+                          triggerButton={
+                            <Button type="button" variant="ghost" size="sm">
+                              Cancel
+                            </Button>
+                          }
+                          confirmButton={
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              onClick={() => {
+                                onCancelEdit();
+                                reset();
+                              }}
+                            >
+                              Discard Changes
+                            </Button>
+                          }
+                        />
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            onCancelEdit();
+                            reset();
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                      <Button
+                        type="submit"
+                        size="sm"
+                        isLoading={isUpdating}
+                        className="bg-green-600 text-white hover:bg-green-700"
+                      >
+                        Update
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              }}
             </Form>
           ) : (
             <div>
@@ -201,36 +234,66 @@ const CommentItem = ({
             }}
             schema={createCommentInputSchema}
           >
-            {({ register, formState, reset }) => (
-              <div className="space-y-2">
-                <Textarea
-                  registration={register('body')}
-                  error={formState.errors.body}
-                  placeholder="Write a reply..."
-                  rows={3}
-                />
-                <div className="flex items-center justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setIsReplying(false);
-                      reset();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    size="sm"
-                    isLoading={createCommentMutation.isPending}
-                  >
-                    Submit Reply
-                  </Button>
+            {({ register, formState, reset, watch }) => {
+              const currentBody = watch('body');
+              const hasContent = currentBody?.trim();
+
+              return (
+                <div className="space-y-2">
+                  <Textarea
+                    registration={register('body')}
+                    error={formState.errors.body}
+                    placeholder="Write a reply..."
+                    rows={3}
+                  />
+                  <div className="flex items-center justify-end gap-2">
+                    {hasContent ? (
+                      <ConfirmationDialog
+                        icon="danger"
+                        title="Discard Reply"
+                        body="You have unsaved changes. Are you sure you want to discard them?"
+                        triggerButton={
+                          <Button type="button" variant="ghost" size="sm">
+                            Cancel
+                          </Button>
+                        }
+                        confirmButton={
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={() => {
+                              setIsReplying(false);
+                              reset();
+                            }}
+                          >
+                            Discard Reply
+                          </Button>
+                        }
+                      />
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setIsReplying(false);
+                          reset();
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                    <Button
+                      type="submit"
+                      size="sm"
+                      isLoading={createCommentMutation.isPending}
+                    >
+                      Submit Reply
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            }}
           </Form>
         </div>
       )}
@@ -363,33 +426,66 @@ const ReplyItem = ({
               schema={updateReplyInputSchema}
               options={{ defaultValues: { body: reply.body } }}
             >
-              {({ register, formState }) => (
-                <div className="mt-2 space-y-2">
-                  <Textarea
-                    registration={register('body')}
-                    error={formState.errors.body}
-                    rows={2}
-                  />
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={onCancelEdit}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      size="sm"
-                      isLoading={isUpdating}
-                      className="bg-green-600 text-white hover:bg-green-700"
-                    >
-                      Update
-                    </Button>
+              {({ register, formState, watch, reset }) => {
+                const currentBody = watch('body');
+                const hasChanges = currentBody !== reply.body;
+
+                return (
+                  <div className="mt-2 space-y-2">
+                    <Textarea
+                      registration={register('body')}
+                      error={formState.errors.body}
+                      rows={2}
+                    />
+                    <div className="flex items-center gap-2">
+                      {hasChanges && currentBody?.trim() ? (
+                        <ConfirmationDialog
+                          icon="danger"
+                          title="Discard Changes"
+                          body="You have unsaved changes. Are you sure you want to discard them?"
+                          triggerButton={
+                            <Button type="button" variant="ghost" size="sm">
+                              Cancel
+                            </Button>
+                          }
+                          confirmButton={
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              onClick={() => {
+                                onCancelEdit();
+                                reset();
+                              }}
+                            >
+                              Discard Changes
+                            </Button>
+                          }
+                        />
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            onCancelEdit();
+                            reset();
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                      <Button
+                        type="submit"
+                        size="sm"
+                        isLoading={isUpdating}
+                        className="bg-green-600 text-white hover:bg-green-700"
+                      >
+                        Update
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              }}
             </Form>
           ) : (
             <div>
@@ -408,32 +504,62 @@ const ReplyItem = ({
             }}
             schema={createCommentInputSchema}
           >
-            {({ register, formState, reset }) => (
-              <div className="space-y-2">
-                <Textarea
-                  registration={register('body')}
-                  error={formState.errors.body}
-                  placeholder="Write a reply..."
-                  rows={3}
-                />
-                <div className="flex items-center justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setIsReplying(false);
-                      reset();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" size="sm" isLoading={isUpdating}>
-                    Submit Reply
-                  </Button>
+            {({ register, formState, reset, watch }) => {
+              const currentBody = watch('body');
+              const hasContent = currentBody?.trim();
+
+              return (
+                <div className="space-y-2">
+                  <Textarea
+                    registration={register('body')}
+                    error={formState.errors.body}
+                    placeholder="Write a reply..."
+                    rows={3}
+                  />
+                  <div className="flex items-center justify-end gap-2">
+                    {hasContent ? (
+                      <ConfirmationDialog
+                        icon="danger"
+                        title="Discard Reply"
+                        body="You have unsaved changes. Are you sure you want to discard them?"
+                        triggerButton={
+                          <Button type="button" variant="ghost" size="sm">
+                            Cancel
+                          </Button>
+                        }
+                        confirmButton={
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={() => {
+                              setIsReplying(false);
+                              reset();
+                            }}
+                          >
+                            Discard Reply
+                          </Button>
+                        }
+                      />
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setIsReplying(false);
+                          reset();
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                    <Button type="submit" size="sm" isLoading={isUpdating}>
+                      Submit Reply
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            }}
           </Form>
         </div>
       )}
@@ -718,51 +844,81 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
       {isCommentFormOpen && (
         <div className="border-t border-slate-200/60 bg-gradient-to-br from-slate-50/30 to-white p-6">
           <Form onSubmit={handleAddComment} schema={createCommentInputSchema}>
-            {({ register, formState, reset }) => (
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-200">
-                    <User className="size-5 text-green-700" />
+            {({ register, formState, reset, watch }) => {
+              const currentBody = watch('body');
+              const hasContent = currentBody?.trim();
+
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-200">
+                      <User className="size-5 text-green-700" />
+                    </div>
+                    <div className="flex-1">
+                      <Textarea
+                        placeholder="Add your comment..."
+                        registration={register('body')}
+                        error={formState.errors.body}
+                        rows={4}
+                      />
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <Textarea
-                      placeholder="Add your comment..."
-                      registration={register('body')}
-                      error={formState.errors.body}
-                      rows={4}
-                    />
+                  <div className="flex justify-end">
+                    <div className="flex items-center gap-3">
+                      {hasContent ? (
+                        <ConfirmationDialog
+                          icon="danger"
+                          title="Discard Comment"
+                          body="You have unsaved changes. Are you sure you want to discard them?"
+                          triggerButton={
+                            <Button type="button" variant="outline" size="sm">
+                              Cancel
+                            </Button>
+                          }
+                          confirmButton={
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              onClick={() => {
+                                setIsCommentFormOpen(false);
+                                reset();
+                              }}
+                            >
+                              Discard Comment
+                            </Button>
+                          }
+                        />
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setIsCommentFormOpen(false);
+                            reset();
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                      <Button
+                        type="submit"
+                        size="sm"
+                        isLoading={createCommentMutation.isPending}
+                        className="flex items-center bg-green-600 text-white hover:bg-green-700"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Send className="mr-2 size-4" />
+                          {createCommentMutation.isPending
+                            ? 'Posting...'
+                            : 'Post Comment'}
+                        </span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex justify-end">
-                  <div className="flex items-center gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setIsCommentFormOpen(false);
-                        reset();
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      size="sm"
-                      isLoading={createCommentMutation.isPending}
-                      className="flex items-center bg-green-600 text-white hover:bg-green-700"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Send className="mr-2 size-4" />
-                        {createCommentMutation.isPending
-                          ? 'Posting...'
-                          : 'Post Comment'}
-                      </span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
+              );
+            }}
           </Form>
         </div>
       )}
