@@ -7,9 +7,10 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/dialog';
 import { Form, Textarea } from '@/components/ui/form';
 import { MDPreview } from '@/components/ui/md-preview';
 import { useNotifications } from '@/components/ui/notifications';
@@ -26,6 +27,7 @@ import {
   useCreateReply,
   useUpdateReply,
   useDeleteReply,
+  useDeleteThread,
   createCommentInputSchema,
   updateCommentInputSchema,
   updateReplyInputSchema,
@@ -34,6 +36,8 @@ import {
   type CreateReplyInput,
   type UpdateReplyInput,
 } from '../api/get-project-thread';
+
+import { EditThreadForm } from './edit-thread-form';
 
 type ProjectThreadProps = {
   threadId: string;
@@ -92,6 +96,11 @@ const CommentItem = ({
 }) => {
   const canEdit = currentUser?.id === comment.author_id;
   const [isReplying, setIsReplying] = useState(false);
+  const [showAllReplies, setShowAllReplies] = useState(false);
+
+  const repliesToShow = showAllReplies
+    ? comment.replies
+    : comment.replies?.slice(0, 5) || [];
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 shadow-sm">
@@ -233,7 +242,7 @@ const CommentItem = ({
 
       {comment.replies && comment.replies.length > 0 && (
         <div className="ml-6 mt-3 space-y-3 border-l-2 border-slate-100 pl-3">
-          {comment.replies.map((reply) => (
+          {repliesToShow.map((reply) => (
             <ReplyItem
               key={reply.id}
               reply={reply}
@@ -265,6 +274,17 @@ const CommentItem = ({
               createCommentMutation={createCommentMutation}
             />
           ))}
+          {comment.replies.length > 5 && (
+            <Button
+              variant="link"
+              className="p-0 text-sm"
+              onClick={() => setShowAllReplies(!showAllReplies)}
+            >
+              {showAllReplies
+                ? 'Show less'
+                : `View all ${comment.replies.length} replies`}
+            </Button>
+          )}
         </div>
       )}
     </div>
@@ -438,9 +458,11 @@ const ReplyItem = ({
 };
 
 export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
+  const navigate = useNavigate();
   const { addNotification } = useNotifications();
   const [isCommentFormOpen, setIsCommentFormOpen] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [isEditingThread, setIsEditingThread] = useState(false);
 
   const { data: thread, isLoading, error } = useProjectThread({ threadId });
   const createCommentMutation = useCreateComment({
@@ -456,10 +478,28 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
   const deleteCommentMutation = useDeleteComment({ threadId });
   const deleteReplyMutation = useDeleteReply({ threadId });
 
+  const deleteThreadMutation = useDeleteThread({
+    config: {
+      onSuccess: () => {
+        addNotification({
+          type: 'success',
+          title: 'Thread deleted successfully',
+        });
+        navigate(`/projects/${thread?.project_id}`);
+      },
+    },
+  });
+
   const user = useUser();
 
   const comments = thread?.comments || [];
   console.log(thread);
+
+  const handleDeleteThread = async () => {
+    if (!thread) return;
+    await deleteThreadMutation.mutateAsync({ threadId: thread.id });
+  };
+
   const handleAddComment = async (values: CreateCommentInput) => {
     if (!thread) return;
     console.log('handleAddComment called with:', values);
@@ -580,6 +620,8 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
     );
   }
 
+  const canEditThread = user.data?.id === thread.author_id;
+
   return (
     <>
       <div className="mb-8 rounded-xl border border-slate-200/60 bg-white shadow-sm">
@@ -605,23 +647,77 @@ export const ProjectThread = ({ threadId }: ProjectThreadProps) => {
                 </p>
               </div>
             </div>
-            <Button
-              size="sm"
-              onClick={() => setIsCommentFormOpen(!isCommentFormOpen)}
-              className="bg-green-600 text-white hover:bg-green-700"
-              disabled={createCommentMutation.isPending}
-            >
-              <div className="flex items-center gap-2">
-                <MessageCircle className="mr-2 size-4" />
-                {isCommentFormOpen ? 'Cancel' : 'Join Discussion'}
-              </div>
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* ADD EDIT/DELETE BUTTONS FOR THREAD AUTHOR */}
+              {canEditThread && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditingThread(true)}
+                    disabled={isEditingThread}
+                  >
+                    <Edit className="mr-2 size-4" />
+                  </Button>
+                  <ConfirmationDialog
+                    icon="danger"
+                    title="Delete Thread"
+                    body="Are you sure you want to delete this thread? This action cannot be undone and will also delete all comments and replies."
+                    triggerButton={
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                      >
+                        <Trash2 className="mr-2 size-4" />
+                      </Button>
+                    }
+                    confirmButton={
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        isLoading={deleteThreadMutation.isPending}
+                        onClick={handleDeleteThread}
+                      >
+                        Delete Thread
+                      </Button>
+                    }
+                    isDone={deleteThreadMutation.isSuccess}
+                  />
+                </>
+              )}
+              <Button
+                size="sm"
+                onClick={() => setIsCommentFormOpen(!isCommentFormOpen)}
+                className="bg-green-600 text-white hover:bg-green-700"
+                disabled={createCommentMutation.isPending}
+              >
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="mr-2 size-4" />
+                  {isCommentFormOpen ? 'Cancel' : 'Join Discussion'}
+                </div>
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Thread Body */}
         <div className="prose max-w-none p-6">
-          <MDPreview value={thread.body} />
+          {isEditingThread ? (
+            <EditThreadForm
+              thread={thread}
+              onCancel={() => setIsEditingThread(false)}
+              onSuccess={() => {
+                setIsEditingThread(false);
+                addNotification({
+                  type: 'success',
+                  title: 'Thread updated successfully',
+                });
+              }}
+            />
+          ) : (
+            <MDPreview value={thread.body} />
+          )}
         </div>
       </div>
 

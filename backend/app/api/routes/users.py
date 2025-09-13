@@ -18,6 +18,8 @@ from app.models import (
     UpdatePassword,
     User,
     UserCreate,
+    UserIdNameRole,
+    VolunteersPublic,
     UserPublic,
     UserRegister,
     UserRole,
@@ -140,6 +142,22 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     session.commit()
     return Message(message="User deleted successfully")
 
+@router.get(
+    "/volunteers",
+    response_model=VolunteersPublic,
+)
+def read_volunteers(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
+    """
+    Retrieve all volunteers.
+    """
+    count_statement = select(func.count()).select_from(User).where(User.role == UserRole.VOLUNTEER)
+    count = session.exec(count_statement).one()
+
+    statement = select(User).where(User.role == UserRole.VOLUNTEER).offset(skip).limit(limit)
+    volunteers = session.exec(statement).all()
+
+    return VolunteersPublic(data=volunteers, count=count)
+
 
 @router.get("/{user_id}", response_model=UserPublic)
 def read_user_by_id(
@@ -212,3 +230,5 @@ def delete_user(
     session.delete(user)
     session.commit()
     return Message(message="User deleted successfully")
+
+

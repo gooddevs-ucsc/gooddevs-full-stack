@@ -16,10 +16,14 @@ import {
   Award,
   Zap,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
+import { useUser } from '@/lib/auth';
 import { formatDate, formatEstimatedTimeline } from '@/utils/format';
+
+import { ProjectApplicationForm } from './project-application-form';
 
 interface ProjectDescriptionTabProps {
   project: any; // Replace with proper type
@@ -29,6 +33,20 @@ export const ProjectDescriptionTab = ({
   project,
 }: ProjectDescriptionTabProps) => {
   const navigate = useNavigate();
+  const { data: user } = useUser();
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
+
+  // Show application form if requested
+  if (showApplicationForm) {
+    return (
+      <ProjectApplicationForm
+        projectId={project.id}
+        projectTitle={project.title}
+        onCancel={() => setShowApplicationForm(false)}
+        onSuccess={() => setShowApplicationForm(false)}
+      />
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -611,9 +629,20 @@ export const ProjectDescriptionTab = ({
             </p>
           </div>
           <div className="space-y-3">
-            <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
+            <Button
+              className="w-full bg-blue-600 text-white hover:bg-blue-700"
+              onClick={() => setShowApplicationForm(true)}
+              disabled={!user || user.role !== 'VOLUNTEER'}
+            >
               Apply to Join Project
             </Button>
+            {(!user || user.role !== 'VOLUNTEER') && (
+              <p className="text-center text-sm text-slate-600">
+                {!user
+                  ? 'Please log in as a volunteer to apply'
+                  : 'Only volunteers can apply to projects'}
+              </p>
+            )}
             <Button
               variant="outline"
               className="flex w-full items-center justify-center"
