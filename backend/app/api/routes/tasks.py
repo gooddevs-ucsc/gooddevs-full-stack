@@ -26,10 +26,7 @@ def create_task(
         raise HTTPException(status_code=404, detail="Project not found")
     
     # Check permissions
-    if current_user.role == UserRole.REQUESTER:
-        if project.requester_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
-    elif current_user.role not in [UserRole.ADMIN]:
+    if current_user.role not in [UserRole.VOLUNTEER, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
     task = crud.create_task(session=session, task_in=task_in, project_id=project_id)
@@ -86,10 +83,8 @@ def update_task(
         raise HTTPException(status_code=404, detail="Task not found")
     
     # Check permissions (similar to project permissions)
-    project = crud.get_project_by_id(session=session, project_id=project_id)
-    if current_user.role == UserRole.REQUESTER:
-        if project.requester_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+    if current_user.role not in [UserRole.ADMIN, UserRole.VOLUNTEER]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     
     task = crud.update_task(session=session, db_task=task, task_in=task_in)
     return TaskResponse(data=task)
@@ -108,11 +103,9 @@ def delete_task(
         raise HTTPException(status_code=404, detail="Task not found")
     
     # Check permissions
-    project = crud.get_project_by_id(session=session, project_id=project_id)
-    if current_user.role == UserRole.REQUESTER:
-        if project.requester_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+    if current_user.role not in [UserRole.VOLUNTEER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+        
     success = crud.delete_task(session=session, task_id=task_id)
     if not success:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -134,11 +127,8 @@ def assign_task(
         raise HTTPException(status_code=404, detail="Project not found")
 
     # Check permissions
-    if current_user.role == UserRole.REQUESTER:
-        if project.requester_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
-    elif current_user.role not in [UserRole.ADMIN]:
+    if current_user.role not in [UserRole.VOLUNTEER, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-
+        
     task = crud.assign_task_to_volunteer(session=session, task_id=task_id, volunteer_id=volunteer_id)
     return TaskResponse(data=task)
