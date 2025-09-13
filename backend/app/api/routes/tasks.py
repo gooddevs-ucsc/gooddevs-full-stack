@@ -26,10 +26,7 @@ def create_task(
         raise HTTPException(status_code=404, detail="Project not found")
     
     # Check permissions
-    if current_user.role == UserRole.VOLUNTEER:
-        pass
-        
-    elif current_user.role not in [UserRole.ADMIN]:
+    if current_user.role not in [UserRole.VOLUNTEER, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
     task = crud.create_task(session=session, task_in=task_in, project_id=project_id)
