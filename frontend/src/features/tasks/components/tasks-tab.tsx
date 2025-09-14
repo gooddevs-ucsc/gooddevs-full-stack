@@ -4,7 +4,9 @@ import { FC, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useNotifications } from '@/components/ui/notifications';
 import { Spinner } from '@/components/ui/spinner';
-import { Task } from '@/types/api';
+import { useUser } from '@/lib/auth';
+import { ROLES } from '@/lib/roles';
+import type { Task } from '@/types/api';
 
 import { useCreateTask } from '../api/create-task';
 import { useDeleteTask } from '../api/delete-task';
@@ -13,14 +15,15 @@ import { useUpdateTask } from '../api/update-task';
 
 import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
 import { TaskList } from './task-list';
-import { TaskFormData, TaskModal } from './task-modal';
+import { TaskModal, type TaskFormData } from './task-modal';
 
 interface TasksTabProps {
   projectId: string;
 }
 
-export const TasksTab: FC<TasksTabProps> = ({ projectId }) => {
+export const TasksTab: FC<TasksTabProps> = ({ projectId }: TasksTabProps) => {
   const { addNotification } = useNotifications();
+  const user = useUser();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -93,6 +96,8 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }) => {
       },
     },
   });
+
+  const canCreateTasks = user.data?.role === ROLES.VOLUNTEER;
 
   const tasks = tasksData?.data || [];
 
@@ -172,10 +177,15 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }) => {
             </p>
           </div>
         </div>
-        <Button onClick={handleCreateTask} className="flex items-center gap-2">
-          <Plus className="size-4" />
-          Create Task
-        </Button>
+        {canCreateTasks && (
+          <Button
+            onClick={handleCreateTask}
+            className="flex items-center gap-2"
+          >
+            <Plus className="size-4" />
+            Create Task
+          </Button>
+        )}
       </div>
 
       {/* Task Stats */}

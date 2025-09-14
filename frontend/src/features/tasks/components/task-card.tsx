@@ -16,6 +16,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown';
+import { useUser } from '@/lib/auth';
+import { ROLES } from '@/lib/roles';
 import { Task, TaskPriority } from '@/types/api';
 import { formatDateOnly } from '@/utils/format';
 
@@ -41,6 +43,10 @@ const getPriorityColor = (priority: TaskPriority) => {
 };
 
 export const TaskCard: FC<TaskCardProps> = ({ task, onEdit, onDelete }) => {
+  const user = useUser();
+
+  const canManageTasks = user.data?.role === ROLES.VOLUNTEER;
+
   return (
     <div className="group rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md">
       {/* Header */}
@@ -48,35 +54,37 @@ export const TaskCard: FC<TaskCardProps> = ({ task, onEdit, onDelete }) => {
         <h4 className="flex-1 text-sm font-semibold text-slate-900 group-hover:text-primary">
           {task.title}
         </h4>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="size-8 p-0 opacity-0 group-hover:opacity-100"
-            >
-              <MoreVertical className="size-4" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem
-              onClick={() => onEdit(task)}
-              className="cursor-pointer"
-            >
-              <Edit className="mr-2 size-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(task.id)}
-              className="cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700"
-            >
-              <Trash2 className="mr-2 size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {canManageTasks && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="size-8 p-0 opacity-0 group-hover:opacity-100"
+              >
+                <MoreVertical className="size-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32">
+              <DropdownMenuItem
+                onClick={() => onEdit(task)}
+                className="cursor-pointer"
+              >
+                <Edit className="mr-2 size-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => onDelete(task.id)}
+                className="cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700"
+              >
+                <Trash2 className="mr-2 size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {/* Description */}
