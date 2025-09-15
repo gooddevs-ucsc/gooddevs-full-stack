@@ -112,47 +112,56 @@ def delete_project(*, session: Session, project_id: uuid.UUID) -> bool:
         return True
     return False
 
+
 def get_user_by_id(*, session: Session, user_id: uuid.UUID) -> User | None:
     return session.get(User, user_id)
 
 
 # Task CRUD operations
-def create_task(*, session: Session, task_in: TaskCreate, project_id: uuid.UUID)-> Task:
+def create_task(*, session: Session, task_in: TaskCreate, project_id: uuid.UUID) -> Task:
     db_task = Task.model_validate(task_in, update={"project_id": project_id})
     session.add(db_task)
     session.commit()
     session.refresh(db_task)
     return db_task
 
+
 def update_task(*, session: Session, db_task: Task, task_in: TaskUpdate) -> Task:
     task_data = task_in.model_dump(exclude_unset=True)
     task_data["updated_at"] = datetime.now(timezone.utc)
-    
+
     db_task.sqlmodel_update(task_data)
     session.add(db_task)
     session.commit()
     session.refresh(db_task)
     return db_task
 
-def delete_task(*, session: Session, task_id: uuid.UUID)-> bool:
+
+def delete_task(*, session: Session, task_id: uuid.UUID) -> bool:
     task = session.get(Task, task_id)
-    
+
     if task:
         session.delete(task)
         session.commit()
         return True
     return False
 
-def get_task_by_id(*, session: Session, task_id: uuid.UUID)-> Task | None:
+
+def get_task_by_id(*, session: Session, task_id: uuid.UUID) -> Task | None:
     return session.get(Task, task_id)
 
-def get_tasks_by_project_id(*, session: Session, project_id: uuid.UUID, skip: int = 0, limit: int = 100)-> list[Task]:
-    statement = select(Task).where(Task.project_id == project_id).offset(skip).limit(limit)
+
+def get_tasks_by_project_id(*, session: Session, project_id: uuid.UUID, skip: int = 0, limit: int = 100) -> list[Task]:
+    statement = select(Task).where(Task.project_id ==
+                                   project_id).offset(skip).limit(limit)
     return session.exec(statement).all()
 
-def count_tasks_by_project(*, session: Session, project_id: uuid.UUID)-> int:
-    statement = select(func.count(Task.id)).where(Task.project_id == project_id)
+
+def count_tasks_by_project(*, session: Session, project_id: uuid.UUID) -> int:
+    statement = select(func.count(Task.id)).where(
+        Task.project_id == project_id)
     return session.exec(statement).one() or 0
+
 
 def assign_task_to_volunteer(*, session: Session, task_id: uuid.UUID, volunteer_id: uuid.UUID) -> Task:
     db_task = session.get(Task, task_id)
@@ -204,7 +213,7 @@ def get_project_thread_by_id(
 
     # Step 3: Sort comments by creation date for correct order.
     all_comments.sort(key=lambda c: c.created_at)
-    
+
     # Step 4: Sort replies within each comment by creation date.
     for comment in all_comments:
         comment.replies.sort(key=lambda r: r.created_at)
@@ -308,7 +317,7 @@ def create_reply(
     parent_comment = session.get(Comment, reply_in.parent_id)
     if not parent_comment:
         raise ValueError("Parent comment not found")
-    
+
     db_reply = Reply(
         body=reply_in.body,
         parent_id=reply_in.parent_id,
@@ -355,17 +364,17 @@ def delete_comment(*, session: Session, db_comment: Comment) -> None:
 
 # Project Application CRUD operations
 def create_application(
-    *, 
-    session: Session, 
-    application_in: ProjectApplicationCreate, 
-    project_id: uuid.UUID, 
+    *,
+    session: Session,
+    application_in: ProjectApplicationCreate,
+    project_id: uuid.UUID,
     volunteer_id: uuid.UUID
 ) -> ProjectApplication:
     """Create a new project application"""
     db_application = ProjectApplication.model_validate(
-        application_in, 
+        application_in,
         update={
-            "project_id": project_id, 
+            "project_id": project_id,
             "volunteer_id": volunteer_id
         }
     )
@@ -381,9 +390,9 @@ def get_application_by_id(*, session: Session, application_id: uuid.UUID) -> Pro
 
 
 def get_application_by_project_and_volunteer(
-    *, 
-    session: Session, 
-    project_id: uuid.UUID, 
+    *,
+    session: Session,
+    project_id: uuid.UUID,
     volunteer_id: uuid.UUID
 ) -> ProjectApplication | None:
     """Check if volunteer has already applied to this project"""
@@ -395,10 +404,10 @@ def get_application_by_project_and_volunteer(
 
 
 def get_applications_by_project_id(
-    *, 
-    session: Session, 
-    project_id: uuid.UUID, 
-    skip: int = 0, 
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    skip: int = 0,
     limit: int = 100
 ) -> tuple[list[ProjectApplication], int]:
     """Get all applications for a specific project"""
@@ -411,20 +420,20 @@ def get_applications_by_project_id(
         .order_by(ProjectApplication.created_at.desc())
     )
     applications = session.exec(statement).all()
-    
+
     count_statement = select(func.count(ProjectApplication.id)).where(
         ProjectApplication.project_id == project_id
     )
     count = session.exec(count_statement).one()
-    
+
     return applications, count
 
 
 def get_applications_by_volunteer_id(
-    *, 
-    session: Session, 
-    volunteer_id: uuid.UUID, 
-    skip: int = 0, 
+    *,
+    session: Session,
+    volunteer_id: uuid.UUID,
+    skip: int = 0,
     limit: int = 100
 ) -> tuple[list[ProjectApplication], int]:
     """Get all applications by a specific volunteer"""
@@ -437,20 +446,20 @@ def get_applications_by_volunteer_id(
         .order_by(ProjectApplication.created_at.desc())
     )
     applications = session.exec(statement).all()
-    
+
     count_statement = select(func.count(ProjectApplication.id)).where(
         ProjectApplication.volunteer_id == volunteer_id
     )
     count = session.exec(count_statement).one()
-    
+
     return applications, count
 
 
 def get_applications_by_status(
-    *, 
-    session: Session, 
-    status: ApplicationStatus, 
-    skip: int = 0, 
+    *,
+    session: Session,
+    status: ApplicationStatus,
+    skip: int = 0,
     limit: int = 100
 ) -> tuple[list[ProjectApplication], int]:
     """Get applications by status"""
@@ -466,25 +475,25 @@ def get_applications_by_status(
         .order_by(ProjectApplication.created_at.desc())
     )
     applications = session.exec(statement).all()
-    
+
     count_statement = select(func.count(ProjectApplication.id)).where(
         ProjectApplication.status == status
     )
     count = session.exec(count_statement).one()
-    
+
     return applications, count
 
 
 def update_application(
-    *, 
-    session: Session, 
-    db_application: ProjectApplication, 
+    *,
+    session: Session,
+    db_application: ProjectApplication,
     application_in: ProjectApplicationUpdate
 ) -> ProjectApplication:
     """Update an existing application"""
     application_data = application_in.model_dump(exclude_unset=True)
     application_data["updated_at"] = datetime.now(timezone.utc)
-    
+
     db_application.sqlmodel_update(application_data)
     session.add(db_application)
     session.commit()
@@ -503,9 +512,9 @@ def delete_application(*, session: Session, application_id: uuid.UUID) -> bool:
 
 
 def get_all_applications(
-    *, 
-    session: Session, 
-    skip: int = 0, 
+    *,
+    session: Session,
+    skip: int = 0,
     limit: int = 100
 ) -> tuple[list[ProjectApplication], int]:
     """Get all applications (admin only)"""
@@ -520,10 +529,10 @@ def get_all_applications(
         .order_by(ProjectApplication.created_at.desc())
     )
     applications = session.exec(statement).all()
-    
+
     count_statement = select(func.count(ProjectApplication.id))
     count = session.exec(count_statement).one()
-    
+
     return applications, count
 
 
