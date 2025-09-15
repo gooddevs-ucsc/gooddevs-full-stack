@@ -189,9 +189,10 @@ class Project(ProjectBase, table=True):
 
     # Relationships
     requester: User | None = Relationship(back_populates="projects")
-    tasks: list["Task"] = Relationship(back_populates="project", cascade_delete=True)
+    tasks: list["Task"] = Relationship(
+        back_populates="project", cascade_delete=True)
     threads: list["ProjectThread"] = Relationship(back_populates="project")
-    
+
 
 # Properties to return via API, id is always required
 class ProjectPublic(ProjectBase):
@@ -246,7 +247,7 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
-    
+
 # Task status enum
 
 
@@ -354,11 +355,13 @@ class ProjectThread(ProjectThreadBase, table=True):
     author_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
     project_id: uuid.UUID = Field(foreign_key="project.id", nullable=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={
+                                 "onupdate": datetime.utcnow})
 
     author: "User" = Relationship()
     project: "Project" = Relationship(back_populates="threads")
-    comments: list["Comment"] = Relationship(back_populates="thread", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    comments: list["Comment"] = Relationship(
+        back_populates="thread", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
 
 
 class ProjectThreadPublic(ProjectThreadBase):
@@ -392,13 +395,16 @@ class CommentUpdate(SQLModel):
 class Comment(CommentBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     author_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
-    thread_id: uuid.UUID = Field(foreign_key="projectthread.id", nullable=False)
+    thread_id: uuid.UUID = Field(
+        foreign_key="projectthread.id", nullable=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={
+                                 "onupdate": datetime.utcnow})
 
     author: "User" = Relationship()
     thread: ProjectThread = Relationship(back_populates="comments")
-    replies: list["Reply"] = Relationship(back_populates="comment", cascade_delete=True)
+    replies: list["Reply"] = Relationship(
+        back_populates="comment", cascade_delete=True)
 
 
 class CommentPublic(CommentBase):
@@ -432,9 +438,11 @@ class ReplyUpdate(SQLModel):
 class Reply(ReplyBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     author_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
-    parent_id: uuid.UUID = Field(foreign_key="comment.id", nullable=False)  # References comment.id
+    parent_id: uuid.UUID = Field(
+        foreign_key="comment.id", nullable=False)  # References comment.id
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={
+                                 "onupdate": datetime.utcnow})
 
     author: "User" = Relationship()
     comment: Comment = Relationship(back_populates="replies")
@@ -476,7 +484,8 @@ class DeveloperRole(str, enum.Enum):
 
 # Base Application model
 class ProjectApplicationBase(SQLModel):
-    volunteer_role: DeveloperRole = Field(sa_column=Column(Enum(DeveloperRole)))
+    volunteer_role: DeveloperRole = Field(
+        sa_column=Column(Enum(DeveloperRole)))
     cover_letter: str | None = Field(default=None, max_length=2000)
     skills: str | None = Field(default=None, max_length=1000)
     experience_years: int | None = Field(default=None, ge=0, le=50)
@@ -490,7 +499,7 @@ class ProjectApplicationCreate(ProjectApplicationBase):
     pass
 
 
-# API model for updating application  
+# API model for updating application
 class ProjectApplicationUpdate(SQLModel):
     volunteer_role: DeveloperRole | None = Field(default=None)
     cover_letter: str | None = Field(default=None, max_length=2000)
@@ -508,7 +517,7 @@ class ProjectApplication(ProjectApplicationBase, table=True):
         # Unique constraint to prevent duplicate applications
         {"sqlite_autoincrement": True},
     )
-    
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     project_id: uuid.UUID = Field(
         foreign_key="project.id", nullable=False, ondelete="CASCADE"
@@ -517,7 +526,8 @@ class ProjectApplication(ProjectApplicationBase, table=True):
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
     status: ApplicationStatus = Field(
-        default=ApplicationStatus.PENDING, sa_column=Column(Enum(ApplicationStatus))
+        default=ApplicationStatus.PENDING, sa_column=Column(
+            Enum(ApplicationStatus))
     )
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
