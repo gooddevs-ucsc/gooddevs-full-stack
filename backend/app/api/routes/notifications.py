@@ -15,32 +15,30 @@ async def notification_stream(current_user: CurrentUser):
     SSE endpoint - keeps connection open and streams notifications
     """
     async def event_generator():
-        # This is a generator that yields notifications as they arrive
-        queue = asyncio.Queue()
+        # Create a queue for this specific connection
+        message_queue = asyncio.Queue()
         
-        # Create a simple wrapper to work with our connection manager
-        class Connection:
-            async def send_text(self, message):
-                await queue.put(message)
-        
-        connection = Connection()
-        await notification_manager.connect(current_user.id, connection)
+        # Register this connection with the notification manager
+        await notification_manager.connect(current_user.id, message_queue)
         
         try:
             # Send initial connection success message
-            yield f"data: {{'type': 'connected'}}\n\n"
+            yield f"data: {{'type': 'connected', 'user_id': '{current_user.id}'}}\n\n"
             
             # Keep connection alive and yield notifications
             while True:
-                # Wait for notification with timeout (for keepalive)
                 try:
-                    message = await asyncio.wait_for(queue.get(), timeout=30.0)
+                    # Wait for notification with timeout (for keepalive)
+                    message = await asyncio.wait_for(message_queue.get(), timeout=30.0)
                     yield message
                 except asyncio.TimeoutError:
                     # Send keepalive ping every 30 seconds
-                    yield f": keepalive\n\n"
+                    yield f"data: {{'type': 'keepalive'}}\n\n"
+        except Exception as e:
+            print(f"SSE connection error: {e}")
         finally:
-            notification_manager.disconnect(current_user.id, connection)
+            # Clean up connection
+            notification_manager.disconnect(current_user.id, message_queue)
     
     return StreamingResponse(
         event_generator(),
@@ -66,7 +64,8 @@ def get_notifications(
         skip=skip,
         limit=limit
     )
-    return NotificationsPublic(data=notifications, count=total)
+    meta = Meta(total=total, page=(skip // limit) + 1, per_page=limit)
+    return NotificationsPublic(data=notifications, meta=meta)
 
 @router.patch("/{notification_id}/read")
 def mark_as_read(
