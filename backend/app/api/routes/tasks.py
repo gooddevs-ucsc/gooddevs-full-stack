@@ -7,21 +7,20 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.models import Task, TaskCreate, TaskPublic, TasksPublic, TaskUpdate, TaskResponse, UserRole, Meta
+from app.models import Task, TaskCreate, TaskPublic, TasksPublic, TaskUpdate, TaskResponse, UserRole, Meta, NotificationType
 from app import crud
 from app.utils import calculate_pagination_meta_from_page
-from app.core.redis import get_redis_client
 
 router = APIRouter(prefix="/projects/{project_id}/tasks", tags=["tasks"])
 
 @router.post("/", response_model=TaskResponse)
-def create_task(
+async def create_task(  # Make this async
     *,
     session: SessionDep,
     current_user: CurrentUser,
     project_id: uuid.UUID,
     task_in: TaskCreate
-) -> Any:
+) -> Any: 
     """Create a new task for a project."""
     # Check if project exists and user has permission
     project = crud.get_project_by_id(session=session, project_id=project_id)
@@ -33,22 +32,25 @@ def create_task(
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
     task = crud.create_task(session=session, task_in=task_in, project_id=project_id)
+    
+    # Send notification if task is assigned
     if getattr(task, "assignee_id", None):
-        event_payload = {
-            "event_type": "TASK_ASSIGNED",
-            "recipient_id": str(task.assignee_id),
-            "message": f"A new task has been assigned to you: {task.title}",
-            "link": f"/projects/{project_id}/tasks/{task.id}"
-        }
         try:
-            redis_client = get_redis_client()
-            # encode bytes for compatibility with worker which expects JSON bytes
-            redis_client.publish("notifications", json.dumps(event_payload))
-        except Exception:
-            # don't break task creation when Redis is unavailable; consider logging
-            logging.warning("Redis is not available for publishing notifications")
+            await crud.create_notification(
+                session=session,
+                user_id=task.assignee_id,
+                notification_type=NotificationType.TASK_ASSIGNED,
+                title="New Task Assigned",
+                message=f"A new task has been assigned to you: {task.title}",
+                related_entity_id=task.id,
+                related_entity_type="task",
+                action_url=f"/projects/{project_id}/tasks/{task.id}"
+            )
+        except Exception as e:
+            logging.warning(f"Could not send notification: {e}")
 
-    return TaskResponse(data=task)  
+    return TaskResponse(data=task)
+ 
 
 @router.get("/", response_model=TasksPublic)
 def read_tasks(
