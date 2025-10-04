@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from app.api.deps import CurrentUser, SessionDep
 from app.core.notification_manager import notification_manager
+from app.models import NotificationsPublic
+from app import crud
+import uuid
 import asyncio
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
@@ -48,3 +51,46 @@ async def notification_stream(current_user: CurrentUser):
             "X-Accel-Buffering": "no"  # Disable nginx buffering
         }
     )
+    
+@router.get("/", response_model=NotificationsPublic)
+def get_notifications(
+    session: SessionDep,
+    current_user: CurrentUser,
+    skip: int = 0,
+    limit: int = 50
+):
+    """Get user's notification history"""
+    notifications, total = crud.get_user_notifications(
+        session=session,
+        user_id=current_user.id,
+        skip=skip,
+        limit=limit
+    )
+    return NotificationsPublic(data=notifications, count=total)
+
+@router.patch("/{notification_id}/read")
+def mark_as_read(
+    session: SessionDep,
+    current_user: CurrentUser,
+    notification_id: uuid.UUID
+):
+    """Mark notification as read"""
+    notification = crud.mark_notification_as_read(
+        session=session,
+        notification_id=notification_id
+    )
+    if not notification or notification.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"message": "Marked as read"}
+
+@router.post("/mark-all-read")
+def mark_all_as_read(
+    session: SessionDep,
+    current_user: CurrentUser
+):
+    """Mark all notifications as read"""
+    count = crud.mark_all_notifications_as_read(
+        session=session,
+        user_id=current_user.id
+    )
+    return {"message": f"Marked {count} notifications as read"}
