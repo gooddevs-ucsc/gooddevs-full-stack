@@ -551,6 +551,21 @@ class ProjectApplicationsPublic(SQLModel):
     meta: Meta
 
 # Notification
+class NotificationPublic(SQLModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    type: str
+    title: str
+    message: str
+    related_entity_id: uuid.UUID | None = None
+    related_entity_type: str | None = None
+    action_url: str | None = None
+    is_read: bool
+    created_at: datetime
+
+class NotificationsPublic(SQLModel):
+    data: list[NotificationPublic]
+    meta: Meta
 
 class NotificationType(str, enum.Enum):
     PROJECT_APPROVED = "PROJECT_APPROVED"
@@ -582,4 +597,7 @@ class Notification(SQLModel, table=True):
     recipient: User = Relationship(back_populates="notifications")
 
     
-
+class Meta(SQLModel):
+    total: int
+    page: int = 1
+    per_page: int = 50
