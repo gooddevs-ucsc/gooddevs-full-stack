@@ -64,7 +64,9 @@ def get_notifications(
         skip=skip,
         limit=limit
     )
-    meta = Meta(total=total, page=(skip // limit) + 1, per_page=limit)
+    # Calculate totalPages manually (since we can't change utils.py)
+    totalPages = (total + limit - 1) // limit  # Ceiling division
+    meta = Meta(total=total, page=(skip // limit) + 1, totalPages=totalPages)
     return NotificationsPublic(data=notifications, meta=meta)
 
 @router.patch("/{notification_id}/read")
@@ -108,7 +110,9 @@ def get_unread_notifications(
         user_id=current_user.id
     )
     
-    meta = Meta(total=len(notifications))
+    total = len(notifications)  # Since we're getting all unread, total = count
+    totalPages = 1  # For unread notifications, we can assume 1 page (or calculate if needed)
+    meta = Meta(total=total, page=1, totalPages=totalPages)
     
     return NotificationsPublic(
         data=notifications,

@@ -597,7 +597,4 @@ class Notification(SQLModel, table=True):
     recipient: User = Relationship(back_populates="notifications")
 
     
-class Meta(SQLModel):
-    total: int
-    page: int = 1
-    per_page: int = 50
+
