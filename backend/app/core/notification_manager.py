@@ -39,6 +39,9 @@ class NotificationConnectionManager:
             # Clean up dead connections
             for dead in dead_connections:
                 self.disconnect(user_id, dead)
+                
+        else:
+            print(f"User {user_id} is offline, notification saved to DB")
 
 # Global instance
 notification_manager = NotificationConnectionManager()
