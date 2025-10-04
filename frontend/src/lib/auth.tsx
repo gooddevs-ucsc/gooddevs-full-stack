@@ -14,7 +14,8 @@ import { ROLES } from './roles';
 
 const getUser = async (): Promise<User> => {
   const response = await api.get('/auth/me');
-
+  // Backend returns {data: user}, API interceptor returns response.data
+  // From debug info: response.data already contains the user object directly
   return response.data;
 };
 

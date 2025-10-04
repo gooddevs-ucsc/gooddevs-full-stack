@@ -1,6 +1,8 @@
 export * from './api/create-project';
 export * from './api/get-project';
 export * from './api/get-project-thread';
+export * from './api/get-applications';
+export * from './api/delete-application';
 export { ProjectThread as ProjectThreadComponent } from './components/project-thread';
 export * from './components/projects-list';
 export * from './components/project-approvals-list';
@@ -8,3 +10,5 @@ export * from './components/project-action-buttons';
 export * from './components/project-detail';
 export * from './components/project-description-tab';
 export * from './components/project-create-form';
+export * from './components/edit-thread-form';
+export * from './api/get-user-projects';

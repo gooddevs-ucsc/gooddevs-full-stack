@@ -317,3 +317,64 @@ export const useDeleteReply = ({
     },
   });
 };
+
+export const updateThreadInputSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  body: z.string().min(1, 'Body is required'),
+});
+export type UpdateThreadInput = z.infer<typeof updateThreadInputSchema>;
+
+// API function to update a thread
+export const updateThread = ({
+  threadId,
+  data,
+}: {
+  threadId: string;
+  data: UpdateThreadInput;
+}): Promise<ProjectThread> => {
+  return api.patch(`/projects/threads/${threadId}`, data);
+};
+
+export const useUpdateThread = ({
+  threadId,
+  config,
+}: {
+  threadId: string;
+  config?: MutationConfig<typeof updateThread>;
+}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...config,
+    mutationFn: updateThread,
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries({
+        queryKey: getProjectThreadQueryOptions(threadId).queryKey,
+      });
+      config?.onSuccess?.(...args);
+    },
+  });
+};
+
+// API function to delete a thread
+export const deleteThread = ({ threadId }: { threadId: string }) => {
+  return api.delete(`/projects/threads/${threadId}`);
+};
+
+export const useDeleteThread = ({
+  config,
+}: {
+  config?: MutationConfig<typeof deleteThread>;
+}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...config,
+    mutationFn: deleteThread,
+    onSuccess: (...args) => {
+      // Invalidate all thread-related queries
+      queryClient.invalidateQueries({
+        queryKey: ['projects'],
+      });
+      config?.onSuccess?.(...args);
+    },
+  });
+};

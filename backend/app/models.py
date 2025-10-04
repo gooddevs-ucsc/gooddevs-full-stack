@@ -103,6 +103,15 @@ class UsersPublic(SQLModel):
     data: list[UserPublic]
     count: int
 
+class UserIdNameRole(SQLModel):
+    id: uuid.UUID
+    firstname: str | None
+    lastname: str | None
+    role: UserRole
+
+class VolunteersPublic(SQLModel):
+    data: list[UserIdNameRole]
+    count: int
 
 # Shared properties
 class ItemBase(SQLModel):
@@ -286,6 +295,7 @@ class TaskUpdate(SQLModel):
     estimated_hours: int | None = Field(default=None, ge=1)
     actual_hours: int | None = Field(default=None, ge=0)
     due_date: datetime | None = Field(default=None)
+    assignee_id: uuid.UUID | None = Field(default=None)
 
 # Database models
 
@@ -308,6 +318,8 @@ class Task(TaskBase, table=True):
 class TaskPublic(TaskBase):
     id: uuid.UUID
     project_id: uuid.UUID
+    assignee_id: uuid.UUID | None = None
+    assignee: UserPublic | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -8,6 +8,7 @@ import {
   Users,
 } from 'lucide-react';
 import { FC } from 'react';
+import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +20,7 @@ import {
 } from '@/components/ui/dropdown';
 import { Progress } from '@/components/ui/progress';
 
-interface RequesterProject {
+export interface RequesterProject {
   id: string;
   title: string;
   description: string;
@@ -27,7 +28,9 @@ interface RequesterProject {
   progress: number;
   createdAt: string;
   teamSize: number;
-  estimatedCompletion: string;
+  estimatedCompletion: string | null;
+  projectType: string;
+  technologies: string[];
 }
 
 interface ProjectCardProps {
@@ -56,6 +59,8 @@ const formatDate = (dateString: string) => {
 };
 
 export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
+  const navigate = useNavigate();
+
   const handleEdit = () => {
     console.log('Edit project:', project.id);
     // Implement edit functionality
@@ -69,6 +74,7 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
   const handleViewDetails = () => {
     console.log('View project details:', project.id);
     // Implement view details functionality
+    navigate(`/projects/${project.id}`);
   };
 
   return (
@@ -168,7 +174,9 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
             </div>
             <span className="font-medium">Est. Completion:</span>
             <span className="ml-2 text-slate-700">
-              {formatDate(project.estimatedCompletion)}
+              {project.estimatedCompletion
+                ? formatDate(project.estimatedCompletion)
+                : 'Not set'}
             </span>
           </div>
         </div>

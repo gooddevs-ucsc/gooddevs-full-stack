@@ -161,6 +161,8 @@ export interface Task {
   estimated_hours?: number;
   actual_hours?: number;
   due_date?: string;
+  assignee_id?: string;
+  assignee?: User;
   created_at: string;
   updated_at: string;
 }
@@ -173,6 +175,7 @@ export interface TaskCreate {
   estimated_hours?: number;
   actual_hours?: number;
   due_date?: string;
+  assignee_id?: string;
 }
 
 export interface TaskUpdate {
@@ -183,6 +186,7 @@ export interface TaskUpdate {
   estimated_hours?: number;
   actual_hours?: number;
   due_date?: string;
+  assignee_id?: string;
 }
 
 export interface TasksResponse {
@@ -192,4 +196,88 @@ export interface TasksResponse {
 
 export interface TaskResponse {
   data: Task;
+}
+
+// Project Application types
+export const APPLICATION_STATUS = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  WITHDRAWN: 'WITHDRAWN',
+} as const;
+
+export const DEVELOPER_ROLES = {
+  FRONTEND: 'FRONTEND',
+  BACKEND: 'BACKEND',
+  FULLSTACK: 'FULLSTACK',
+  UIUX: 'UIUX',
+  MOBILE: 'MOBILE',
+  DEVOPS: 'DEVOPS',
+  QA: 'QA',
+  PM: 'PM',
+} as const;
+
+export type ApplicationStatus =
+  (typeof APPLICATION_STATUS)[keyof typeof APPLICATION_STATUS];
+export type DeveloperRole =
+  (typeof DEVELOPER_ROLES)[keyof typeof DEVELOPER_ROLES];
+
+export const DEVELOPER_ROLE_OPTIONS = [
+  { label: 'Select your role...', value: '' },
+  { label: 'Frontend Developer', value: DEVELOPER_ROLES.FRONTEND },
+  { label: 'Backend Developer', value: DEVELOPER_ROLES.BACKEND },
+  { label: 'Full-Stack Developer', value: DEVELOPER_ROLES.FULLSTACK },
+  { label: 'UI/UX Designer', value: DEVELOPER_ROLES.UIUX },
+  { label: 'Mobile Developer', value: DEVELOPER_ROLES.MOBILE },
+  { label: 'DevOps Engineer', value: DEVELOPER_ROLES.DEVOPS },
+  { label: 'QA Engineer', value: DEVELOPER_ROLES.QA },
+  { label: 'Project Manager', value: DEVELOPER_ROLES.PM },
+];
+
+export interface ProjectApplication {
+  id: string;
+  project_id: string;
+  volunteer_id: string;
+  volunteer_role: DeveloperRole;
+  cover_letter?: string;
+  skills?: string;
+  experience_years?: number;
+  portfolio_url?: string;
+  linkedin_url?: string;
+  github_url?: string;
+  status: ApplicationStatus;
+  created_at: string;
+  updated_at: string;
+  volunteer?: User;
+  project?: Project;
+}
+
+export interface ProjectApplicationCreate {
+  volunteer_role: DeveloperRole;
+  cover_letter?: string;
+  skills?: string;
+  experience_years?: number;
+  portfolio_url?: string;
+  linkedin_url?: string;
+  github_url?: string;
+}
+
+export interface ProjectApplicationUpdate {
+  volunteer_role?: DeveloperRole;
+  cover_letter?: string;
+  skills?: string;
+  experience_years?: number;
+  portfolio_url?: string;
+  linkedin_url?: string;
+  github_url?: string;
+  status?: ApplicationStatus;
+}
+
+export interface ProjectApplicationResponse {
+  data: ProjectApplication;
+}
+
+export interface ProjectApplicationsResponse {
+  data: ProjectApplication[];
+  meta: Meta;
 }

@@ -68,6 +68,38 @@ def read_projects(
         return ProjectsPublic(data=projects, meta=meta)
     raise HTTPException(status_code=403, detail="Insufficient permissions")
 
+@router.get("/my-projects", response_model=ProjectsPublic)
+def read_user_projects(
+    session: SessionDep,
+    current_user: CurrentUser,
+    page: int = 1,
+    limit: int = 100
+) -> Any:
+    """
+    Retrieve projects created by the current user.
+    """
+    count_statement = (
+        select(func.count())
+        .select_from(Project)
+        .where(Project.requester_id == current_user.id)
+    )
+    total = session.exec(count_statement).one()
+
+    # Convert page to skip
+    skip = page_to_skip(page, limit)
+    
+    statement = (
+        select(Project)
+        .where(Project.requester_id == current_user.id)
+        .offset(skip)
+        .limit(limit)
+    )
+    projects = session.exec(statement).all()
+
+    # Calculate pagination metadata
+    meta = calculate_pagination_meta_from_page(
+        total=total, page=page, limit=limit)
+    return ProjectsPublic(data=projects, meta=meta)
 
 @router.get("/approved", response_model=ProjectsPublic)
 def read_approved_projects(
