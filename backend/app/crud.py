@@ -548,19 +548,22 @@ async def create_notification(
     session.commit()
     session.refresh(notification)
     
-    # Send via SSE to connected clients
-    await notification_manager.send_notification(
-        user_id=user_id,
-        notification_data={
-            "id": str(notification.id),
-            "type": notification.type,
-            "title": notification.title,
-            "message": notification.message,
-            "action_url": notification.action_url,
-            "created_at": notification.created_at.isoformat(),
-            "is_read": notification.is_read
-        }
-    )
+    # 2. TRY TO SEND VIA SSE - Bonus for online users
+    try:
+        await notification_manager.send_notification(
+            user_id=user_id,
+            notification_data={
+                "id": str(notification.id),
+                "type": notification.type,
+                "title": notification.title,
+                "message": notification.message,
+                "action_url": notification.action_url,
+                "created_at": notification.created_at.isoformat(),
+                "is_read": notification.is_read
+            }
+        )
+    except Exception as e:
+        print(f"Could not send real-time notification (user offline): {e}")
     
     return notification
 
