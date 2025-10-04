@@ -615,3 +615,27 @@ def mark_all_notifications_as_read(
     
     session.commit()
     return len(notifications)
+
+def get_unread_notifications(
+    *, session: Session, user_id: uuid.UUID
+) -> list[Notification]:
+    """Get all unread notifications for a user"""
+    statement = (
+        select(Notification)
+        .where(
+            Notification.user_id == user_id,
+            Notification.is_read == False
+        )
+        .order_by(Notification.created_at.desc())
+    )
+    return session.exec(statement).all()
+
+def get_unread_notifications_count(
+    *, session: Session, user_id: uuid.UUID
+) -> int:
+    """Get count of unread notifications for a user"""
+    statement = select(func.count(Notification.id)).where(
+        Notification.user_id == user_id,
+        Notification.is_read == False
+    )
+    return session.exec(statement).one()
