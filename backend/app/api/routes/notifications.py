@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from app.api.deps import CurrentUser, SessionDep
 from app.core.notification_manager import notification_manager
-from app.models import NotificationsPublic
+from app.models import NotificationsPublic, Meta
 from app import crud
 import uuid
 import asyncio
@@ -94,3 +94,40 @@ def mark_all_as_read(
         user_id=current_user.id
     )
     return {"message": f"Marked {count} notifications as read"}
+
+@router.get("/unread", response_model=NotificationsPublic)
+def get_unread_notifications(
+    session: SessionDep,
+    current_user: CurrentUser
+):
+    """
+    Get all unread notifications.
+    Called when user logs in or opens app.
+    """
+    notifications = crud.get_unread_notifications(
+        session=session, 
+        user_id=current_user.id
+    )
+    
+    meta = Meta(total=len(notifications))
+    
+    return NotificationsPublic(
+        data=notifications,
+        meta=meta
+    )
+
+@router.get("/unread/count")
+def get_unread_count(
+    session: SessionDep,
+    current_user: CurrentUser
+):
+    """
+    Get count of unread notifications.
+    For the notification bell badge.
+    """
+    count = crud.get_unread_notifications_count(
+        session=session, 
+        user_id=current_user.id
+    )
+    
+    return {"count": count}
