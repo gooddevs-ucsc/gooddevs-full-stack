@@ -554,21 +554,32 @@ class ProjectApplicationsPublic(SQLModel):
 
 class NotificationType(str, enum.Enum):
     PROJECT_APPROVED = "PROJECT_APPROVED"
-    NEW_APPLICATION = "NEW_APPLICATION"
+    PROJECT_REJECTED = "PROJECT_REJECTED"
+    APPLICATION_RECEIVED = "APPLICATION_RECEIVED"
+    APPLICATION_APPROVED = "APPLICATION_APPROVED"
+    APPLICATION_REJECTED = "APPLICATION_REJECTED"
+    NEW_COMMENT = "NEW_COMMENT"
+    NEW_REPLY = "NEW_REPLY"
     TASK_ASSIGNED = "TASK_ASSIGNED"
-    # Add other types as needed
+    PROJECT_STATUS_CHANGED = "PROJECT_STATUS_CHANGED"
 
+# Database model
 class Notification(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    message: str
-    is_read: bool = Field(default=False)
-    link: str | None = Field(default=None) # e.g., /projects/{project_id}
+    user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
     type: NotificationType = Field(sa_column=Column(Enum(NotificationType)))
+    title: str = Field(max_length=255)
+    message: str = Field(max_length=1000)
+    
+    related_entity_id: uuid.UUID | None = Field(default=None)
+    related_entity_type: str | None = Field(default=None, max_length=50)
+    action_url: str | None = Field(default=None, max_length=500)
+    
+    is_read: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
-
-    # Foreign key to the user who should receive the notification
-    recipient_id: uuid.UUID = Field(foreign_key="user.id")
-    recipient: "User" = Relationship(back_populates="notifications")
+    
+    # Fix: Use consistent naming
+    recipient: User = Relationship(back_populates="notifications")
 
     
 
