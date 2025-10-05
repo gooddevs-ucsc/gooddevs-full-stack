@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from app.api.deps import CurrentUser, SessionDep
@@ -23,8 +24,9 @@ async def notification_stream(current_user: CurrentUser):
         
         try:
             # Send initial connection success message
-            yield f"data: {{'type': 'connected', 'user_id': '{current_user.id}'}}\n\n"
-            
+            connect_data = {'type': 'connected', 'user_id': str(current_user.id)}
+            yield f"data: {json.dumps(connect_data)}\n\n"
+
             # Keep connection alive and yield notifications
             while True:
                 try:
@@ -33,7 +35,8 @@ async def notification_stream(current_user: CurrentUser):
                     yield message
                 except asyncio.TimeoutError:
                     # Send keepalive ping every 30 seconds
-                    yield f"data: {{'type': 'keepalive'}}\n\n"
+                    keepalive_data = {'type': 'keepalive'}
+                    yield f"data: {json.dumps(keepalive_data)}\n\n"
         except Exception as e:
             print(f"SSE connection error: {e}")
         finally:

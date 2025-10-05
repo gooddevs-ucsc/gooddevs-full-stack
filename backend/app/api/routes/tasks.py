@@ -39,7 +39,7 @@ async def create_task(  # Make this async
             await crud.create_notification(
                 session=session,
                 user_id=task.assignee_id,
-                notification_type=NotificationType.TASK_ASSIGNED,
+                type=NotificationType.TASK_ASSIGNED,
                 title="New Task Assigned",
                 message=f"A new task has been assigned to you: {task.title}",
                 related_entity_id=task.id,

@@ -526,7 +526,7 @@ async def create_notification(
     *,
     session: Session,
     user_id: uuid.UUID,
-    notification_type: NotificationType,
+    type: NotificationType,
     title: str,
     message: str,
     related_entity_id: uuid.UUID | None = None,
@@ -537,7 +537,7 @@ async def create_notification(
     # Create in database
     notification = Notification(
         user_id=user_id,
-        type=notification_type,
+        type=type,
         title=title,
         message=message,
         related_entity_id=related_entity_id,
