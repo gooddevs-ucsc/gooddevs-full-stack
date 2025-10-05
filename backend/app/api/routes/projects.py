@@ -8,7 +8,7 @@ from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 
 from app.api.deps import CurrentUser, SessionDep, OptionalCurrentUser
-from app.models import Project, ProjectCreate, ProjectPublic, ProjectsPublic, ProjectUpdate, Message, UserRole, ProjectStatus, User, TokenPayload, Meta, ProjectResponse
+from app.models import NotificationType, Project, ProjectCreate, ProjectPublic, ProjectsPublic, ProjectUpdate, Message, UserRole, ProjectStatus, User, TokenPayload, Meta, ProjectResponse
 from app.core import security
 from app.core.config import settings
 from app import crud
@@ -280,7 +280,7 @@ def delete_project(
 
 
 @router.put("/{id}/approve", response_model=ProjectResponse)
-def approve_project(
+async def approve_project(
     *,
     session: SessionDep,
     current_user: CurrentUser,
@@ -303,6 +303,21 @@ def approve_project(
     project_update = ProjectUpdate(status=ProjectStatus.APPROVED)
     project = crud.update_project(
         session=session, db_project=project, project_in=project_update)
+    
+    try:
+        await crud.create_notification(
+            session=session,    
+            user_id=project.requester_id,
+            type=NotificationType.PROJECT_APPROVED,
+            title="Project Approved",
+            message=f"Your project '{project.title}' has been approved.",
+            related_entity_id=project.id,
+            related_entity_type="Project",
+            action_url=f"/projects/{project.id}"
+        )
+    except Exception as e:
+        # Log the error but do not fail the approval process
+        print(f"Failed to create notification: {e}")
     return ProjectResponse(data=project)
 
 
