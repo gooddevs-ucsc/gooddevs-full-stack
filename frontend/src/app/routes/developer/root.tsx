@@ -1,9 +1,10 @@
-import { Home, Folder, Settings, User, DollarSign } from 'lucide-react';
+import { DollarSign, Folder, Home, Settings, User } from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
 import { ForbiddenFallback } from '@/components/ui/forbidden-fallback';
 import { paths } from '@/config/paths';
+import { NotificationBell } from '@/features/notifications'; // Import here (allowed in routes/)
 import { Authorization } from '@/lib/authorization';
 import { ROLES } from '@/lib/roles';
 
@@ -37,7 +38,12 @@ const DeveloperRoot = () => {
       allowedRoles={[ROLES.VOLUNTEER]}
       forbiddenFallback={<ForbiddenFallback roles={[ROLES.VOLUNTEER]} />}
     >
-      <DashboardLayout navigation={navigation}>
+      <DashboardLayout
+        navigation={navigation}
+        headerExtras={<NotificationBell />}
+      >
+        {' '}
+        {/* Pass the bell here */}
         <Outlet />
       </DashboardLayout>
     </Authorization>

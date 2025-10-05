@@ -1,16 +1,17 @@
 import {
   ArrowLeft,
+  DollarSign,
   Folder,
   Home,
   Settings,
   User,
-  DollarSign,
 } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
 import { ForbiddenFallback } from '@/components/ui/forbidden-fallback';
 import { paths } from '@/config/paths';
+import { NotificationBell } from '@/features/notifications';
 import { Authorization } from '@/lib/authorization';
 import { ROLES } from '@/lib/roles';
 
@@ -57,7 +58,10 @@ const RequesterRoot = () => {
       allowedRoles={[ROLES.REQUESTER]}
       forbiddenFallback={<ForbiddenFallback roles={[ROLES.REQUESTER]} />}
     >
-      <DashboardLayout navigation={navigation}>
+      <DashboardLayout
+        navigation={navigation}
+        headerExtras={<NotificationBell />}
+      >
         <Outlet />
       </DashboardLayout>
     </Authorization>
