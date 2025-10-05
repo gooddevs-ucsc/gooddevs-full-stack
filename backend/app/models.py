@@ -86,6 +86,7 @@ class User(UserBase, table=True):
         back_populates="owner", cascade_delete=True)
     projects: list["Project"] = Relationship(
         back_populates="requester", cascade_delete=True)
+    notifications: list["Notification"] = Relationship(back_populates="recipient")
 
 
 # Properties to return via API, id is always required
@@ -548,3 +549,52 @@ class ProjectApplicationResponse(SQLModel):
 class ProjectApplicationsPublic(SQLModel):
     data: list[ProjectApplicationPublic]
     meta: Meta
+
+# Notification
+class NotificationPublic(SQLModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    type: str
+    title: str
+    message: str
+    related_entity_id: uuid.UUID | None = None
+    related_entity_type: str | None = None
+    action_url: str | None = None
+    is_read: bool
+    created_at: datetime
+
+class NotificationsPublic(SQLModel):
+    data: list[NotificationPublic]
+    meta: Meta
+
+class NotificationType(str, enum.Enum):
+    PROJECT_APPROVED = "PROJECT_APPROVED"
+    PROJECT_REJECTED = "PROJECT_REJECTED"
+    APPLICATION_RECEIVED = "APPLICATION_RECEIVED"
+    APPLICATION_APPROVED = "APPLICATION_APPROVED"
+    APPLICATION_REJECTED = "APPLICATION_REJECTED"
+    NEW_COMMENT = "NEW_COMMENT"
+    NEW_REPLY = "NEW_REPLY"
+    TASK_ASSIGNED = "TASK_ASSIGNED"
+    PROJECT_STATUS_CHANGED = "PROJECT_STATUS_CHANGED"
+
+# Database model
+class Notification(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    type: NotificationType = Field(sa_column=Column(Enum(NotificationType)))
+    title: str = Field(max_length=255)
+    message: str = Field(max_length=1000)
+    
+    related_entity_id: uuid.UUID | None = Field(default=None)
+    related_entity_type: str | None = Field(default=None, max_length=50)
+    action_url: str | None = Field(default=None, max_length=500)
+    
+    is_read: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Fix: Use consistent naming
+    recipient: User = Relationship(back_populates="notifications")
+
+    
+

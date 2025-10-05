@@ -1,93 +1,55 @@
-import { Filter, Plus, Search } from 'lucide-react';
+import { Plus, Search, Filter } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { ContentLayout } from '@/components/layouts';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { paths } from '@/config/paths';
-import { ProjectCard } from '@/features/requester/components/project-card';
+import { useUserProjects } from '@/features/projects/api/get-user-projects'; // You'll need to create this
+import {
+  ProjectCard,
+  RequesterProject,
+} from '@/features/requester/components/project-card';
+import { Project } from '@/types/api';
 
-interface RequesterProject {
-  id: string;
-  title: string;
-  description: string;
-  status: 'Active' | 'Completed' | 'Pending'; // Exact literal types
-  progress: number;
-  createdAt: string;
-  teamSize: number;
-  estimatedCompletion: string;
-}
+// Map API project status to display status
+const mapProjectStatus = (apiStatus: string) => {
+  switch (apiStatus) {
+    case 'PENDING':
+      return 'Pending';
+    case 'APPROVED':
+      return 'Active';
+    case 'COMPLETED':
+      return 'Completed';
+    default:
+      return 'Pending';
+  }
+};
 
-// Mock data - replace with real API data later
-const mockProjects: RequesterProject[] = [
-  {
-    id: '1',
-    title: 'Environmental Tracker',
-    description:
-      'Mobile app for tracking personal carbon footprint and environmental impact with real-time analytics',
-    status: 'Active',
-    progress: 75,
-    createdAt: '2024-01-15',
-    teamSize: 3,
-    estimatedCompletion: '2024-03-15',
-  },
-  {
-    id: '2',
-    title: 'Community Food Bank App',
-    description:
-      'Web platform connecting food donors with local food banks and community organizations',
-    status: 'Pending',
-    progress: 0,
-    createdAt: '2024-01-20',
-    teamSize: 0,
-    estimatedCompletion: '2024-04-20',
-  },
-  {
-    id: '3',
-    title: 'Local Library System',
-    description:
-      'Digital catalog and book reservation system for community library with user management',
-    status: 'Active',
-    progress: 45,
-    createdAt: '2024-01-10',
-    teamSize: 2,
-    estimatedCompletion: '2024-02-28',
-  },
-  {
-    id: '4',
-    title: 'Youth Education Platform',
-    description:
-      'Interactive learning platform for underprivileged youth with gamification features',
-    status: 'Completed',
-    progress: 100,
-    createdAt: '2023-12-01',
-    teamSize: 4,
-    estimatedCompletion: '2024-01-15',
-  },
-  {
-    id: '5',
-    title: 'Senior Care Connect',
-    description:
-      'Healthcare management system for elderly care coordination and family communication',
-    status: 'Completed',
-    progress: 100,
-    createdAt: '2023-11-15',
-    teamSize: 3,
-    estimatedCompletion: '2024-01-01',
-  },
-  {
-    id: '6',
-    title: 'Animal Shelter Management',
-    description:
-      'Comprehensive system for managing animal adoptions, volunteers, and shelter operations',
-    status: 'Pending',
-    progress: 0,
-    createdAt: '2024-01-25',
-    teamSize: 0,
-    estimatedCompletion: '2024-05-01',
-  },
-];
+// Transform API Project to RequesterProject
+const transformProject = (project: Project): RequesterProject => ({
+  id: project.id,
+  title: project.title,
+  description: project.description,
+  status: mapProjectStatus(project.status) as
+    | 'Pending'
+    | 'Active'
+    | 'Completed',
+  progress:
+    mapProjectStatus(project.status) === 'Completed'
+      ? 100
+      : mapProjectStatus(project.status) === 'Active'
+        ? 0
+        : 0,
+  createdAt: new Date(project.created_at as string).toISOString().split('T')[0],
+  teamSize: 1,
+  estimatedCompletion: null,
+  projectType: project.project_type
+    ? project.project_type.replace('_', ' ')
+    : 'Unknown',
+  technologies: project.preferred_technologies?.split(',') || [],
+});
 
 type ProjectStatus = 'All' | 'Active' | 'Completed' | 'Pending';
 
@@ -96,22 +58,37 @@ const RequesterProjectsRoute = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<ProjectStatus>('All');
 
+  // Fetch user's projects
+  const {
+    data: projectsData,
+    isLoading,
+    error,
+  } = useUserProjects({
+    page: 1,
+    limit: 100,
+  });
+
+  const projects = projectsData?.data || [];
+
   const statusTabs: ProjectStatus[] = ['All', 'Active', 'Completed', 'Pending'];
 
   // Filter projects based on search term and status
-  const filteredProjects = mockProjects.filter((project) => {
+  const filteredProjects = projects.filter((project: Project) => {
     const matchesSearch =
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       project.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const projectDisplayStatus = mapProjectStatus(project.status);
     const matchesStatus =
-      selectedStatus === 'All' || project.status === selectedStatus;
+      selectedStatus === 'All' || projectDisplayStatus === selectedStatus;
     return matchesSearch && matchesStatus;
   });
 
   // Get count for each status
   const getStatusCount = (status: ProjectStatus) => {
-    if (status === 'All') return mockProjects.length;
-    return mockProjects.filter((project) => project.status === status).length;
+    if (status === 'All') return projects.length;
+    return projects.filter(
+      (project: Project) => mapProjectStatus(project.status) === status,
+    ).length;
   };
 
   const getStatusColor = (status: ProjectStatus) => {
@@ -128,6 +105,28 @@ const RequesterProjectsRoute = () => {
         return 'border-slate-200 bg-slate-50 text-slate-700';
     }
   };
+
+  if (isLoading) {
+    return (
+      <ContentLayout title="My Projects">
+        <div className="flex h-48 w-full items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      </ContentLayout>
+    );
+  }
+  if (error) {
+    return (
+      <ContentLayout title="My Projects">
+        <div className="flex h-48 w-full items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600">Error loading projects</p>
+            <p className="text-sm text-slate-500">Please try again later</p>
+          </div>
+        </div>
+      </ContentLayout>
+    );
+  }
 
   return (
     <ContentLayout title="My Projects">
@@ -152,25 +151,26 @@ const RequesterProjectsRoute = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-4">
           {/* Search Bar */}
-          <div className="relative max-w-md flex-1">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-            <Input
-              placeholder="Search projects by name or description..."
+            <input
+              type="text"
+              placeholder="Search projects..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 
-          {/* Status Filter Tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          {/* Status Tabs */}
+          <div className="flex flex-wrap gap-2">
             {statusTabs.map((status) => (
               <button
                 key={status}
                 onClick={() => setSelectedStatus(status)}
-                className={`flex items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-all hover:shadow-sm ${
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all hover:shadow-md ${
                   selectedStatus === status
                     ? getStatusColor(status)
                     : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -188,7 +188,7 @@ const RequesterProjectsRoute = () => {
         {/* Results Summary */}
         <div className="flex items-center justify-between border-b border-slate-200 pb-4">
           <p className="text-sm text-slate-600">
-            Showing {filteredProjects.length} of {mockProjects.length} projects
+            Showing {filteredProjects.length} of {projects.length} projects
             {selectedStatus !== 'All' && ` • ${selectedStatus} projects`}
             {searchTerm && ` • Search: "${searchTerm}"`}
           </p>
@@ -209,8 +209,11 @@ const RequesterProjectsRoute = () => {
         {/* Projects Grid */}
         {filteredProjects.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+            {filteredProjects.map((project: Project) => (
+              <ProjectCard
+                key={project.id}
+                project={transformProject(project)}
+              />
             ))}
           </div>
         ) : (
@@ -227,7 +230,13 @@ const RequesterProjectsRoute = () => {
                 : "You haven't submitted any projects yet. Create your first project to get started."}
             </p>
             {!searchTerm && selectedStatus === 'All' && (
-              <Button className="mt-4" size="lg">
+              <Button
+                className="mt-4"
+                size="lg"
+                onClick={() =>
+                  navigate(paths.requester.createProject.getHref())
+                }
+              >
                 <Plus className="mr-2 size-4" />
                 Create Your First Project
               </Button>
