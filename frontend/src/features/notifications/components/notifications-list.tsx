@@ -5,11 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { paths } from '@/config/paths';
 
-import {
-  useMarkAllAsRead,
-  useMarkAsRead,
-  useUnreadNotifications,
-} from '../api/notifications-api';
+import { useUnreadNotifications } from '../api/get-unread-notifications';
+import { useMarkAllAsRead, useMarkAsRead } from '../api/mark-as-read';
 
 import { NotificationItem } from './notification-item';
 

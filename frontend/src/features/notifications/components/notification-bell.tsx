@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown';
 
-import { useUnreadCount } from '../api/notifications-api';
+import { useUnreadCount } from '../api/get-unread-notifications';
 
 import { NotificationsList } from './notifications-list';
 

@@ -7,11 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/utils/cn';
 
-import {
-  useMarkAllAsRead,
-  useMarkAsRead,
-  useNotificationsList,
-} from '../api/notifications-api';
+import { useNotificationsList } from '../api/get-notifications-list';
+import { useMarkAllAsRead, useMarkAsRead } from '../api/mark-as-read';
 
 import { NotificationItem } from './notification-item';
 
