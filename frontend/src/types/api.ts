@@ -281,3 +281,40 @@ export interface ProjectApplicationsResponse {
   data: ProjectApplication[];
   meta: Meta;
 }
+
+export const NOTIFICATION_TYPES = {
+  PROJECT_APPROVED: 'PROJECT_APPROVED',
+  PROJECT_REJECTED: 'PROJECT_REJECTED',
+  APPLICATION_RECEIVED: 'APPLICATION_RECEIVED',
+  APPLICATION_APPROVED: 'APPLICATION_APPROVED',
+  APPLICATION_REJECTED: 'APPLICATION_REJECTED',
+  NEW_COMMENT: 'NEW_COMMENT',
+  NEW_REPLY: 'NEW_REPLY',
+  TASK_ASSIGNED: 'TASK_ASSIGNED',
+  PROJECT_STATUS_CHANGED: 'PROJECT_STATUS_CHANGED',
+} as const;
+
+export type NotificationType =
+  (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
+
+export interface NotificationData {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  related_entity_id?: string;
+  related_entity_type?: string;
+  action_url?: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface NotificationsResponse {
+  data: NotificationData[];
+  meta: {
+    page: number;
+    total: number;
+    totalPages: number;
+  };
+}
