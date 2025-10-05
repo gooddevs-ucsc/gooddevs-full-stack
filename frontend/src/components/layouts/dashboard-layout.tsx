@@ -1,4 +1,4 @@
-import { PanelLeft, Bell, Settings, User2 } from 'lucide-react';
+import { PanelLeft, Settings, User2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { NavLink, useNavigate, useNavigation } from 'react-router';
 
@@ -76,11 +76,13 @@ const Progress = () => {
 type DashboardLayoutProps = {
   children: React.ReactNode;
   navigation: SideNavigationItem[];
+  headerExtras?: React.ReactNode; // Add this prop for custom header items like NotificationBell
 };
 
 export function DashboardLayout({
   children,
   navigation,
+  headerExtras, // Accept the prop
 }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const logout = useLogout({
@@ -145,15 +147,8 @@ export function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="rounded-full hover:bg-slate-100/80"
-            >
-              <Bell className="size-5 text-slate-600" />
-              <span className="sr-only">Notifications</span>
-            </Button>
-
+            {headerExtras}{' '}
+            {/* Render the passed-in extras (e.g., NotificationBell) here */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
