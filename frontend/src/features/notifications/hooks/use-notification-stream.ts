@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useNotifications } from '@/components/ui/notifications';
 import { NotificationData } from '@/types/api';
 
-import { notificationsKeys } from '../api/notifications-api';
+import { unreadNotificationsKeys } from '../api/get-unread-notifications';
 
 export const useNotificationStream = (enabled: boolean = true) => {
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -57,9 +57,11 @@ export const useNotificationStream = (enabled: boolean = true) => {
         });
 
         // Update queries
-        queryClient.invalidateQueries({ queryKey: notificationsKeys.unread() });
         queryClient.invalidateQueries({
-          queryKey: notificationsKeys.unreadCount(),
+          queryKey: unreadNotificationsKeys.unread(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: unreadNotificationsKeys.unreadCount(),
         });
 
         console.log('🔔 New notification:', notification);
