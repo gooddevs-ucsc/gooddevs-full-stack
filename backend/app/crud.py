@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from sqlmodel import Session, select, func
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, ProjectThreadCreate, ProjectThreadUpdate,Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus
-
+from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, ProjectThreadCreate, ProjectThreadUpdate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, Notification, NotificationType
+from app.core.notification_manager import notification_manager
 from sqlalchemy.orm import selectinload
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -547,3 +547,122 @@ def get_all_applications(
     count = session.exec(count_statement).one()
     
     return applications, count
+
+# Notification CRUD operations
+async def create_notification(
+    *,
+    session: Session,
+    user_id: uuid.UUID,
+    type: NotificationType,
+    title: str,
+    message: str,
+    related_entity_id: uuid.UUID | None = None,
+    related_entity_type: str | None = None,
+    action_url: str | None = None
+) -> Notification:
+    """Create notification and send via SSE"""
+    # Create in database
+    notification = Notification(
+        user_id=user_id,
+        type=type,
+        title=title,
+        message=message,
+        related_entity_id=related_entity_id,
+        related_entity_type=related_entity_type,
+        action_url=action_url
+    )
+    session.add(notification)
+    session.commit()
+    session.refresh(notification)
+    
+    # 2. TRY TO SEND VIA SSE - Bonus for online users
+    try:
+        await notification_manager.send_notification(
+            user_id=user_id,
+            notification_data={
+                "id": str(notification.id),
+                "type": notification.type,
+                "title": notification.title,
+                "message": notification.message,
+                "action_url": notification.action_url,
+                "created_at": notification.created_at.isoformat(),
+                "is_read": notification.is_read
+            }
+        )
+    except Exception as e:
+        print(f"Could not send real-time notification (user offline): {e}")
+    
+    return notification
+
+def get_user_notifications(
+    *, session: Session, user_id: uuid.UUID, skip: int = 0, limit: int = 50
+) -> tuple[list[Notification], int]:
+    """Get user's notifications (for initial load)"""
+    statement = (
+        select(Notification)
+        .where(Notification.user_id == user_id)
+        .order_by(Notification.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    notifications = session.exec(statement).all()
+    
+    count_statement = select(func.count(Notification.id)).where(
+        Notification.user_id == user_id
+    )
+    count = session.exec(count_statement).one()
+    
+    return notifications, count
+
+def mark_notification_as_read(
+    *, session: Session, notification_id: uuid.UUID
+) -> Notification:
+    """Mark single notification as read"""
+    notification = session.get(Notification, notification_id)
+    if notification:
+        notification.is_read = True
+        session.add(notification)
+        session.commit()
+        session.refresh(notification)
+    return notification
+
+def mark_all_notifications_as_read(
+    *, session: Session, user_id: uuid.UUID
+) -> int:
+    """Mark all user's notifications as read"""
+    statement = (
+        select(Notification)
+        .where(Notification.user_id == user_id, Notification.is_read == False)
+    )
+    notifications = session.exec(statement).all()
+    
+    for notification in notifications:
+        notification.is_read = True
+        session.add(notification)
+    
+    session.commit()
+    return len(notifications)
+
+def get_unread_notifications(
+    *, session: Session, user_id: uuid.UUID
+) -> list[Notification]:
+    """Get all unread notifications for a user"""
+    statement = (
+        select(Notification)
+        .where(
+            Notification.user_id == user_id,
+            Notification.is_read == False
+        )
+        .order_by(Notification.created_at.desc())
+    )
+    return session.exec(statement).all()
+
+def get_unread_notifications_count(
+    *, session: Session, user_id: uuid.UUID
+) -> int:
+    """Get count of unread notifications for a user"""
+    statement = select(func.count(Notification.id)).where(
+        Notification.user_id == user_id,
+        Notification.is_read == False
+    )
+    return session.exec(statement).one()
