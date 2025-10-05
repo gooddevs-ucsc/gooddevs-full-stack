@@ -66,6 +66,10 @@ export const paths = {
       path: 'profile',
       getHref: () => '/app/profile',
     },
+    notifications: {
+      path: 'notifications',
+      getHref: () => '/app/notifications',
+    },
   },
 
   admin: {
