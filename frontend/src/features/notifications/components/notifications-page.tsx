@@ -1,10 +1,13 @@
-import { Bell, CheckCheck } from 'lucide-react';
+import { Bell, CheckCheck, Home } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { ContentLayout } from '@/components/layouts';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { paths } from '@/config/paths';
+import { useUser } from '@/lib/auth';
+import { ROLES } from '@/lib/roles';
 import { cn } from '@/utils/cn';
 
 import { useNotificationsList } from '../api/get-notifications-list';
@@ -14,6 +17,7 @@ import { NotificationItem } from './notification-item';
 
 export const NotificationsPage = () => {
   const navigate = useNavigate();
+  const { data: user } = useUser();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const { data, isLoading } = useNotificationsList();
   const markAsReadMutation = useMarkAsRead();
@@ -40,18 +44,44 @@ export const NotificationsPage = () => {
     markAllAsReadMutation.mutate();
   };
 
+  const getDashboardPath = () => {
+    if (!user?.role) return paths.app.root.path;
+    switch (user.role) {
+      case ROLES.ADMIN:
+        return paths.admin.dashboard.getHref();
+      case ROLES.REQUESTER:
+        return paths.requester.dashboard.getHref();
+      case ROLES.SPONSOR:
+        return paths.sponsor.dashboard.getHref();
+      case ROLES.VOLUNTEER:
+      default:
+        return paths.developer.dashboard.getHref();
+    }
+  };
+
   return (
     <ContentLayout title="Notifications">
       <div className="mx-auto max-w-4xl">
-        {/* Header */}
+        {/* Header - Add Back to Dashboard Button */}
         <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              All Notifications
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">
-              Stay updated with your projects and applications
-            </p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(getDashboardPath())}
+              className="flex items-center gap-2"
+            >
+              <Home className="size-4" />
+              Back to Dashboard
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">
+                All Notifications
+              </h1>
+              <p className="mt-1 text-sm text-slate-600">
+                Stay updated with your projects and applications
+              </p>
+            </div>
           </div>
 
           {hasUnread && (
