@@ -9,8 +9,46 @@ import {
 export const TestPayment = () => {
   const initiatePaymentMutation = useInitiatePayment({
     mutationConfig: {
-      onSuccess: (data) => {
-        console.log('Payment initiated:', data);
+      onSuccess: ({ data: paymentData }) => {
+        console.log('Payment initiated:', paymentData);
+
+        const formElement = document.createElement('form');
+        formElement.method = 'post';
+        formElement.action = 'https://sandbox.payhere.lk/pay/checkout';
+
+        // Add hidden fields
+        const fileds = {
+          merchant_id: paymentData.merchant_id,
+          return_url: paymentData.return_url,
+          cancel_url: paymentData.cancel_url,
+          notify_url: paymentData.notify_url,
+          order_id: paymentData.order_id,
+          items: paymentData.items,
+          currency: paymentData.currency,
+          amount: paymentData.amount,
+          hash: paymentData.hash,
+          first_name: paymentData.first_name,
+          last_name: paymentData.last_name,
+          email: paymentData.email,
+          phone: paymentData.phone,
+          address: paymentData.address,
+          city: paymentData.city,
+          country: paymentData.country,
+        };
+
+        // Create and append hidden input fields
+        Object.entries(fileds).forEach(([key, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = value as string;
+          formElement.appendChild(input);
+        });
+
+        // Submit the form
+        document.body.appendChild(formElement);
+        formElement.submit();
+        document.body.removeChild(formElement);
       },
     },
   });
