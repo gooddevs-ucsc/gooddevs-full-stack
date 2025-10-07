@@ -199,3 +199,30 @@ def generate_payhere_hash(merchant_id: str, order_id: str, amount: float, curren
     final_hash = hashlib.md5(data.encode()).hexdigest().upper()
 
     return final_hash
+
+
+def verify_payhere_hash(merchant_id: str, order_id: str, amount: float, currency: str, status_code: str, received_hash: str, merchant_secret: str) -> bool:
+    """
+    Verify the received MD5 hash against the expected hash.
+
+    Args:
+        merchant_id: Merchant ID
+        order_id: Order ID
+        amount: Payment amount
+        currency: Currency code
+        status_code: Payment status code
+        received_hash: Hash received from PayHere
+        merchant_secret: Merchant secret key
+
+    Returns:
+        True if hashes match, False otherwise
+    """
+
+    inner_hash = hashlib.md5(merchant_secret.encode()).hexdigest().upper()
+
+    expected_hash = hashlib.md5(
+        f"{merchant_id}{order_id}{amount}{currency}{status_code}{inner_hash}".encode(
+        )
+    ).hexdigest().upper()
+
+    return expected_hash == received_hash
