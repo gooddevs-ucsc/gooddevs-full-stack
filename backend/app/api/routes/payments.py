@@ -1,15 +1,16 @@
-import uuid
-import hashlib
-from typing import Any
-
-from fastapi import APIRouter, HTTPException, Depends
-from sqlmodel import select
-
-from app.api.deps import SessionDep
-from app.models import PaymentCreate,  PaymentInitiationResponse, PaymentInitiationPublic
-from app.core.config import settings
 from app import crud
-from app.utils import generate_payhere_hash
+from app.core.config import settings
+from app.models import PaymentCreate,  PaymentInitiationResponse, PaymentInitiationPublic, PayhereCheckoutAPIVerificationResponse, PaymentStatus
+from app.api.deps import SessionDep
+from app.utils import generate_payhere_hash, verify_payhere_hash
+import logging
+from typing import Any, Annotated
+
+from fastapi import APIRouter, HTTPException, Form
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -49,7 +50,6 @@ def initiate_payment(
         payment.currency.value,
         merchant_secret
     )
-
     return PaymentInitiationResponse(
         data=PaymentInitiationPublic(
             **payment.model_dump(exclude={"id", "status", "created_at", "updated_at"}),
@@ -59,3 +59,45 @@ def initiate_payment(
             hash=payment_hash
         )
     )
+
+
+@router.post("/payhere-webhook")
+def payhere_webhook(
+    *,
+    session: SessionDep,
+    verification_data: Annotated[PayhereCheckoutAPIVerificationResponse,
+                                 Form(...)]
+) -> bool:
+    """
+    Handle PayHere webhook notifications.
+    """
+    isVerified = verify_payhere_hash(
+        merchant_id=verification_data.merchant_id,
+        order_id=verification_data.order_id,
+        amount=verification_data.payhere_amount,
+        currency=verification_data.payhere_currency,
+        status_code=verification_data.status_code,
+        received_hash=verification_data.md5sig,
+        merchant_secret=settings.PAYHERE_MERCHANT_SECRET
+    )
+
+    if isVerified and verification_data.order_id and verification_data.status_code:
+        # Map PayHere status_code to PaymentStatus enum
+        try:
+            status_code_int = int(verification_data.status_code)
+            payment_status = PaymentStatus(status_code_int)
+
+            # Update payment status in database
+            order_id = int(verification_data.order_id)
+            crud.update_payment_status(
+                session=session,
+                order_id=order_id,
+                status=payment_status
+            )
+
+        except:
+            raise HTTPException(status_code=400)
+    elif not isVerified:
+        raise HTTPException(status_code=400)
+
+    return True

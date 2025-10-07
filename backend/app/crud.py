@@ -2,7 +2,7 @@ from sqlalchemy.orm import selectinload
 from app.models import (
     Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread,
     ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate,
-    PaymentCurrency,  ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus
+    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus
 )
 
 import uuid
@@ -596,6 +596,22 @@ def create_payment(*, session: Session, payment_in: PaymentCreate, merchant_id: 
     session.commit()
     session.refresh(db_payment)
     return db_payment
+
+
+def update_payment_status(*, session: Session, order_id: int, status: PaymentStatus) -> Payment | None:
+    """
+    Update payment status by order_id
+    """
+    statement = select(Payment).where(Payment.order_id == order_id)
+    payment = session.exec(statement).first()
+
+    if payment:
+        payment.status = status
+        session.add(payment)
+        session.commit()
+        session.refresh(payment)
+
+    return payment
 
     return applications, count
 

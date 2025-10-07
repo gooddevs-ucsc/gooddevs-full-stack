@@ -637,6 +637,27 @@ class PaymentInitiationPublic(PaymentBase):
 
 class PaymentInitiationResponse(SQLModel):
     data: PaymentInitiationPublic
+
+
+# PayHere Webhook models
+class PayhereCheckoutAPIVerificationResponse(SQLModel):
+    """Model for PayHere webhook form data"""
+    merchant_id: str | None = None
+    order_id: str | None = None
+    payment_id: str | None = None
+    payhere_amount: str | None = None
+    payhere_currency: str | None = None
+    status_code: str | None = None
+    md5sig: str | None = None
+    custom_1: str | None = None
+    custom_2: str | None = None
+    method: str | None = None
+    status_message: str | None = None
+    card_holder_name: str | None = None
+    card_no: str | None = None
+    card_expiry: str | None = None
+
+
 # Notification
 
 
