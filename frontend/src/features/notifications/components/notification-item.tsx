@@ -1,4 +1,4 @@
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 import {
   CheckCircle,
   Clock,
@@ -40,7 +40,7 @@ export const NotificationItem = ({
   notification,
   onClick,
 }: NotificationItemProps) => {
-  const timeAgo = formatDistanceToNow(new Date(notification.created_at), {
+  const timeAgo = formatDistanceToNow(parseISO(notification.created_at), {
     addSuffix: true,
   });
 
