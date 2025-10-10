@@ -22,6 +22,10 @@ export type Paginated<T> = {
   meta: Meta;
 };
 
+export type ApiResponse<T> = {
+  data: T;
+};
+
 export type User = Entity<{
   firstname: string;
   lastname: string;
@@ -197,6 +201,35 @@ export interface TasksResponse {
 export interface TaskResponse {
   data: Task;
 }
+
+// Payment-related types
+export type PaymentDetails = {
+  orderId: string;
+  items: string;
+  currency: string;
+  amount: string;
+};
+
+export type Payment = {
+  merchant_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+  order_id: number;
+  items: string;
+  currency: string;
+  amount: number;
+  return_url: string;
+  cancel_url: string;
+  notify_url: string;
+  hash: string;
+};
+
+export type InitiatePaymentResponse = ApiResponse<Payment>;
 
 // Project Application types
 export const APPLICATION_STATUS = {

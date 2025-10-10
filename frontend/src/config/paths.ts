@@ -178,4 +178,14 @@ export const paths = {
       getHref: () => '/developer/settings',
     },
   },
+  payments: {
+    root: {
+      path: '/payments',
+      getHref: () => '/payments',
+    },
+    testPayment: {
+      path: 'test',
+      getHref: () => '/payments/test',
+    },
+  },
 } as const;

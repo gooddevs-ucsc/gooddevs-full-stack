@@ -95,6 +95,13 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
 
+    # PayHere configuration
+    PAYHERE_MERCHANT_ID: str | None = None
+    PAYHERE_MERCHANT_SECRET: str | None = None
+    PAYHERE_DEFAULT_RETURN_URL: str | None = None
+    PAYHERE_DEFAULT_CANCEL_URL: str | None = None
+    PAYHERE_DEFAULT_NOTIFY_URL: str | None = None
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (

@@ -246,6 +246,17 @@ export const createAppRouter = (queryClient: QueryClient) =>
       ],
     },
     {
+      path: paths.payments.root.path,
+      children: [
+        {
+          path: paths.payments.testPayment.path,
+          lazy: () =>
+            import('./routes/payments/test-payment').then(convert(queryClient)),
+        },
+      ],
+    },
+
+    {
       path: '*',
       lazy: () => import('./routes/not-found').then(convert(queryClient)),
     },
