@@ -3,7 +3,7 @@ import enum
 from datetime import datetime
 
 from pydantic import EmailStr
-from sqlmodel import Field, Relationship, SQLModel, Column, Enum
+from sqlmodel import Field, Relationship, SQLModel, Column, Enum, Identity, Integer
 
 
 class UserRole(str, enum.Enum):
@@ -86,7 +86,8 @@ class User(UserBase, table=True):
         back_populates="owner", cascade_delete=True)
     projects: list["Project"] = Relationship(
         back_populates="requester", cascade_delete=True)
-    notifications: list["Notification"] = Relationship(back_populates="recipient")
+    notifications: list["Notification"] = Relationship(
+        back_populates="recipient")
 
 
 # Properties to return via API, id is always required
@@ -103,17 +104,21 @@ class UsersPublic(SQLModel):
     data: list[UserPublic]
     count: int
 
+
 class UserIdNameRole(SQLModel):
     id: uuid.UUID
     firstname: str | None
     lastname: str | None
     role: UserRole
 
+
 class VolunteersPublic(SQLModel):
     data: list[UserIdNameRole]
     count: int
 
 # Shared properties
+
+
 class ItemBase(SQLModel):
     title: str = Field(min_length=1, max_length=255)
     description: str | None = Field(default=None, max_length=255)
@@ -190,9 +195,10 @@ class Project(ProjectBase, table=True):
 
     # Relationships
     requester: User | None = Relationship(back_populates="projects")
-    tasks: list["Task"] = Relationship(back_populates="project", cascade_delete=True)
+    tasks: list["Task"] = Relationship(
+        back_populates="project", cascade_delete=True)
     threads: list["ProjectThread"] = Relationship(back_populates="project")
-    
+
 
 # Properties to return via API, id is always required
 class ProjectPublic(ProjectBase):
@@ -247,7 +253,7 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
-    
+
 # Task status enum
 
 
@@ -355,11 +361,13 @@ class ProjectThread(ProjectThreadBase, table=True):
     author_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
     project_id: uuid.UUID = Field(foreign_key="project.id", nullable=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={
+                                 "onupdate": datetime.utcnow})
 
     author: "User" = Relationship()
     project: "Project" = Relationship(back_populates="threads")
-    comments: list["Comment"] = Relationship(back_populates="thread", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    comments: list["Comment"] = Relationship(
+        back_populates="thread", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
 
 
 class ProjectThreadPublic(ProjectThreadBase):
@@ -393,13 +401,16 @@ class CommentUpdate(SQLModel):
 class Comment(CommentBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     author_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
-    thread_id: uuid.UUID = Field(foreign_key="projectthread.id", nullable=False)
+    thread_id: uuid.UUID = Field(
+        foreign_key="projectthread.id", nullable=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={
+                                 "onupdate": datetime.utcnow})
 
     author: "User" = Relationship()
     thread: ProjectThread = Relationship(back_populates="comments")
-    replies: list["Reply"] = Relationship(back_populates="comment", cascade_delete=True)
+    replies: list["Reply"] = Relationship(
+        back_populates="comment", cascade_delete=True)
 
 
 class CommentPublic(CommentBase):
@@ -433,9 +444,11 @@ class ReplyUpdate(SQLModel):
 class Reply(ReplyBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     author_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
-    parent_id: uuid.UUID = Field(foreign_key="comment.id", nullable=False)  # References comment.id
+    parent_id: uuid.UUID = Field(
+        foreign_key="comment.id", nullable=False)  # References comment.id
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={
+                                 "onupdate": datetime.utcnow})
 
     author: "User" = Relationship()
     comment: Comment = Relationship(back_populates="replies")
@@ -477,7 +490,8 @@ class DeveloperRole(str, enum.Enum):
 
 # Base Application model
 class ProjectApplicationBase(SQLModel):
-    volunteer_role: DeveloperRole = Field(sa_column=Column(Enum(DeveloperRole)))
+    volunteer_role: DeveloperRole = Field(
+        sa_column=Column(Enum(DeveloperRole)))
     cover_letter: str | None = Field(default=None, max_length=2000)
     skills: str | None = Field(default=None, max_length=1000)
     experience_years: int | None = Field(default=None, ge=0, le=50)
@@ -491,7 +505,7 @@ class ProjectApplicationCreate(ProjectApplicationBase):
     pass
 
 
-# API model for updating application  
+# API model for updating application
 class ProjectApplicationUpdate(SQLModel):
     volunteer_role: DeveloperRole | None = Field(default=None)
     cover_letter: str | None = Field(default=None, max_length=2000)
@@ -509,7 +523,7 @@ class ProjectApplication(ProjectApplicationBase, table=True):
         # Unique constraint to prevent duplicate applications
         {"sqlite_autoincrement": True},
     )
-    
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     project_id: uuid.UUID = Field(
         foreign_key="project.id", nullable=False, ondelete="CASCADE"
@@ -518,7 +532,8 @@ class ProjectApplication(ProjectApplicationBase, table=True):
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
     status: ApplicationStatus = Field(
-        default=ApplicationStatus.PENDING, sa_column=Column(Enum(ApplicationStatus))
+        default=ApplicationStatus.PENDING, sa_column=Column(
+            Enum(ApplicationStatus))
     )
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -550,7 +565,102 @@ class ProjectApplicationsPublic(SQLModel):
     data: list[ProjectApplicationPublic]
     meta: Meta
 
+
+# Payment status enum with numeric values
+class PaymentStatus(int, enum.Enum):
+    PENDING = 0
+    CANCELLED = -1
+    FAILED = -2
+    CHARGEDBACK = -3
+    SUCCESS = 2
+
+
+# Payment currency enum
+class PaymentCurrency(str, enum.Enum):
+    LKR = "LKR"
+    USD = "USD"
+
+
+# Base Payment model
+class PaymentBase(SQLModel):
+    merchant_id: str = Field(max_length=255)
+    first_name: str = Field(max_length=255)
+    last_name: str = Field(max_length=255)
+    email: EmailStr = Field(max_length=255)
+    phone: str = Field(max_length=50)
+    address: str = Field(max_length=500)
+    city: str = Field(max_length=255)
+    country: str = Field(max_length=255)
+    order_id: int = Field(unique=True, index=True)
+    items: str = Field(max_length=1000)  # Item title or Order/Invoice number
+    currency: PaymentCurrency = Field(sa_column=Column(Enum(PaymentCurrency)))
+    amount: float = Field(ge=0)
+
+
+# API models for creation - only fields sent from frontend
+class PaymentCreate(SQLModel):
+    first_name: str | None = Field(default=None, max_length=255)
+    last_name: str | None = Field(default=None, max_length=255)
+    email: EmailStr | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=50)
+    address: str | None = Field(default=None, max_length=500)
+    city: str | None = Field(default=None, max_length=255)
+    country: str | None = Field(default=None, max_length=255)
+    amount: float = Field(ge=0)
+    # order_id, items, and currency will be generated by backend
+
+
+# Database model
+class Payment(PaymentBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    order_id: int = Field(sa_column=Column("order_id", Integer, Identity()))
+    status: PaymentStatus = Field(
+        default=PaymentStatus.PENDING, sa_column=Column(Enum(PaymentStatus)))
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# Public API models
+class PaymentPublic(PaymentBase):
+    id: uuid.UUID
+    status: PaymentStatus
+    created_at: datetime
+    updated_at: datetime
+
+
+class PaymentInitiationPublic(PaymentBase):
+    return_url: str
+    cancel_url: str
+    notify_url: str
+    hash: str
+
+
+class PaymentInitiationResponse(SQLModel):
+    data: PaymentInitiationPublic
+
+
+# PayHere Webhook models
+class PayhereCheckoutAPIVerificationResponse(SQLModel):
+    """Model for PayHere webhook form data"""
+    merchant_id: str | None = None
+    order_id: str | None = None
+    payment_id: str | None = None
+    payhere_amount: str | None = None
+    payhere_currency: str | None = None
+    status_code: str | None = None
+    md5sig: str | None = None
+    custom_1: str | None = None
+    custom_2: str | None = None
+    method: str | None = None
+    status_message: str | None = None
+    card_holder_name: str | None = None
+    card_no: str | None = None
+    card_expiry: str | None = None
+
+
 # Notification
+
+
 class NotificationPublic(SQLModel):
     id: uuid.UUID
     user_id: uuid.UUID
@@ -563,9 +673,11 @@ class NotificationPublic(SQLModel):
     is_read: bool
     created_at: datetime
 
+
 class NotificationsPublic(SQLModel):
     data: list[NotificationPublic]
     meta: Meta
+
 
 class NotificationType(str, enum.Enum):
     PROJECT_APPROVED = "PROJECT_APPROVED"
@@ -579,22 +691,22 @@ class NotificationType(str, enum.Enum):
     PROJECT_STATUS_CHANGED = "PROJECT_STATUS_CHANGED"
 
 # Database model
+
+
 class Notification(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE")
     type: NotificationType = Field(sa_column=Column(Enum(NotificationType)))
     title: str = Field(max_length=255)
     message: str = Field(max_length=1000)
-    
+
     related_entity_id: uuid.UUID | None = Field(default=None)
     related_entity_type: str | None = Field(default=None, max_length=50)
     action_url: str | None = Field(default=None, max_length=500)
-    
+
     is_read: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     # Fix: Use consistent naming
     recipient: User = Relationship(back_populates="notifications")
-
-    
-

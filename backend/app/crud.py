@@ -1,3 +1,10 @@
+from sqlalchemy.orm import selectinload
+from app.models import (
+    Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread,
+    ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate,
+    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus
+)
+
 import uuid
 from typing import Any
 from datetime import datetime, timezone
@@ -8,6 +15,7 @@ from app.core.security import get_password_hash, verify_password
 from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, ProjectThreadCreate, ProjectThreadUpdate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, Notification, NotificationType
 from app.core.notification_manager import notification_manager
 from sqlalchemy.orm import selectinload
+
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
@@ -107,47 +115,56 @@ def delete_project(*, session: Session, project_id: uuid.UUID) -> bool:
         return True
     return False
 
+
 def get_user_by_id(*, session: Session, user_id: uuid.UUID) -> User | None:
     return session.get(User, user_id)
 
 
 # Task CRUD operations
-def create_task(*, session: Session, task_in: TaskCreate, project_id: uuid.UUID)-> Task:
+def create_task(*, session: Session, task_in: TaskCreate, project_id: uuid.UUID) -> Task:
     db_task = Task.model_validate(task_in, update={"project_id": project_id})
     session.add(db_task)
     session.commit()
     session.refresh(db_task)
     return db_task
 
+
 def update_task(*, session: Session, db_task: Task, task_in: TaskUpdate) -> Task:
     task_data = task_in.model_dump(exclude_unset=True)
     task_data["updated_at"] = datetime.now(timezone.utc)
-    
+
     db_task.sqlmodel_update(task_data)
     session.add(db_task)
     session.commit()
     session.refresh(db_task)
     return db_task
 
-def delete_task(*, session: Session, task_id: uuid.UUID)-> bool:
+
+def delete_task(*, session: Session, task_id: uuid.UUID) -> bool:
     task = session.get(Task, task_id)
-    
+
     if task:
         session.delete(task)
         session.commit()
         return True
     return False
 
-def get_task_by_id(*, session: Session, task_id: uuid.UUID)-> Task | None:
+
+def get_task_by_id(*, session: Session, task_id: uuid.UUID) -> Task | None:
     return session.get(Task, task_id)
 
-def get_tasks_by_project_id(*, session: Session, project_id: uuid.UUID, skip: int = 0, limit: int = 100)-> list[Task]:
-    statement = select(Task).where(Task.project_id == project_id).offset(skip).limit(limit)
+
+def get_tasks_by_project_id(*, session: Session, project_id: uuid.UUID, skip: int = 0, limit: int = 100) -> list[Task]:
+    statement = select(Task).where(Task.project_id ==
+                                   project_id).offset(skip).limit(limit)
     return session.exec(statement).all()
 
-def count_tasks_by_project(*, session: Session, project_id: uuid.UUID)-> int:
-    statement = select(func.count(Task.id)).where(Task.project_id == project_id)
+
+def count_tasks_by_project(*, session: Session, project_id: uuid.UUID) -> int:
+    statement = select(func.count(Task.id)).where(
+        Task.project_id == project_id)
     return session.exec(statement).one() or 0
+
 
 def assign_task_to_volunteer(*, session: Session, task_id: uuid.UUID, volunteer_id: uuid.UUID) -> Task:
     db_task = session.get(Task, task_id)
@@ -199,7 +216,7 @@ def get_project_thread_by_id(
 
     # Step 3: Sort comments by creation date for correct order.
     all_comments.sort(key=lambda c: c.created_at)
-    
+
     # Step 4: Sort replies within each comment by creation date.
     for comment in all_comments:
         comment.replies.sort(key=lambda r: r.created_at)
@@ -251,8 +268,8 @@ def delete_project_thread(*, session: Session, db_thread: ProjectThread) -> None
     """
     session.delete(db_thread)
     session.commit()
-    
-    
+
+
 # Comment CRUD operations
 def get_comment_by_id(*, session: Session, comment_id: uuid.UUID) -> Comment | None:
     return session.get(Comment, comment_id)
@@ -330,7 +347,7 @@ def create_reply(
     parent_comment = session.get(Comment, reply_in.parent_id)
     if not parent_comment:
         raise ValueError("Parent comment not found")
-    
+
     db_reply = Reply(
         body=reply_in.body,
         parent_id=reply_in.parent_id,
@@ -377,17 +394,17 @@ def delete_comment(*, session: Session, db_comment: Comment) -> None:
 
 # Project Application CRUD operations
 def create_application(
-    *, 
-    session: Session, 
-    application_in: ProjectApplicationCreate, 
-    project_id: uuid.UUID, 
+    *,
+    session: Session,
+    application_in: ProjectApplicationCreate,
+    project_id: uuid.UUID,
     volunteer_id: uuid.UUID
 ) -> ProjectApplication:
     """Create a new project application"""
     db_application = ProjectApplication.model_validate(
-        application_in, 
+        application_in,
         update={
-            "project_id": project_id, 
+            "project_id": project_id,
             "volunteer_id": volunteer_id
         }
     )
@@ -403,9 +420,9 @@ def get_application_by_id(*, session: Session, application_id: uuid.UUID) -> Pro
 
 
 def get_application_by_project_and_volunteer(
-    *, 
-    session: Session, 
-    project_id: uuid.UUID, 
+    *,
+    session: Session,
+    project_id: uuid.UUID,
     volunteer_id: uuid.UUID
 ) -> ProjectApplication | None:
     """Check if volunteer has already applied to this project"""
@@ -417,10 +434,10 @@ def get_application_by_project_and_volunteer(
 
 
 def get_applications_by_project_id(
-    *, 
-    session: Session, 
-    project_id: uuid.UUID, 
-    skip: int = 0, 
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    skip: int = 0,
     limit: int = 100
 ) -> tuple[list[ProjectApplication], int]:
     """Get all applications for a specific project"""
@@ -433,20 +450,20 @@ def get_applications_by_project_id(
         .order_by(ProjectApplication.created_at.desc())
     )
     applications = session.exec(statement).all()
-    
+
     count_statement = select(func.count(ProjectApplication.id)).where(
         ProjectApplication.project_id == project_id
     )
     count = session.exec(count_statement).one()
-    
+
     return applications, count
 
 
 def get_applications_by_volunteer_id(
-    *, 
-    session: Session, 
-    volunteer_id: uuid.UUID, 
-    skip: int = 0, 
+    *,
+    session: Session,
+    volunteer_id: uuid.UUID,
+    skip: int = 0,
     limit: int = 100
 ) -> tuple[list[ProjectApplication], int]:
     """Get all applications by a specific volunteer"""
@@ -459,20 +476,20 @@ def get_applications_by_volunteer_id(
         .order_by(ProjectApplication.created_at.desc())
     )
     applications = session.exec(statement).all()
-    
+
     count_statement = select(func.count(ProjectApplication.id)).where(
         ProjectApplication.volunteer_id == volunteer_id
     )
     count = session.exec(count_statement).one()
-    
+
     return applications, count
 
 
 def get_applications_by_status(
-    *, 
-    session: Session, 
-    status: ApplicationStatus, 
-    skip: int = 0, 
+    *,
+    session: Session,
+    status: ApplicationStatus,
+    skip: int = 0,
     limit: int = 100
 ) -> tuple[list[ProjectApplication], int]:
     """Get applications by status"""
@@ -488,25 +505,25 @@ def get_applications_by_status(
         .order_by(ProjectApplication.created_at.desc())
     )
     applications = session.exec(statement).all()
-    
+
     count_statement = select(func.count(ProjectApplication.id)).where(
         ProjectApplication.status == status
     )
     count = session.exec(count_statement).one()
-    
+
     return applications, count
 
 
 def update_application(
-    *, 
-    session: Session, 
-    db_application: ProjectApplication, 
+    *,
+    session: Session,
+    db_application: ProjectApplication,
     application_in: ProjectApplicationUpdate
 ) -> ProjectApplication:
     """Update an existing application"""
     application_data = application_in.model_dump(exclude_unset=True)
     application_data["updated_at"] = datetime.now(timezone.utc)
-    
+
     db_application.sqlmodel_update(application_data)
     session.add(db_application)
     session.commit()
@@ -525,9 +542,9 @@ def delete_application(*, session: Session, application_id: uuid.UUID) -> bool:
 
 
 def get_all_applications(
-    *, 
-    session: Session, 
-    skip: int = 0, 
+    *,
+    session: Session,
+    skip: int = 0,
     limit: int = 100
 ) -> tuple[list[ProjectApplication], int]:
     """Get all applications (admin only)"""
@@ -542,13 +559,65 @@ def get_all_applications(
         .order_by(ProjectApplication.created_at.desc())
     )
     applications = session.exec(statement).all()
-    
+
     count_statement = select(func.count(ProjectApplication.id))
     count = session.exec(count_statement).one()
-    
+
+    return applications, count
+
+
+# Payment CRUD operations
+def create_payment(*, session: Session, payment_in: PaymentCreate, merchant_id: str) -> Payment:
+
+    # Convert PaymentCreate to dict and ensure all required fields have values
+    payment_data = payment_in.model_dump()
+
+    # Add merchant_id from config
+    payment_data["merchant_id"] = merchant_id
+
+    # Remove order_id from payment_data since it will be auto-generated
+    # Don't include order_id in the initial data
+
+    # Set default items description (will be updated after order_id is generated)
+    payment_data["items"] = "Payment Processing"
+
+    # Set default currency (you can modify this logic as needed)
+    # Default to LKR, can be made configurable
+    payment_data["currency"] = PaymentCurrency.LKR
+
+    # Create Payment object (order_id will be auto-generated)
+    db_payment = Payment(**payment_data)
+    session.add(db_payment)
+    session.flush()  # This generates the auto-increment order_id
+
+    # Now update items description with the actual order_id
+    db_payment.items = f"Payment for Order {db_payment.order_id}"
+
+    session.commit()
+    session.refresh(db_payment)
+    return db_payment
+
+
+def update_payment_status(*, session: Session, order_id: int, status: PaymentStatus) -> Payment | None:
+    """
+    Update payment status by order_id
+    """
+    statement = select(Payment).where(Payment.order_id == order_id)
+    payment = session.exec(statement).first()
+
+    if payment:
+        payment.status = status
+        session.add(payment)
+        session.commit()
+        session.refresh(payment)
+
+    return payment
+
     return applications, count
 
 # Notification CRUD operations
+
+
 async def create_notification(
     *,
     session: Session,
@@ -574,7 +643,7 @@ async def create_notification(
     session.add(notification)
     session.commit()
     session.refresh(notification)
-    
+
     # 2. TRY TO SEND VIA SSE - Bonus for online users
     try:
         await notification_manager.send_notification(
@@ -591,8 +660,9 @@ async def create_notification(
         )
     except Exception as e:
         print(f"Could not send real-time notification (user offline): {e}")
-    
+
     return notification
+
 
 def get_user_notifications(
     *, session: Session, user_id: uuid.UUID, skip: int = 0, limit: int = 50
@@ -606,13 +676,14 @@ def get_user_notifications(
         .limit(limit)
     )
     notifications = session.exec(statement).all()
-    
+
     count_statement = select(func.count(Notification.id)).where(
         Notification.user_id == user_id
     )
     count = session.exec(count_statement).one()
-    
+
     return notifications, count
+
 
 def mark_notification_as_read(
     *, session: Session, notification_id: uuid.UUID
@@ -626,6 +697,7 @@ def mark_notification_as_read(
         session.refresh(notification)
     return notification
 
+
 def mark_all_notifications_as_read(
     *, session: Session, user_id: uuid.UUID
 ) -> int:
@@ -635,13 +707,14 @@ def mark_all_notifications_as_read(
         .where(Notification.user_id == user_id, Notification.is_read == False)
     )
     notifications = session.exec(statement).all()
-    
+
     for notification in notifications:
         notification.is_read = True
         session.add(notification)
-    
+
     session.commit()
     return len(notifications)
+
 
 def get_unread_notifications(
     *, session: Session, user_id: uuid.UUID
@@ -656,6 +729,7 @@ def get_unread_notifications(
         .order_by(Notification.created_at.desc())
     )
     return session.exec(statement).all()
+
 
 def get_unread_notifications_count(
     *, session: Session, user_id: uuid.UUID
