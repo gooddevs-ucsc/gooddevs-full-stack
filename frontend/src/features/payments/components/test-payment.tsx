@@ -10,8 +10,6 @@ export const TestPayment = () => {
   const initiatePaymentMutation = useInitiatePayment({
     mutationConfig: {
       onSuccess: ({ data: paymentData }) => {
-        console.log('Payment initiated:', paymentData);
-
         const formElement = document.createElement('form');
         formElement.method = 'post';
         formElement.action = 'https://sandbox.payhere.lk/pay/checkout';
