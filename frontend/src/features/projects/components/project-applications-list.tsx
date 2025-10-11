@@ -1,4 +1,4 @@
-import {
+﻿import {
   Calendar,
   Github,
   Linkedin,
@@ -13,10 +13,12 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useNotifications } from '@/components/ui/notifications';
 import { Spinner } from '@/components/ui/spinner';
 import { APPLICATION_STATUS, ProjectApplication } from '@/types/api';
 import { formatDate } from '@/utils/format';
 
+import { useUpdateApplicationStatus } from '../api/application-status-update';
 import { useProject } from '../api/get-project';
 import { useProjectApplications } from '../api/get-project-applications';
 
@@ -58,21 +60,20 @@ export const ProjectApplicationsList = ({
       app.volunteer?.lastname
         ?.toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
-      app.volunteer?.email
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
+      app.volunteer?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.volunteer_role.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.cover_letter?.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchesStatus && matchesSearch;
   });
 
-  // Get counts for each status
+  // Helper function to count applications by status for tab badges
   const getStatusCount = (status: string) => {
-    if (status === 'all') return applications.length;
-    return applications.filter((app) => app.status === status).length;
+    if (status === 'all') return applications.length; // Total count for "All" tab
+    return applications.filter((app) => app.status === status).length; // Count for specific status
   };
 
+  // Configuration for status filter tabs with counts
   const statusTabs = [
     { key: 'all', label: 'All Applications', count: getStatusCount('all') },
     {
@@ -179,6 +180,7 @@ export const ProjectApplicationsList = ({
             <ApplicationCard
               key={application.id}
               application={application}
+              projectId={projectId}
             />
           ))
         )}
@@ -187,11 +189,72 @@ export const ProjectApplicationsList = ({
   );
 };
 
+/**
+ * Props for the ApplicationCard component
+ */
 interface ApplicationCardProps {
-  application: ProjectApplication;
+  application: ProjectApplication; // The application data to display
+  projectId: string; // Project ID for cache invalidation after updates
 }
 
-const ApplicationCard = ({ application }: ApplicationCardProps) => {
+/**
+ * Individual application card component
+ *
+ * Displays:
+ * - Developer information (name, email, experience)
+ * - Application details (role, cover letter, skills)
+ * - Portfolio and social links
+ * - Approve/Reject buttons for pending applications
+ */
+const ApplicationCard = ({ application, projectId }: ApplicationCardProps) => {
+  // Hook for showing success/error notifications
+  const { addNotification } = useNotifications();
+
+  // Mutation hook for updating application status (approve/reject)
+  const { mutate: updateStatus, isPending: isUpdating } =
+    useUpdateApplicationStatus({
+      projectId, // Pass project ID for proper cache invalidation
+      mutationConfig: {
+        // Show success notification when status update succeeds
+        onSuccess: () => {
+          addNotification({
+            type: 'success',
+            title: 'Application Updated',
+            message: 'Application status has been successfully updated.',
+          });
+        },
+        // Show error notification when status update fails
+        onError: () => {
+          addNotification({
+            type: 'error',
+            title: 'Update Failed',
+            message: 'Failed to update application status. Please try again.',
+          });
+        },
+      },
+    });
+
+  /**
+   * Handle approving an application
+   * Calls the API to update status to APPROVED and refreshes the applications list
+   */
+  const handleApprove = () => {
+    updateStatus({
+      applicationId: application.id,
+      status: APPLICATION_STATUS.APPROVED,
+    });
+  };
+
+  /**
+   * Handle rejecting an application
+   * Calls the API to update status to REJECTED and refreshes the applications list
+   */
+  const handleReject = () => {
+    updateStatus({
+      applicationId: application.id,
+      status: APPLICATION_STATUS.REJECTED,
+    });
+  };
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between">
@@ -339,16 +402,20 @@ const ApplicationCard = ({ application }: ApplicationCardProps) => {
             <div className="flex space-x-3 border-t border-gray-200 pt-4">
               <Button
                 size="sm"
+                disabled={isUpdating}
+                onClick={handleApprove}
                 className="bg-green-600 text-white hover:bg-green-700"
               >
-                Approve Application
+                {isUpdating ? 'Updating...' : 'Approve Application'}
               </Button>
               <Button
                 size="sm"
                 variant="outline"
+                disabled={isUpdating}
+                onClick={handleReject}
                 className="border-red-300 text-red-600 hover:bg-red-50"
               >
-                Reject Application
+                {isUpdating ? 'Updating...' : 'Reject Application'}
               </Button>
             </div>
           )}
