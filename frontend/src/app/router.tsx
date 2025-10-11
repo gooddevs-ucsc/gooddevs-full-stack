@@ -189,6 +189,13 @@ export const createAppRouter = (queryClient: QueryClient) =>
             ),
         },
         {
+          path: paths.requester.projectApplications.path,
+          lazy: () =>
+            import('./routes/requester/project-applications').then(
+              convert(queryClient),
+            ),
+        },
+        {
           path: paths.requester.sponsorships.path,
           lazy: () =>
             import('./routes/requester/sponsorships').then(
