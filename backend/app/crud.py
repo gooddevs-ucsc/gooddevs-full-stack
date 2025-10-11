@@ -638,7 +638,8 @@ async def create_notification(
         message=message,
         related_entity_id=related_entity_id,
         related_entity_type=related_entity_type,
-        action_url=action_url
+        action_url=action_url,
+        created_at=datetime.now(timezone.utc)
     )
     session.add(notification)
     session.commit()
@@ -654,7 +655,7 @@ async def create_notification(
                 "title": notification.title,
                 "message": notification.message,
                 "action_url": notification.action_url,
-                "created_at": notification.created_at.isoformat(),
+                "created_at": notification.created_at.replace(tzinfo=timezone.utc).isoformat(),
                 "is_read": notification.is_read
             }
         )

@@ -7,11 +7,26 @@ import { HelmetProvider } from 'react-helmet-async';
 import { MainErrorFallback } from '@/components/errors/main';
 import { Notifications } from '@/components/ui/notifications';
 import { Spinner } from '@/components/ui/spinner';
-import { AuthLoader } from '@/lib/auth';
+import { useNotificationStream } from '@/features/notifications/hooks/use-notification-stream';
+import { AuthLoader, useUser } from '@/lib/auth';
 import { queryConfig } from '@/lib/react-query';
 
 type AppProviderProps = {
   children: React.ReactNode;
+};
+
+// Separate component to use hooks after auth is loaded
+const NotificationStreamProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const user = useUser();
+
+  // Only connect to SSE if user is authenticated
+  useNotificationStream(!!user.data);
+
+  return <>{children}</>;
 };
 
 export const AppProvider = ({ children }: AppProviderProps) => {
@@ -42,7 +57,9 @@ export const AppProvider = ({ children }: AppProviderProps) => {
                 </div>
               )}
             >
-              {children}
+              <NotificationStreamProvider>
+                {children}
+              </NotificationStreamProvider>
             </AuthLoader>
           </QueryClientProvider>
         </HelmetProvider>

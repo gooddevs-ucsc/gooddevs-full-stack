@@ -1,14 +1,15 @@
 import {
-  Home,
+  ClipboardCheck,
   // Users, Folder,
   DollarSign,
-  ClipboardCheck,
+  Home,
 } from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
 import { ForbiddenFallback } from '@/components/ui/forbidden-fallback';
 import { paths } from '@/config/paths';
+import { NotificationBell } from '@/features/notifications';
 import { Authorization } from '@/lib/authorization';
 import { ROLES } from '@/lib/roles';
 
@@ -40,7 +41,10 @@ const AdminRoot = () => {
       forbiddenFallback={<ForbiddenFallback roles={[ROLES.ADMIN]} />}
       allowedRoles={[ROLES.ADMIN]}
     >
-      <DashboardLayout navigation={navigation}>
+      <DashboardLayout
+        navigation={navigation}
+        headerExtras={<NotificationBell />}
+      >
         <Outlet />
       </DashboardLayout>
     </Authorization>
