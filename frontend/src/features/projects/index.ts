@@ -3,6 +3,7 @@ export * from './api/get-project';
 export * from './api/get-project-thread';
 export * from './api/get-applications';
 export * from './api/get-project-applications';
+export * from './api/application-status-update';
 export * from './api/delete-application';
 export { ProjectThread as ProjectThreadComponent } from './components/project-thread';
 export * from './components/projects-list';
