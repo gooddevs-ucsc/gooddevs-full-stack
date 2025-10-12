@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from app.api.deps import CurrentUser, SessionDep, OptionalCurrentUser
 from app.models import NotificationType, Project, ProjectCreate, ProjectPublic, ProjectsPublic, ProjectUpdate, Message, UserRole, ProjectStatus, User, TokenPayload, Meta, ProjectResponse
-from app.core import security
+from app.core import groq_utils, security
 from app.core.config import settings
 from app import crud
 from app.utils import calculate_pagination_meta, page_to_skip, calculate_pagination_meta_from_page
@@ -346,3 +346,15 @@ def reject_project(
     project = crud.update_project(
         session=session, db_project=project, project_in=project_update)
     return ProjectResponse(data=project)
+
+@router.post("/generate-details")
+async def generate_project_details_endpoint(prompt: str):
+    try:
+        details = await groq_utils.generate_project_details(prompt)
+        return details
+    except ValueError as e:
+        # Send a 400 Bad Request error to the frontend
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        # Generic server error for other unexpected issues
+        raise HTTPException(status_code=500, detail="An unexpected error occurred.")
