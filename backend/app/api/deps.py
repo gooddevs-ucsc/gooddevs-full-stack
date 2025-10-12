@@ -2,7 +2,7 @@ from collections.abc import Generator
 from typing import Annotated, Optional
 
 import jwt
-from fastapi import Depends, HTTPException, status, Request, Cookie
+from fastapi import Depends, HTTPException, status, Request, Cookie, UploadFile
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
@@ -117,3 +117,20 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
             status_code=403, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+def validate_image_file(max_size: int = 5 * 1024 * 1024):
+    async def validator(file: UploadFile) -> UploadFile:
+        file_content = await file.read()
+        file_size = len(file_content)
+        
+        if file_size > max_size:
+            raise HTTPException(
+                status_code=413, 
+                detail=f"File too large. Maximum size is {max_size // (1024*1024)}MB"
+            )
+        
+        # Reset file pointer
+        await file.seek(0)
+        return file
+    
+    return validator

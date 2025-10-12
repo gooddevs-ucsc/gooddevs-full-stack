@@ -1,5 +1,6 @@
 import secrets
 import warnings
+import cloudinary
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -122,6 +123,18 @@ class Settings(BaseSettings):
         )
 
         return self
+    
+    # Cloudinary settings
+    cloudinary_cloud_name: str
+    cloudinary_api_key: str
+    cloudinary_api_secret: str
 
 
 settings = Settings()  # type: ignore
+
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name=settings.cloudinary_cloud_name,
+    api_key=settings.cloudinary_api_key,
+    api_secret=settings.cloudinary_api_secret
+)
