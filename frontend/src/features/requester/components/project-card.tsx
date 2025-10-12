@@ -6,6 +6,7 @@ import {
   MoreVertical,
   Trash2,
   Users,
+  UserCheck,
 } from 'lucide-react';
 import { FC } from 'react';
 import { useNavigate } from 'react-router';
@@ -19,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown';
 import { Progress } from '@/components/ui/progress';
+import { paths } from '@/config/paths';
 
 export interface RequesterProject {
   id: string;
@@ -77,6 +79,10 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
     navigate(`/projects/${project.id}`);
   };
 
+  const handleViewApplications = () => {
+    navigate(paths.requester.projectApplications.getHref(project.id));
+  };
+
   return (
     <div className="group relative overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/20">
       <div className="absolute inset-0 bg-gradient-to-br from-slate-50/30 to-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
@@ -114,6 +120,13 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
               >
                 <ExternalLink className="mr-2 size-4" />
                 View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleViewApplications}
+                className="cursor-pointer"
+              >
+                <UserCheck className="mr-2 size-4" />
+                View Applications
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
                 <Edit className="mr-2 size-4" />
@@ -181,8 +194,17 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="mt-6 flex justify-end">
+        {/* Action Buttons */}
+        <div className="mt-6 flex justify-end gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleViewApplications}
+            className="border-blue-300/50 bg-white text-blue-600 shadow-sm transition-all duration-200 hover:border-blue-400 hover:bg-blue-50"
+          >
+            <UserCheck className="mr-2 size-4" />
+            Applications
+          </Button>
           <Button
             variant="outline"
             size="sm"
