@@ -27,9 +27,15 @@ async def generate_project_details(prompt: str) -> dict:
         "title": "A concise, descriptive title for the project.",
         "description": "A detailed, well-structured description of the project.",
         "project_type": "Choose ONE of: {valid_types}",
-        "technologies": ["A list of suggested technologies"],
+        "technologies": ["Technology1", "Technology2", "Technology3"],
         "estimated_timeline": "Choose ONE of: {valid_timelines}"
     }}
+    
+    **Technology Guidelines:**
+    - List ONLY technology names (e.g., "React", "Node.js", "PostgreSQL")
+    - Do NOT include descriptions or explanations
+    - Keep each technology name concise (1-3 words max)
+    - Suggest 3-8 relevant technologies for the project type
 
     **Invalid Input JSON Structure (on failure):**
     {{
