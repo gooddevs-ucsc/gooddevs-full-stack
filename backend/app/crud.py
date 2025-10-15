@@ -598,6 +598,14 @@ def create_payment(*, session: Session, payment_in: PaymentCreate, merchant_id: 
     return db_payment
 
 
+def get_payment_by_order_id(*, session: Session, order_id: int) -> Payment | None:
+    """
+    Get payment by order_id
+    """
+    statement = select(Payment).where(Payment.order_id == order_id)
+    return session.exec(statement).first()
+
+
 def update_payment_status(*, session: Session, order_id: int, status: PaymentStatus) -> Payment | None:
     """
     Update payment status by order_id
@@ -607,13 +615,12 @@ def update_payment_status(*, session: Session, order_id: int, status: PaymentSta
 
     if payment:
         payment.status = status
+        payment.updated_at = datetime.now(timezone.utc)
         session.add(payment)
         session.commit()
         session.refresh(payment)
 
     return payment
-
-    return applications, count
 
 # Notification CRUD operations
 

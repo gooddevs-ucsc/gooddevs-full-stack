@@ -1,7 +1,11 @@
 from app import crud
 from app.core.config import settings
-from app.models import PaymentCreate,  PaymentInitiationResponse, PaymentInitiationPublic, PayhereCheckoutAPIVerificationResponse, PaymentStatus
-from app.api.deps import SessionDep
+from app.models import (
+    PaymentCreate, PaymentInitiationResponse, PaymentInitiationPublic,
+    PayhereCheckoutAPIVerificationResponse, PaymentStatus, PaymentPublic,
+    PayHereRetrievalResponse
+)
+from app.api.deps import SessionDep, PayHereServiceDep
 from app.utils import generate_payhere_hash, verify_payhere_hash
 import logging
 from typing import Any, Annotated
@@ -101,3 +105,24 @@ def payhere_webhook(
         raise HTTPException(status_code=400)
 
     return True
+
+
+@router.get("/{order_id}", response_model=PaymentPublic)
+async def get_payment_by_order_id(
+    *,
+    payhere_service: PayHereServiceDep,
+    order_id: int
+) -> Any:
+    """
+    Get payment details by order_id.
+
+    Args:
+        order_id: The order ID to retrieve
+
+    Returns:
+        Payment details
+    """
+    payment = await payhere_service.get_payment_by_order_id(
+        order_id=order_id)
+
+    return payment
