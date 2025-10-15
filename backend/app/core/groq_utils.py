@@ -57,9 +57,7 @@ async def generate_project_details(prompt: str) -> dict:
                 "content": prompt,
             }
         ],
-        # Use the fast Llama 3 8b model
         model="llama-3.1-8b-instant",
-        # Enforce JSON output
         response_format={"type": "json_object"},
         )
 
@@ -77,8 +75,12 @@ async def generate_project_details(prompt: str) -> dict:
     
     except ValueError as e:
         # Re-raise our specific validation errors as HTTP 400 errors
-        raise HTTPException(status_code=400, detail=str(e))
+        raise 
+
+    except json.JSONDecodeError as e:
+        # JSON parsing error - this is a server error
+        raise Exception("Failed to process AI response")
+    
     except Exception as e:
-        # Catch any other unexpected API or parsing errors
-        print(f"An unexpected error occurred with Groq API: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate project details from AI service.")
+        # Any other error (API failure, network issues, etc.) - this is a server error
+        raise Exception("Failed to generate project details from AI service")

@@ -358,3 +358,4 @@ async def generate_project_details_endpoint(prompt: str):
     except Exception:
         # Generic server error for other unexpected issues
         raise HTTPException(status_code=500, detail="An unexpected error occurred.")
+    
