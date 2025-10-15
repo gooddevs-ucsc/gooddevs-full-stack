@@ -66,6 +66,10 @@ export const paths = {
       path: 'profile',
       getHref: () => '/app/profile',
     },
+    notifications: {
+      path: 'notifications',
+      getHref: () => '/app/notifications',
+    },
   },
 
   admin: {
@@ -134,6 +138,11 @@ export const paths = {
     createProject: {
       path: 'projects/create',
       getHref: () => '/requester/projects/create',
+    },
+    projectApplications: {
+      path: 'projects/:projectId/applications',
+      getHref: (projectId: string) =>
+        `/requester/projects/${projectId}/applications`,
     },
     sponsorships: {
       path: 'sponsorships',
