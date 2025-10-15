@@ -1,6 +1,7 @@
 import uuid
 import enum
 from datetime import datetime
+from typing import Any
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel, Column, Enum, Identity, Integer
@@ -656,6 +657,64 @@ class PayhereCheckoutAPIVerificationResponse(SQLModel):
     card_holder_name: str | None = None
     card_no: str | None = None
     card_expiry: str | None = None
+
+
+# PayHere Retrieval API models
+class PayHereOAuthTokenResponse(SQLModel):
+    """Response from PayHere OAuth token endpoint"""
+    access_token: str
+    token_type: str
+    expires_in: int
+    scope: str
+
+
+class PayHereCustomerDetails(SQLModel):
+    """Customer details from PayHere retrieval response"""
+    fist_name: str | None = None  # Note: PayHere API has typo "fist_name"
+    last_name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    delivery_details: dict | None = None
+
+
+class PayHereAmountDetail(SQLModel):
+    """Amount details from PayHere retrieval response"""
+    currency: str
+    gross: float
+    fee: float
+    net: float
+    exchange_rate: float
+    exchange_from: str
+    exchange_to: str
+
+
+class PayHerePaymentMethod(SQLModel):
+    """Payment method details from PayHere retrieval response"""
+    method: str
+    card_customer_name: str | None = None
+    card_no: str | None = None
+
+
+class PayHerePaymentData(SQLModel):
+    """Individual payment data from PayHere retrieval response"""
+    payment_id: int
+    order_id: str
+    date: str
+    description: str
+    status: str  # RECEIVED, REFUNDED, CHARGEBACKED, etc.
+    currency: str
+    amount: float
+    customer: PayHereCustomerDetails | None = None
+    amount_detail: PayHereAmountDetail | None = None
+    payment_method: PayHerePaymentMethod | None = None
+    items: Any | None = None
+
+
+class PayHereRetrievalResponse(SQLModel):
+    """Full response from PayHere payment retrieval API"""
+    status: int  # 1 = success, -1 = not found, -2 = auth error
+    msg: str
+    data: list[PayHerePaymentData] | None = None
 
 
 # Notification
