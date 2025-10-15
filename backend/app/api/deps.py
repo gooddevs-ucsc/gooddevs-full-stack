@@ -13,6 +13,8 @@ from app.core.config import settings
 from app.core.db import engine
 from app.models import TokenPayload, User
 
+from app.services.payhere_service import PayHereService
+
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token",
     auto_error=False  # Don't auto-error so we can check cookies
@@ -117,3 +119,10 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
             status_code=403, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+def get_payhere_service(session: SessionDep) -> PayHereService:
+    return PayHereService(session=session)
+
+
+PayHereServiceDep = Annotated[PayHereService, Depends(get_payhere_service)]
