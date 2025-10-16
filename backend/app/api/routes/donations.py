@@ -115,23 +115,23 @@ async def get_my_donations(
 ) -> DonationsPublic:
     """
     Get all donations made by the current user, ordered by ID (most recent first).
-    
+
     This endpoint:
     1. Fetches all donations made by the current user, ordered by order_id descending
     2. For each donation, retrieves payment details from PayHere service
     3. Returns donation data with updated payment status from PayHere
-    
+
     The payment status is fetched in real-time from PayHere API to ensure accuracy.
-    
+
     Requires authentication.
-    
+
     Args:
         skip: Number of records to skip (for pagination)
         limit: Maximum number of records to return
-    
+
     Returns:
         DonationsPublic: List of donations with payment details and pagination metadata
-    
+
     Raises:
         HTTPException 401: User not authenticated
         HTTPException 500: Server error while fetching donations
@@ -144,13 +144,13 @@ async def get_my_donations(
             skip=skip,
             limit=limit
         )
-        
+
         # Get total count for pagination
         total = crud.count_donations_by_donor_id(
             session=session,
             donor_id=current_user.id
         )
-        
+
         # Fetch payment details for each donation using PayHere service
         # Note: donations are already filtered by SUCCESS/PENDING status at database level
         donations_with_payments = []
@@ -158,7 +158,7 @@ async def get_my_donations(
             # Use PayHere service to get payment details
             # This will check PayHere API if payment status is PENDING
             payment = await payhere_service.get_payment_by_order_id(donation.order_id)
-            
+
             if payment:
                 # Create DonationPublic with payment and donor info
                 donation_public = DonationPublic(
@@ -201,29 +201,30 @@ async def get_my_donations(
                 logger.warning(
                     f"Payment not found for donation {donation.id} with order_id {donation.order_id}"
                 )
-        
+
         # Calculate pagination metadata
         # Total is already filtered by payment status at database level
         total_pages = (total + limit - 1) // limit if limit > 0 else 1
         current_page = (skip // limit) + 1 if limit > 0 else 1
-        
+
         meta = Meta(
             page=current_page,
             total=total,
             totalPages=total_pages
         )
-        
+
         logger.info(
             f"Retrieved {len(donations_with_payments)} successful/pending donations for user {current_user.id}"
         )
-        
+
         return DonationsPublic(
             data=donations_with_payments,
             meta=meta
         )
-        
+
     except Exception as e:
-        logger.error(f"Error fetching donations for user {current_user.id}: {str(e)}")
+        logger.error(
+            f"Error fetching donations for user {current_user.id}: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail="Failed to retrieve donations"
