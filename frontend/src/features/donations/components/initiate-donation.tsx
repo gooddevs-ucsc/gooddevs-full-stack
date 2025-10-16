@@ -1,0 +1,117 @@
+import { Button } from '@/components/ui/button';
+import { Form, Input, Textarea } from '@/components/ui/form';
+import { ProtectedRoute } from '@/lib/auth';
+
+import {
+  initiateDonationInputSchema,
+  useInitiateDonation,
+} from '../api/initiate-donation';
+
+export const InitiateDonation = () => {
+  const initiateDonationMutation = useInitiateDonation({
+    mutationConfig: {
+      onSuccess: ({ data: paymentData }) => {
+        const formElement = document.createElement('form');
+        formElement.method = 'post';
+        formElement.action = 'https://sandbox.payhere.lk/pay/checkout';
+
+        // Add hidden fields
+        const fields = {
+          merchant_id: paymentData.merchant_id,
+          return_url: paymentData.return_url,
+          cancel_url: paymentData.cancel_url,
+          notify_url: paymentData.notify_url,
+          order_id: paymentData.order_id,
+          items: paymentData.items,
+          currency: paymentData.currency,
+          amount: paymentData.amount,
+          hash: paymentData.hash,
+          first_name: paymentData.first_name,
+          last_name: paymentData.last_name,
+          email: paymentData.email,
+          phone: paymentData.phone,
+          address: paymentData.address,
+          city: paymentData.city,
+          country: paymentData.country,
+        };
+
+        // Create and append hidden input fields
+        Object.entries(fields).forEach(([key, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = value as string;
+          formElement.appendChild(input);
+        });
+
+        // Submit the form
+        document.body.appendChild(formElement);
+        formElement.submit();
+        document.body.removeChild(formElement);
+      },
+    },
+  });
+
+  return (
+    <ProtectedRoute>
+      <Form
+        id="initiate-donation"
+        onSubmit={(values) => {
+          initiateDonationMutation.mutate({ data: values });
+        }}
+        schema={initiateDonationInputSchema}
+      >
+        {({ register, formState }) => (
+          <>
+            <Input
+              label="Phone"
+              error={formState.errors['phone']}
+              registration={register('phone')}
+              placeholder="+94771234567"
+            />
+            <Input
+              label="Address"
+              error={formState.errors['address']}
+              registration={register('address')}
+              placeholder="123 Main Street"
+            />
+            <Input
+              label="City"
+              error={formState.errors['city']}
+              registration={register('city')}
+              placeholder="Colombo"
+            />
+            <Input
+              label="Country"
+              error={formState.errors['country']}
+              registration={register('country')}
+              placeholder="Sri Lanka"
+            />
+            <Input
+              label="Amount"
+              type="number"
+              error={formState.errors['amount']}
+              registration={register('amount', { valueAsNumber: true })}
+              placeholder="1000"
+            />
+            <Textarea
+              label="Message (Optional)"
+              error={formState.errors['message']}
+              registration={register('message')}
+              placeholder="Leave a message of support..."
+            />
+            <div>
+              <Button
+                isLoading={initiateDonationMutation.isPending}
+                type="submit"
+                className="w-full"
+              >
+                Proceed to Donate
+              </Button>
+            </div>
+          </>
+        )}
+      </Form>
+    </ProtectedRoute>
+  );
+};

@@ -192,5 +192,9 @@ export const paths = {
       path: 'test',
       getHref: () => '/payments/test',
     },
+    donation: {
+      path: 'donation',
+      getHref: () => '/payments/donation',
+    },
   },
 } as const;

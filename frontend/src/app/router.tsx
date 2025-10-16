@@ -260,6 +260,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
           lazy: () =>
             import('./routes/payments/test-payment').then(convert(queryClient)),
         },
+        {
+          path: paths.payments.donation.path,
+          lazy: () =>
+            import('./routes/payments/donation').then(convert(queryClient)),
+        },
       ],
     },
 
