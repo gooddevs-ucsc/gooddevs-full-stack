@@ -816,3 +816,80 @@ class DonationResponse(SQLModel):
 class DonationsPublic(SQLModel):
     data: list[DonationPublic]
     meta: Meta
+
+# Enhanced Requester Profile models
+
+
+class RequesterProfileBase(SQLModel):
+    tagline: str | None = Field(default=None, max_length=500)
+    logo_url: str | None = Field(default=None, max_length=500)
+    cover_image_url: str | None = Field(default=None, max_length=500)
+    website: str | None = Field(default=None, max_length=255)
+    location: str | None = Field(default=None, max_length=255)
+    about: str | None = Field(default=None, max_length=2000)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    twitter_url: str | None = Field(default=None, max_length=500)
+    facebook_url: str | None = Field(default=None, max_length=500)
+    instagram_url: str | None = Field(default=None, max_length=500)
+    contact_phone: str | None = Field(default=None, max_length=20)
+
+
+class RequesterProfileCreate(RequesterProfileBase):
+    pass
+
+
+class RequesterProfileUpdate(SQLModel):
+    tagline: str | None = Field(default=None, max_length=500)
+    logo_url: str | None = Field(default=None, max_length=500)
+    cover_image_url: str | None = Field(default=None, max_length=500)
+    website: str | None = Field(default=None, max_length=255)
+    location: str | None = Field(default=None, max_length=255)
+    about: str | None = Field(default=None, max_length=2000)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    twitter_url: str | None = Field(default=None, max_length=500)
+    facebook_url: str | None = Field(default=None, max_length=500)
+    instagram_url: str | None = Field(default=None, max_length=500)
+    contact_phone: str | None = Field(default=None, max_length=20)
+
+
+class RequesterProfile(RequesterProfileBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE", unique=True
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationship
+    user: User | None = Relationship()
+
+
+class RequesterProfilePublic(RequesterProfileBase):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    # Include user info so frontend can access name and email
+    user: UserPublic | None = None
+
+    # Computed properties that can be derived from user data
+    @property
+    def organization_name(self) -> str:
+        if self.user:
+            return f"{self.user.firstname} {self.user.lastname}"
+        return "Unknown Organization"
+
+    @property
+    def organization_email(self) -> str:
+        if self.user:
+            return self.user.email
+        return ""
+
+
+class RequesterProfileResponse(SQLModel):
+    data: RequesterProfilePublic
+
+
+class RequesterProfilesPublic(SQLModel):
+    data: list[RequesterProfilePublic]
+    count: int

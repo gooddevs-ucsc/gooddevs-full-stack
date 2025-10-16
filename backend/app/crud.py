@@ -2,7 +2,7 @@ from sqlalchemy.orm import selectinload
 from app.models import (
     Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread,
     ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate,
-    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, Donation, DonationCreate
+    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate
 )
 
 import uuid
@@ -751,6 +751,8 @@ def get_unread_notifications_count(
 
 
 # Donation CRUD operations
+
+
 def create_donation(
     *,
     session: Session,
@@ -834,3 +836,225 @@ def count_donations_by_donor_id(
         )
     )
     return len(list(session.exec(statement).all()))
+
+
+# Requester Profile CRUD operations
+
+
+def create_requester_profile(
+    *, session: Session, profile_in: RequesterProfileCreate, user_id: uuid.UUID
+) -> RequesterProfile:
+    """Create a new requester profile"""
+    from app.models import RequesterProfile
+
+    db_profile = RequesterProfile.model_validate(
+        profile_in, update={
+            "user_id": user_id,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
+        }
+    )
+    session.add(db_profile)
+    session.commit()
+    session.refresh(db_profile)
+    return db_profile
+
+
+def get_requester_profile(*, session: Session, profile_id: uuid.UUID) -> RequesterProfilePublic | None:
+    """Get requester profile by ID with user data"""
+    from app.models import RequesterProfile
+
+    statement = (
+        select(RequesterProfile)
+        .options(selectinload(RequesterProfile.user))
+        .where(RequesterProfile.id == profile_id)
+    )
+    profile = session.exec(statement).first()
+
+    if not profile:
+        return None
+
+    # Convert to public model
+    return RequesterProfilePublic.model_validate(profile, update={"user": profile.user})
+
+
+def get_requester_profile_by_user_id(
+    *, session: Session, user_id: uuid.UUID
+) -> RequesterProfilePublic | None:
+    """Get requester profile by user ID with user data"""
+    from app.models import RequesterProfile
+
+    statement = (
+        select(RequesterProfile)
+        .options(selectinload(RequesterProfile.user))
+        .where(RequesterProfile.user_id == user_id)
+    )
+    profile = session.exec(statement).first()
+
+    if not profile:
+        return None
+
+    # Convert to public model
+    return RequesterProfilePublic.model_validate(profile, update={"user": profile.user})
+
+
+def update_requester_profile(
+    *, session: Session, db_profile: RequesterProfile, profile_in: RequesterProfileUpdate
+) -> RequesterProfilePublic:
+    """Update an existing requester profile"""
+    profile_data = profile_in.model_dump(exclude_unset=True)
+    profile_data["updated_at"] = datetime.now(timezone.utc)
+
+    db_profile.sqlmodel_update(profile_data)
+    session.add(db_profile)
+    session.commit()
+    session.refresh(db_profile)
+
+    # Load user relationship for response
+    session.refresh(db_profile, ["user"])
+
+    return RequesterProfilePublic.model_validate(db_profile, update={"user": db_profile.user})
+
+
+def delete_requester_profile(*, session: Session, profile_id: uuid.UUID) -> bool:
+    """Delete a requester profile"""
+    from app.models import RequesterProfile
+
+    profile = session.get(RequesterProfile, profile_id)
+    if profile:
+        session.delete(profile)
+        session.commit()
+        return True
+    return False
+
+
+def get_requester_profiles(
+    *, session: Session, skip: int = 0, limit: int = 100
+) -> tuple[list[RequesterProfilePublic], int]:
+    """Get all requester profiles with pagination"""
+    from app.models import RequesterProfile
+
+    statement = (
+        select(RequesterProfile)
+        .options(selectinload(RequesterProfile.user))
+        .offset(skip)
+        .limit(limit)
+        .order_by(RequesterProfile.created_at.desc())
+    )
+    profiles = session.exec(statement).all()
+
+    count_statement = select(func.count(RequesterProfile.id))
+    count = session.exec(count_statement).one()
+
+    # Convert to public models
+    public_profiles = [
+        RequesterProfilePublic.model_validate(
+            profile, update={"user": profile.user})
+        for profile in profiles
+    ]
+
+    return public_profiles, count
+
+
+def search_requester_profiles(
+    *,
+    session: Session,
+    search_query: str | None = None,
+    location: str | None = None,
+    skip: int = 0,
+    limit: int = 100
+) -> tuple[list[RequesterProfilePublic], int]:
+    """Search requester profiles with filters"""
+    from app.models import RequesterProfile, User
+
+    statement = (
+        select(RequesterProfile)
+        .join(User, RequesterProfile.user_id == User.id)
+        .options(selectinload(RequesterProfile.user))
+    )
+
+    # Add search filters
+    filters = []
+    if search_query:
+        search_filter = (
+            User.firstname.ilike(f"%{search_query}%") |
+            User.lastname.ilike(f"%{search_query}%") |
+            User.email.ilike(f"%{search_query}%") |
+            RequesterProfile.tagline.ilike(f"%{search_query}%") |
+            RequesterProfile.about.ilike(f"%{search_query}%")
+        )
+        filters.append(search_filter)
+
+    if location:
+        filters.append(RequesterProfile.location.ilike(f"%{location}%"))
+
+    if filters:
+        statement = statement.where(*filters)
+
+    # Add pagination and ordering
+    count_statement = statement.with_only_columns(
+        func.count(RequesterProfile.id))
+    count = session.exec(count_statement).one()
+
+    profiles = session.exec(
+        statement.offset(skip).limit(limit).order_by(
+            RequesterProfile.created_at.desc())
+    ).all()
+
+    # Convert to public models
+    public_profiles = [
+        RequesterProfilePublic.model_validate(
+            profile, update={"user": profile.user})
+        for profile in profiles
+    ]
+
+    return public_profiles, count
+
+
+def get_requester_profile_stats(*, session: Session, user_id: uuid.UUID) -> dict:
+    """Get statistics for requester's dashboard"""
+
+    # Count projects by status
+    total_projects = session.exec(
+        select(func.count(Project.id)).where(Project.requester_id == user_id)
+    ).one() or 0
+
+    approved_projects = session.exec(
+        select(func.count(Project.id)).where(
+            Project.requester_id == user_id,
+            Project.status == ProjectStatus.APPROVED
+        )
+    ).one() or 0
+
+    pending_projects = session.exec(
+        select(func.count(Project.id)).where(
+            Project.requester_id == user_id,
+            Project.status == ProjectStatus.PENDING
+        )
+    ).one() or 0
+
+    # Count applications for user's projects
+    total_applications = session.exec(
+        select(func.count(ProjectApplication.id))
+        .join(Project, ProjectApplication.project_id == Project.id)
+        .where(Project.requester_id == user_id)
+    ).one() or 0
+
+    # Count pending applications
+    pending_applications = session.exec(
+        select(func.count(ProjectApplication.id))
+        .join(Project, ProjectApplication.project_id == Project.id)
+        .where(
+            Project.requester_id == user_id,
+            ProjectApplication.status == ApplicationStatus.PENDING
+        )
+    ).one() or 0
+
+    return {
+        "total_projects": total_projects,
+        "approved_projects": approved_projects,
+        "pending_projects": pending_projects,
+        "total_applications": total_applications,
+        "pending_applications": pending_applications,
+        "active_volunteers": 0,
+    }
