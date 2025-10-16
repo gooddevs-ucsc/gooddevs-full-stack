@@ -787,3 +787,50 @@ def get_donation_by_order_id(
     """Get donation by payment order_id"""
     statement = select(Donation).where(Donation.order_id == order_id)
     return session.exec(statement).first()
+
+
+def get_donations_by_donor_id(
+    *,
+    session: Session,
+    donor_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Donation]:
+    """
+    Get all donations made by a specific donor with SUCCESS or PENDING payment status,
+    ordered by order_id (descending).
+    This returns donations with their relationships loaded.
+    Only includes donations where payment status is SUCCESS (2) or PENDING (0).
+    """
+    statement = (
+        select(Donation)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(
+            Donation.donor_id == donor_id,
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+        .order_by(Donation.order_id.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_donations_by_donor_id(
+    *,
+    session: Session,
+    donor_id: uuid.UUID
+) -> int:
+    """
+    Count total donations made by a specific donor with SUCCESS or PENDING payment status.
+    Only counts donations where payment status is SUCCESS (2) or PENDING (0).
+    """
+    statement = (
+        select(Donation)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(
+            Donation.donor_id == donor_id,
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+    )
+    return len(list(session.exec(statement).all()))
