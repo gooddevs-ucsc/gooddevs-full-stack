@@ -13,6 +13,8 @@ from app.core.config import settings
 from app.core.db import engine
 from app.models import TokenPayload, User
 
+from app.services.payhere_service import PayHereService
+
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token",
     auto_error=False  # Don't auto-error so we can check cookies
@@ -118,19 +120,27 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
         )
     return current_user
 
+
+def get_payhere_service(session: SessionDep) -> PayHereService:
+    return PayHereService(session=session)
+
+
+PayHereServiceDep = Annotated[PayHereService, Depends(get_payhere_service)]
+
+
 def validate_image_file(max_size: int = 5 * 1024 * 1024):
     async def validator(file: UploadFile) -> UploadFile:
         file_content = await file.read()
         file_size = len(file_content)
-        
+
         if file_size > max_size:
             raise HTTPException(
-                status_code=413, 
+                status_code=413,
                 detail=f"File too large. Maximum size is {max_size // (1024*1024)}MB"
             )
-        
+
         # Reset file pointer
         await file.seek(0)
         return file
-    
+
     return validator

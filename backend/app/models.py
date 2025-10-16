@@ -1,6 +1,7 @@
 import uuid
 import enum
 from datetime import datetime
+from typing import Any
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel, Column, Enum, Identity, Integer
@@ -658,6 +659,64 @@ class PayhereCheckoutAPIVerificationResponse(SQLModel):
     card_expiry: str | None = None
 
 
+# PayHere Retrieval API models
+class PayHereOAuthTokenResponse(SQLModel):
+    """Response from PayHere OAuth token endpoint"""
+    access_token: str
+    token_type: str
+    expires_in: int
+    scope: str
+
+
+class PayHereCustomerDetails(SQLModel):
+    """Customer details from PayHere retrieval response"""
+    fist_name: str | None = None  # Note: PayHere API has typo "fist_name"
+    last_name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    delivery_details: dict | None = None
+
+
+class PayHereAmountDetail(SQLModel):
+    """Amount details from PayHere retrieval response"""
+    currency: str
+    gross: float
+    fee: float
+    net: float
+    exchange_rate: float
+    exchange_from: str
+    exchange_to: str
+
+
+class PayHerePaymentMethod(SQLModel):
+    """Payment method details from PayHere retrieval response"""
+    method: str
+    card_customer_name: str | None = None
+    card_no: str | None = None
+
+
+class PayHerePaymentData(SQLModel):
+    """Individual payment data from PayHere retrieval response"""
+    payment_id: int
+    order_id: str
+    date: str
+    description: str
+    status: str  # RECEIVED, REFUNDED, CHARGEBACKED, etc.
+    currency: str
+    amount: float
+    customer: PayHereCustomerDetails | None = None
+    amount_detail: PayHereAmountDetail | None = None
+    payment_method: PayHerePaymentMethod | None = None
+    items: Any | None = None
+
+
+class PayHereRetrievalResponse(SQLModel):
+    """Full response from PayHere payment retrieval API"""
+    status: int  # 1 = success, -1 = not found, -2 = auth error
+    msg: str
+    data: list[PayHerePaymentData] | None = None
+
+
 # Notification
 
 
@@ -710,3 +769,78 @@ class Notification(SQLModel, table=True):
 
     # Fix: Use consistent naming
     recipient: User = Relationship(back_populates="notifications")
+
+# Enhanced Requester Profile models 
+class RequesterProfileBase(SQLModel):
+    tagline: str | None = Field(default=None, max_length=500)
+    logo_url: str | None = Field(default=None, max_length=500)
+    cover_image_url: str | None = Field(default=None, max_length=500)
+    website: str | None = Field(default=None, max_length=255)
+    location: str | None = Field(default=None, max_length=255)
+    about: str | None = Field(default=None, max_length=2000)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    twitter_url: str | None = Field(default=None, max_length=500)
+    facebook_url: str | None = Field(default=None, max_length=500)
+    instagram_url: str | None = Field(default=None, max_length=500)
+    contact_phone: str | None = Field(default=None, max_length=20)
+
+
+class RequesterProfileCreate(RequesterProfileBase):
+    pass
+
+
+class RequesterProfileUpdate(SQLModel):
+    tagline: str | None = Field(default=None, max_length=500)
+    logo_url: str | None = Field(default=None, max_length=500)
+    cover_image_url: str | None = Field(default=None, max_length=500)
+    website: str | None = Field(default=None, max_length=255)
+    location: str | None = Field(default=None, max_length=255)
+    about: str | None = Field(default=None, max_length=2000)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    twitter_url: str | None = Field(default=None, max_length=500)
+    facebook_url: str | None = Field(default=None, max_length=500)
+    instagram_url: str | None = Field(default=None, max_length=500)
+    contact_phone: str | None = Field(default=None, max_length=20)
+
+
+class RequesterProfile(RequesterProfileBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE", unique=True
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationship
+    user: User | None = Relationship()
+
+
+class RequesterProfilePublic(RequesterProfileBase):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    # Include user info so frontend can access name and email
+    user: UserPublic | None = None
+    
+    # Computed properties that can be derived from user data
+    @property
+    def organization_name(self) -> str:
+        if self.user:
+            return f"{self.user.firstname} {self.user.lastname}"
+        return "Unknown Organization"
+    
+    @property
+    def organization_email(self) -> str:
+        if self.user:
+            return self.user.email
+        return ""
+
+
+class RequesterProfileResponse(SQLModel):
+    data: RequesterProfilePublic
+
+
+class RequesterProfilesPublic(SQLModel):
+    data: list[RequesterProfilePublic]
+    count: int

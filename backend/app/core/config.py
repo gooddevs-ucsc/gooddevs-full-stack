@@ -104,6 +104,13 @@ class Settings(BaseSettings):
     PAYHERE_DEFAULT_CANCEL_URL: str | None = None
     PAYHERE_DEFAULT_NOTIFY_URL: str | None = None
 
+    # PayHere Retrieval API configuration
+    PAYHERE_APP_ID: str | None = None
+    PAYHERE_APP_SECRET: str | None = None
+    PAYHERE_API_BASE_URL: str = "https://sandbox.payhere.lk"  # Default to sandbox
+    PAYHERE_TOKEN_URL: str = "https://sandbox.payhere.lk/merchant/v1/oauth/token"
+    PAYHERE_RETRIEVAL_URL: str = "https://sandbox.payhere.lk/merchant/v1/payment/search"
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (
