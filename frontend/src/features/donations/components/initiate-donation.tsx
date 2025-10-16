@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { Form, Input, Textarea } from '@/components/ui/form';
+import { Form, Input, Select, Textarea } from '@/components/ui/form';
 import { ProtectedRoute } from '@/lib/auth';
+import { getCountryOptions } from '@/utils/countries';
 
 import {
   initiateDonationInputSchema,
@@ -81,11 +82,11 @@ export const InitiateDonation = () => {
               registration={register('city')}
               placeholder="Colombo"
             />
-            <Input
+            <Select
               label="Country"
               error={formState.errors['country']}
               registration={register('country')}
-              placeholder="Sri Lanka"
+              options={getCountryOptions()}
             />
             <Input
               label="Amount"
