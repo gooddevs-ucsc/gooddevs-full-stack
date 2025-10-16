@@ -231,6 +231,54 @@ export type Payment = {
 
 export type InitiatePaymentResponse = ApiResponse<Payment>;
 
+// Payment status enum (matches backend)
+export const PAYMENT_STATUS = {
+  PENDING: 0,
+  CANCELLED: -1,
+  FAILED: -2,
+  CHARGEDBACK: -3,
+  SUCCESS: 2,
+} as const;
+
+export type PaymentStatus =
+  (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
+
+// Full payment details (from database)
+export type PaymentPublic = {
+  id: string;
+  merchant_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+  order_id: number;
+  items: string;
+  currency: string;
+  amount: number;
+  status: PaymentStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+// Donation types
+export type Donation = {
+  id: string;
+  donor_id: string;
+  order_id: number;
+  message?: string;
+  created_at: string;
+  donor?: User;
+  payment?: PaymentPublic;
+};
+
+export type DonationsResponse = {
+  data: Donation[];
+  meta: Meta;
+};
+
 // Project Application types
 export const APPLICATION_STATUS = {
   PENDING: 'PENDING',
