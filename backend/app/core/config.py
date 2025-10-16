@@ -3,6 +3,7 @@ import warnings
 import cloudinary
 from typing import Annotated, Any, Literal
 
+import groq
 from pydantic import (
     AnyUrl,
     BeforeValidator,
@@ -132,16 +133,21 @@ class Settings(BaseSettings):
         return self
     
     # Cloudinary settings
-    cloudinary_cloud_name: str
-    cloudinary_api_key: str
-    cloudinary_api_secret: str
+    CLOUDINARY_CLOUD_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
 
-
+    # Groq configuration
+    GROQ_API_KEY: str
+    
 settings = Settings()  # type: ignore
 
 # Configure Cloudinary
 cloudinary.config(
-    cloud_name=settings.cloudinary_cloud_name,
-    api_key=settings.cloudinary_api_key,
-    api_secret=settings.cloudinary_api_secret
+    cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+    api_key=settings.CLOUDINARY_API_KEY,
+    api_secret=settings.CLOUDINARY_API_SECRET
 )
+
+# Configure Groq
+groq.api_key = settings.GROQ_API_KEY
