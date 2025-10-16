@@ -2,7 +2,7 @@ from sqlalchemy.orm import selectinload
 from app.models import (
     Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread,
     ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate,
-    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic
+    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate
 )
 
 import uuid
@@ -749,13 +749,104 @@ def get_unread_notifications_count(
     )
     return session.exec(statement).one()
 
+
+# Donation CRUD operations
+
+
+def create_donation(
+    *,
+    session: Session,
+    order_id: int,
+    donor_id: uuid.UUID,
+    message: str | None = None
+) -> Donation:
+    """
+    Create a new donation record linked to a payment.
+    Called during payment initiation, not after payment completion.
+    """
+    # Check if donation already exists for this order_id
+    existing = get_donation_by_order_id(session=session, order_id=order_id)
+    if existing:
+        raise ValueError("Donation already exists for this payment")
+
+    # Create donation
+    db_donation = Donation(
+        donor_id=donor_id,
+        order_id=order_id,
+        message=message
+    )
+    session.add(db_donation)
+    session.commit()
+    session.refresh(db_donation)
+    return db_donation
+
+
+def get_donation_by_order_id(
+    *,
+    session: Session,
+    order_id: int
+) -> Donation | None:
+    """Get donation by payment order_id"""
+    statement = select(Donation).where(Donation.order_id == order_id)
+    return session.exec(statement).first()
+
+
+def get_donations_by_donor_id(
+    *,
+    session: Session,
+    donor_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Donation]:
+    """
+    Get all donations made by a specific donor with SUCCESS or PENDING payment status,
+    ordered by order_id (descending).
+    This returns donations with their relationships loaded.
+    Only includes donations where payment status is SUCCESS (2) or PENDING (0).
+    """
+    statement = (
+        select(Donation)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(
+            Donation.donor_id == donor_id,
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+        .order_by(Donation.order_id.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_donations_by_donor_id(
+    *,
+    session: Session,
+    donor_id: uuid.UUID
+) -> int:
+    """
+    Count total donations made by a specific donor with SUCCESS or PENDING payment status.
+    Only counts donations where payment status is SUCCESS (2) or PENDING (0).
+    """
+    statement = (
+        select(Donation)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(
+            Donation.donor_id == donor_id,
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+    )
+    return len(list(session.exec(statement).all()))
+
+
 # Requester Profile CRUD operations
+
+
 def create_requester_profile(
     *, session: Session, profile_in: RequesterProfileCreate, user_id: uuid.UUID
 ) -> RequesterProfile:
     """Create a new requester profile"""
     from app.models import RequesterProfile
-    
+
     db_profile = RequesterProfile.model_validate(
         profile_in, update={
             "user_id": user_id,
@@ -772,17 +863,17 @@ def create_requester_profile(
 def get_requester_profile(*, session: Session, profile_id: uuid.UUID) -> RequesterProfilePublic | None:
     """Get requester profile by ID with user data"""
     from app.models import RequesterProfile
-    
+
     statement = (
         select(RequesterProfile)
         .options(selectinload(RequesterProfile.user))
         .where(RequesterProfile.id == profile_id)
     )
     profile = session.exec(statement).first()
-    
+
     if not profile:
         return None
-    
+
     # Convert to public model
     return RequesterProfilePublic.model_validate(profile, update={"user": profile.user})
 
@@ -792,17 +883,17 @@ def get_requester_profile_by_user_id(
 ) -> RequesterProfilePublic | None:
     """Get requester profile by user ID with user data"""
     from app.models import RequesterProfile
-    
+
     statement = (
         select(RequesterProfile)
         .options(selectinload(RequesterProfile.user))
         .where(RequesterProfile.user_id == user_id)
     )
     profile = session.exec(statement).first()
-    
+
     if not profile:
         return None
-    
+
     # Convert to public model
     return RequesterProfilePublic.model_validate(profile, update={"user": profile.user})
 
@@ -813,22 +904,22 @@ def update_requester_profile(
     """Update an existing requester profile"""
     profile_data = profile_in.model_dump(exclude_unset=True)
     profile_data["updated_at"] = datetime.now(timezone.utc)
-    
+
     db_profile.sqlmodel_update(profile_data)
     session.add(db_profile)
     session.commit()
     session.refresh(db_profile)
-    
+
     # Load user relationship for response
     session.refresh(db_profile, ["user"])
-    
+
     return RequesterProfilePublic.model_validate(db_profile, update={"user": db_profile.user})
 
 
 def delete_requester_profile(*, session: Session, profile_id: uuid.UUID) -> bool:
     """Delete a requester profile"""
     from app.models import RequesterProfile
-    
+
     profile = session.get(RequesterProfile, profile_id)
     if profile:
         session.delete(profile)
@@ -842,7 +933,7 @@ def get_requester_profiles(
 ) -> tuple[list[RequesterProfilePublic], int]:
     """Get all requester profiles with pagination"""
     from app.models import RequesterProfile
-    
+
     statement = (
         select(RequesterProfile)
         .options(selectinload(RequesterProfile.user))
@@ -851,16 +942,17 @@ def get_requester_profiles(
         .order_by(RequesterProfile.created_at.desc())
     )
     profiles = session.exec(statement).all()
-    
+
     count_statement = select(func.count(RequesterProfile.id))
     count = session.exec(count_statement).one()
-    
+
     # Convert to public models
     public_profiles = [
-        RequesterProfilePublic.model_validate(profile, update={"user": profile.user})
+        RequesterProfilePublic.model_validate(
+            profile, update={"user": profile.user})
         for profile in profiles
     ]
-    
+
     return public_profiles, count
 
 
@@ -874,13 +966,13 @@ def search_requester_profiles(
 ) -> tuple[list[RequesterProfilePublic], int]:
     """Search requester profiles with filters"""
     from app.models import RequesterProfile, User
-    
+
     statement = (
         select(RequesterProfile)
         .join(User, RequesterProfile.user_id == User.id)
         .options(selectinload(RequesterProfile.user))
     )
-    
+
     # Add search filters
     filters = []
     if search_query:
@@ -892,59 +984,62 @@ def search_requester_profiles(
             RequesterProfile.about.ilike(f"%{search_query}%")
         )
         filters.append(search_filter)
-    
+
     if location:
         filters.append(RequesterProfile.location.ilike(f"%{location}%"))
-    
+
     if filters:
         statement = statement.where(*filters)
-    
+
     # Add pagination and ordering
-    count_statement = statement.with_only_columns(func.count(RequesterProfile.id))
+    count_statement = statement.with_only_columns(
+        func.count(RequesterProfile.id))
     count = session.exec(count_statement).one()
-    
+
     profiles = session.exec(
-        statement.offset(skip).limit(limit).order_by(RequesterProfile.created_at.desc())
+        statement.offset(skip).limit(limit).order_by(
+            RequesterProfile.created_at.desc())
     ).all()
-    
+
     # Convert to public models
     public_profiles = [
-        RequesterProfilePublic.model_validate(profile, update={"user": profile.user})
+        RequesterProfilePublic.model_validate(
+            profile, update={"user": profile.user})
         for profile in profiles
     ]
-    
+
     return public_profiles, count
 
 
 def get_requester_profile_stats(*, session: Session, user_id: uuid.UUID) -> dict:
     """Get statistics for requester's dashboard"""
-    
+
     # Count projects by status
     total_projects = session.exec(
         select(func.count(Project.id)).where(Project.requester_id == user_id)
     ).one() or 0
-    
+
     approved_projects = session.exec(
         select(func.count(Project.id)).where(
             Project.requester_id == user_id,
             Project.status == ProjectStatus.APPROVED
         )
     ).one() or 0
-    
+
     pending_projects = session.exec(
         select(func.count(Project.id)).where(
             Project.requester_id == user_id,
             Project.status == ProjectStatus.PENDING
         )
     ).one() or 0
-    
+
     # Count applications for user's projects
     total_applications = session.exec(
         select(func.count(ProjectApplication.id))
         .join(Project, ProjectApplication.project_id == Project.id)
         .where(Project.requester_id == user_id)
     ).one() or 0
-    
+
     # Count pending applications
     pending_applications = session.exec(
         select(func.count(ProjectApplication.id))
@@ -954,12 +1049,12 @@ def get_requester_profile_stats(*, session: Session, user_id: uuid.UUID) -> dict
             ProjectApplication.status == ApplicationStatus.PENDING
         )
     ).one() or 0
-    
+
     return {
         "total_projects": total_projects,
         "approved_projects": approved_projects,
         "pending_projects": pending_projects,
         "total_applications": total_applications,
         "pending_applications": pending_applications,
-        "active_volunteers": 0,  
+        "active_volunteers": 0,
     }
