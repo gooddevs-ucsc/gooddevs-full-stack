@@ -2,7 +2,7 @@ from sqlalchemy.orm import selectinload
 from app.models import (
     Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread,
     ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate,
-    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus
+    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, Donation, DonationCreate
 )
 
 import uuid
@@ -748,3 +748,42 @@ def get_unread_notifications_count(
         Notification.is_read == False
     )
     return session.exec(statement).one()
+
+
+# Donation CRUD operations
+def create_donation(
+    *,
+    session: Session,
+    order_id: int,
+    donor_id: uuid.UUID,
+    message: str | None = None
+) -> Donation:
+    """
+    Create a new donation record linked to a payment.
+    Called during payment initiation, not after payment completion.
+    """
+    # Check if donation already exists for this order_id
+    existing = get_donation_by_order_id(session=session, order_id=order_id)
+    if existing:
+        raise ValueError("Donation already exists for this payment")
+
+    # Create donation
+    db_donation = Donation(
+        donor_id=donor_id,
+        order_id=order_id,
+        message=message
+    )
+    session.add(db_donation)
+    session.commit()
+    session.refresh(db_donation)
+    return db_donation
+
+
+def get_donation_by_order_id(
+    *,
+    session: Session,
+    order_id: int
+) -> Donation | None:
+    """Get donation by payment order_id"""
+    statement = select(Donation).where(Donation.order_id == order_id)
+    return session.exec(statement).first()
