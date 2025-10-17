@@ -18,7 +18,8 @@ from app.models import (
     ApplicationStatus,
     Meta,
     Project,
-    VolunteersPublic
+    VolunteersPublic,
+    ApprovedTeamMembersPublic
 )
 from app import crud
 from app.utils import calculate_pagination_meta_from_page, page_to_skip
@@ -178,7 +179,7 @@ def read_project_applications(
     return ProjectApplicationsPublic(data=applications, meta=meta)
 
 
-@router.get("/projects/{project_id}/approved-applicants", response_model=VolunteersPublic)
+@router.get("/projects/{project_id}/approved-applicants", response_model=ApprovedTeamMembersPublic)
 def get_approved_applicants_for_project(
     *,
     session: SessionDep,
@@ -186,8 +187,8 @@ def get_approved_applicants_for_project(
     project_id: uuid.UUID
 ) -> Any:
     """
-    Get all approved applicants (volunteers) for a specific project.
-    This is used for task assignment - only approved applicants can be assigned tasks.
+    Get all approved applicants (volunteers) for a specific project with their roles.
+    This endpoint is public - anyone can see approved team members for any project.
     Filtering is done at database level for efficiency.
     """
     # Check if project exists
@@ -195,13 +196,13 @@ def get_approved_applicants_for_project(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Get approved applicants directly from database with filtering
-    approved_volunteers = crud.get_approved_applicants_for_project(
+    # Get approved team members with their volunteer roles
+    approved_team_members = crud.get_approved_applicants_for_project(
         session=session,
         project_id=project_id
     )
 
-    return VolunteersPublic(data=approved_volunteers, count=len(approved_volunteers))
+    return ApprovedTeamMembersPublic(data=approved_team_members, count=len(approved_team_members))
 
 
 @router.get("/{application_id}", response_model=ProjectApplicationResponse)
