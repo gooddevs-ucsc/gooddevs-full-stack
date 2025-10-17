@@ -56,6 +56,8 @@ export const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
   // State for tracking selected development roles
   const [selectedDevRoles, setSelectedDevRoles] = useState<string[]>([]);
 
+  const [volunteerRolesError, setVolunteerRolesError] = useState<string>('');
+
   // Handler for development role checkboxes
   const handleDevRoleChange = (roleId: string, checked: boolean) => {
     if (checked) {
@@ -63,13 +65,24 @@ export const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
     } else {
       setSelectedDevRoles((prev) => prev.filter((id) => id !== roleId));
     }
+    if (volunteerRolesError) {
+      setVolunteerRolesError('');
+    }
   };
 
   return (
     <div>
       <Form
         onSubmit={(values) => {
-          // You can access selectedDevRoles here if needed for future backend integration
+          if (values.role === 'VOLUNTEER' && selectedDevRoles.length === 0) {
+            setVolunteerRolesError(
+              'Please select at least one development role',
+            );
+            return;
+          }
+
+          setVolunteerRolesError('');
+
           const submissionData = {
             ...values,
             volunteer_roles: selectedDevRoles,
@@ -91,6 +104,7 @@ export const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
             // Clear development roles if switching away from volunteer
             if (currentRole !== 'VOLUNTEER') {
               setSelectedDevRoles([]);
+              setVolunteerRolesError('');
             }
           }
 
@@ -198,6 +212,13 @@ export const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
                       </div>
                     ))}
                   </div>
+
+                  {/* Volunteer roles validation error */}
+                  {volunteerRolesError && (
+                    <p className="text-sm text-red-600">
+                      {volunteerRolesError}
+                    </p>
+                  )}
 
                   {/* Optional: Show selected roles count */}
                   {selectedDevRoles.length > 0 && (
