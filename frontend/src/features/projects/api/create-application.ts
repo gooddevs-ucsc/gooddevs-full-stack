@@ -27,9 +27,37 @@ export const createApplicationInputSchema = z.object({
   ),
   cover_letter: z
     .string()
+    .min(1, 'Cover letter is required')
     .min(50, 'Cover letter must be at least 50 characters')
     .max(2000, 'Cover letter must not exceed 2000 characters')
-    .optional(),
+    .refine(
+      (value) => {
+        // Check if the text contains meaningful content
+        const trimmed = value.trim();
+
+        // Check if it's just repeated characters or numbers
+        const isRepeatedChar = /^(.)\1{49,}$/.test(trimmed); // 50+ of the same character
+        const isOnlyNumbers = /^[0-9\s]*$/.test(trimmed); // Only numbers and spaces
+        const isOnlySpecialChars = /^[^a-zA-Z]*$/.test(trimmed); // No letters at all
+
+        // Check for minimum word count (at least 8 words)
+        const wordCount = trimmed
+          .split(/\s+/)
+          .filter((word) => word.length > 0).length;
+        const hasMinWords = wordCount >= 8;
+
+        return (
+          !isRepeatedChar &&
+          !isOnlyNumbers &&
+          !isOnlySpecialChars &&
+          hasMinWords
+        );
+      },
+      {
+        message:
+          'Cover letter must contain meaningful text with at least 8 words. Please avoid using only numbers, repeated characters, or special characters.',
+      },
+    ),
   skills: z
     .string()
     .max(1000, 'Skills must not exceed 1000 characters')
