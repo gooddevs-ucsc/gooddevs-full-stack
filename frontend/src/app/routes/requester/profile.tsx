@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Building2,
   Calendar,
@@ -13,56 +14,78 @@ import {
   X,
   Plus,
   Phone,
+  Upload,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Trash2,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useNotifications } from '@/components/ui/notifications';
 import { Spinner } from '@/components/ui/spinner';
 import { paths } from '@/config/paths';
 import { useUserProjects } from '@/features/projects/api/get-user-projects';
+import {
+  useRequesterProfile,
+  useUpdateRequesterProfile,
+  UpdateRequesterProfileInput,
+} from '@/features/requester/api/get-requester-profile';
 import { api } from '@/lib/api-client';
-import { useUser } from '@/lib/auth';
 import { Project } from '@/types/api';
 
-// Define the requester profile interface
-interface RequesterProfile {
-  id: string;
-  user_id: string;
-  tagline: string | null;
-  logo_url: string | null;
-  cover_image_url: string | null;
-  website: string | null;
-  location: string | null;
-  about: string | null;
-  linkedin_url: string | null;
-  twitter_url: string | null;
-  facebook_url: string | null;
-  contact_phone: string | null;
-  created_at: string;
-  updated_at: string;
-  user: {
-    id: string;
-    firstname: string;
-    lastname: string;
-    email: string;
-  } | null;
-}
-
 const OrganizationProfile = () => {
-  const { data: user } = useUser();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<RequesterProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [, setIsEditing] = useState(false);
+  const { addNotification } = useNotifications();
+  const queryClient = useQueryClient();
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Use the new API hooks
+  const {
+    data: profileResponse,
+    isLoading: profileLoading,
+    error: profileError,
+  } = useRequesterProfile();
+
+  const updateProfileMutation = useUpdateRequesterProfile({
+    mutationConfig: {
+      onSuccess: () => {
+        addNotification({
+          type: 'success',
+          title: 'Profile Updated',
+          message: 'Your profile has been updated successfully.',
+        });
+        setEditingSection(null);
+      },
+      onError: (error) => {
+        addNotification({
+          type: 'error',
+          title: 'Update Failed',
+          message: 'Failed to update profile. Please try again.',
+        });
+        console.error('Failed to update profile:', error);
+      },
+    },
+  });
+
+  const profile = profileResponse?.data;
+
   const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState<{
+    logo: boolean;
+    cover: boolean;
+  }>({
+    logo: false,
+    cover: false,
+  });
   const [editData, setEditData] = useState({
     tagline: '',
     location: '',
     website: '',
-    phone: '',
+    contact_phone: '',
     about: '',
     linkedin_url: '',
     twitter_url: '',
@@ -78,6 +101,97 @@ const OrganizationProfile = () => {
   });
 
   const projects = projectsData?.data || [];
+
+  // Image upload handler
+  const handleImageUpload = async (file: File, type: 'logo' | 'cover') => {
+    setUploadingImage((prev) => ({ ...prev, [type]: true }));
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Use dedicated endpoints that upload AND save to database
+      const endpoint =
+        type === 'logo'
+          ? '/requester-profile/upload-logo'
+          : '/requester-profile/upload-cover';
+
+      const response = await api.put(endpoint, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // The backend returns RequesterProfileResponse which has { data: RequesterProfile }
+      // So response.data is already the RequesterProfileResponse
+      const updatedProfile = response.data;
+
+      if (!updatedProfile) {
+        throw new Error('No profile data returned from server');
+      }
+
+      // Invalidate and refetch the profile query to update UI
+      queryClient.invalidateQueries({ queryKey: ['requester-profile'] });
+
+      addNotification({
+        type: 'success',
+        title: 'Image Uploaded',
+        message: `${type === 'logo' ? 'Logo' : 'Cover image'} uploaded and saved successfully!`,
+      });
+
+      // Close the editing modal since the image is now saved
+      setEditingSection(null);
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+
+      const errorMessage =
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to upload image. Please try again.';
+
+      addNotification({
+        type: 'error',
+        title: 'Upload Failed',
+        message: errorMessage,
+      });
+    } finally {
+      setUploadingImage((prev) => ({ ...prev, [type]: false }));
+    }
+  };
+
+  const handleFileSelect = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    type: 'logo' | 'cover',
+  ) => {
+    console.log('File selected:', event.target.files?.[0]); // Debug log
+
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        addNotification({
+          type: 'error',
+          title: 'File Too Large',
+          message: 'Please select an image smaller than 5MB.',
+        });
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        addNotification({
+          type: 'error',
+          title: 'Invalid File Type',
+          message: 'Please select an image file.',
+        });
+        return;
+      }
+
+      console.log('Starting upload for:', type, file.name); // Debug log
+      handleImageUpload(file, type);
+    }
+  };
 
   // Calculate project counts by status (same as dashboard)
   const getProjectCountsByStatus = () => {
@@ -155,40 +269,6 @@ const OrganizationProfile = () => {
     (project) => project.status === 'Active',
   );
 
-  // Fetch requester profile data
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get('/requester-profile/');
-        setProfile(response.data);
-
-        // Initialize edit data
-        setEditData({
-          tagline: response.data.tagline || '',
-          location: response.data.location || '',
-          website: response.data.website || '',
-          phone: response.data.contact_phone || '',
-          about: response.data.about || '',
-          linkedin_url: response.data.linkedin_url || '',
-          twitter_url: response.data.twitter_url || '',
-          facebook_url: response.data.facebook_url || '',
-          logo_url: response.data.logo_url || '',
-          cover_image_url: response.data.cover_image_url || '',
-        });
-      } catch (error: any) {
-        console.error('Failed to fetch profile:', error);
-        setError('Failed to load profile data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchProfile();
-    }
-  }, [user]);
-
   const handleEditSection = (section: string) => {
     if (!profile) return;
 
@@ -197,7 +277,7 @@ const OrganizationProfile = () => {
       tagline: profile.tagline || '',
       location: profile.location || '',
       website: profile.website || '',
-      phone: profile.contact_phone || '',
+      contact_phone: profile.contact_phone || '',
       about: profile.about || '',
       linkedin_url: profile.linkedin_url || '',
       twitter_url: profile.twitter_url || '',
@@ -210,7 +290,7 @@ const OrganizationProfile = () => {
   const handleSaveSection = async () => {
     if (!profile) return;
 
-    let payload: any = {};
+    let payload: UpdateRequesterProfileInput = {};
 
     if (editingSection === 'header') {
       payload = {
@@ -220,7 +300,7 @@ const OrganizationProfile = () => {
     } else if (editingSection === 'contact') {
       payload = {
         website: editData.website,
-        contact_phone: editData.phone,
+        contact_phone: editData.contact_phone,
       };
     } else if (editingSection === 'social') {
       payload = {
@@ -242,25 +322,16 @@ const OrganizationProfile = () => {
       };
     }
 
-    try {
-      await api.put('/requester-profile/', payload);
-      setProfile((prevProfile) => ({
-        ...prevProfile!,
-        ...payload,
-      }));
-      setEditingSection(null);
-    } catch (error) {
-      console.error('Failed to update profile:', error);
-      alert('Failed to update profile. Please try again.');
-    }
+    updateProfileMutation.mutate({ data: payload });
   };
 
   const handleCancelEdit = () => {
     setEditingSection(null);
-    setIsEditing(false);
   };
 
-  if (loading) {
+  const loading = profileLoading || updateProfileMutation.isPending;
+
+  if (profileLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Spinner size="lg" />
@@ -268,11 +339,13 @@ const OrganizationProfile = () => {
     );
   }
 
-  if (error || !profile) {
+  if (profileError || !profile) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <p className="mb-4 text-red-600">{error || 'Profile not found'}</p>
+          <p className="mb-4 text-red-600">
+            {profileError?.message || 'Profile not found'}
+          </p>
           <Button onClick={() => window.location.reload()}>Try Again</Button>
         </div>
       </div>
@@ -287,6 +360,22 @@ const OrganizationProfile = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
+      {/* Hidden file inputs */}
+      <input
+        ref={logoFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => handleFileSelect(e, 'logo')}
+      />
+      <input
+        ref={coverFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => handleFileSelect(e, 'cover')}
+      />
+
       {/* Profile Header */}
       <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm">
         {/* Cover Image */}
@@ -302,12 +391,13 @@ const OrganizationProfile = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
 
           {/* Cover Image Edit Button */}
-          <div className="absolute right-4 top-4 ">
+          <div className="absolute right-4 top-4">
             {editingSection === 'cover' ? (
               <div className="flex gap-2">
                 <Button
                   size="sm"
                   onClick={handleSaveSection}
+                  disabled={loading}
                   className="bg-white/90 backdrop-blur-sm hover:bg-white"
                 >
                   <Save className="size-3" />
@@ -316,6 +406,7 @@ const OrganizationProfile = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleCancelEdit}
+                  disabled={loading}
                   className="bg-white/90 backdrop-blur-sm hover:bg-white"
                 >
                   <X className="size-3" />
@@ -326,6 +417,7 @@ const OrganizationProfile = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => handleEditSection('cover')}
+                disabled={loading}
                 className="border-white/30 bg-white/20 text-white backdrop-blur-sm hover:bg-white/30"
                 title="Edit cover image"
               >
@@ -333,27 +425,6 @@ const OrganizationProfile = () => {
               </Button>
             )}
           </div>
-
-          {/* Cover Image Edit Form */}
-          {editingSection === 'cover' && (
-            <div className="absolute left-4 top-16 min-w-80 rounded-lg bg-white/95 p-4 shadow-lg backdrop-blur-sm">
-              <label
-                htmlFor="cover-image-url"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
-                Cover Image URL
-              </label>
-              <Input
-                id="cover-image-url"
-                value={editData.cover_image_url}
-                onChange={(e) =>
-                  setEditData({ ...editData, cover_image_url: e.target.value })
-                }
-                placeholder="https://example.com/cover.png"
-                className="w-full"
-              />
-            </div>
-          )}
         </div>
 
         {/* Profile Content */}
@@ -380,6 +451,7 @@ const OrganizationProfile = () => {
                     <Button
                       size="sm"
                       onClick={handleSaveSection}
+                      disabled={loading}
                       className="size-8 rounded-full border-2 border-white bg-slate-600 p-2 text-white shadow-lg hover:bg-slate-700"
                       title="Save logo"
                     >
@@ -389,6 +461,7 @@ const OrganizationProfile = () => {
                       variant="outline"
                       size="sm"
                       onClick={handleCancelEdit}
+                      disabled={loading}
                       className="size-8 rounded-full border-2 border-white bg-slate-500 p-2 text-white shadow-lg hover:bg-slate-600"
                       title="Cancel"
                     >
@@ -400,6 +473,7 @@ const OrganizationProfile = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => handleEditSection('logo')}
+                    disabled={loading}
                     className="size-8 rounded-full border-2 border-white bg-slate-600 p-2 text-white opacity-80 shadow-lg transition-all hover:bg-slate-700 hover:opacity-100"
                     title="Edit logo"
                   >
@@ -407,27 +481,6 @@ const OrganizationProfile = () => {
                   </Button>
                 )}
               </div>
-
-              {/* Logo Edit Form */}
-              {editingSection === 'logo' && (
-                <div className="absolute left-0 top-12 z-10 min-w-80 rounded-lg border bg-white p-4 shadow-lg">
-                  <label
-                    htmlFor="logo-image-url"
-                    className="mb-2 block text-sm font-medium text-slate-700"
-                  >
-                    Logo Image URL
-                  </label>
-                  <Input
-                    id="logo-image-url"
-                    value={editData.logo_url}
-                    onChange={(e) =>
-                      setEditData({ ...editData, logo_url: e.target.value })
-                    }
-                    placeholder="https://example.com/logo.png"
-                    className="w-full"
-                  />
-                </div>
-              )}
             </div>
           </div>
 
@@ -435,10 +488,19 @@ const OrganizationProfile = () => {
           <div className="absolute right-8 top-4">
             {editingSection === 'header' ? (
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleSaveSection}>
+                <Button
+                  size="sm"
+                  onClick={handleSaveSection}
+                  disabled={loading}
+                >
                   <Save className="size-4" />
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancelEdit}
+                  disabled={loading}
+                >
                   <X className="size-4" />
                 </Button>
               </div>
@@ -447,6 +509,7 @@ const OrganizationProfile = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => handleEditSection('header')}
+                disabled={loading}
               >
                 <Edit2 className="size-4" />
               </Button>
@@ -499,6 +562,317 @@ const OrganizationProfile = () => {
         </div>
       </div>
 
+      {/* Image Edit Forms - Fixed positioning with action buttons */}
+      {editingSection === 'cover' && (
+        <div className="fixed left-1/2 top-1/2 z-50 min-w-96 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+          {/* Header with close button */}
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Update Cover Image
+            </h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancelEdit}
+              className="size-8 rounded-full p-2"
+              title="Close"
+            >
+              <X className="size-3" />
+            </Button>
+          </div>
+
+          {/* Current Image Preview */}
+          {editData.cover_image_url && (
+            <div className="mb-4">
+              <p className="mb-2 text-sm font-medium text-slate-700">
+                Current Image:
+              </p>
+              <div className="relative">
+                <img
+                  src={editData.cover_image_url}
+                  alt="Cover preview"
+                  className="h-24 w-full rounded-lg object-cover"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setEditData({ ...editData, cover_image_url: '' })
+                  }
+                  className="absolute -right-2 -top-2 size-8 rounded-full border-2 border-white bg-red-500 p-1 text-white hover:bg-red-600"
+                  title="Remove image"
+                >
+                  <Trash2 className="size-3" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Upload Option */}
+          <div className="space-y-4">
+            <div className="rounded-lg border-2 border-dashed border-slate-300 p-6 transition-colors hover:border-slate-400">
+              <div className="text-center">
+                <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-slate-100">
+                  <Upload className="size-6 text-slate-600" />
+                </div>
+                <p className="mb-2 text-sm font-medium text-slate-900">
+                  Upload a new image
+                </p>
+                <p className="mb-4 text-xs text-slate-500">
+                  PNG, JPG, GIF up to 5MB
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => coverFileInputRef.current?.click()}
+                  disabled={uploadingImage.cover}
+                  className="relative"
+                >
+                  {uploadingImage.cover ? (
+                    <>
+                      <Spinner size="sm" className="mr-2" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="mr-2 size-4" />
+                      Choose File
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-3 text-slate-500">or</span>
+              </div>
+            </div>
+
+            {/* URL Option */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <LinkIcon className="size-4 text-slate-500" />
+                <label
+                  htmlFor="cover-image-url"
+                  className="text-sm font-medium text-slate-700"
+                >
+                  Enter image URL
+                </label>
+              </div>
+              <Input
+                id="cover-image-url"
+                value={editData.cover_image_url}
+                onChange={(e) =>
+                  setEditData({
+                    ...editData,
+                    cover_image_url: e.target.value,
+                  })
+                }
+                placeholder="https://example.com/your-cover-image.jpg"
+                className="w-full"
+              />
+              {editData.cover_image_url &&
+                !editData.cover_image_url.startsWith('http') && (
+                  <p className="text-xs text-red-500">
+                    Please enter a valid URL starting with http:// or https://
+                  </p>
+                )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="mt-6 flex justify-end gap-2 border-t border-slate-200 pt-4">
+            <Button
+              variant="outline"
+              onClick={handleCancelEdit}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveSection}
+              disabled={loading || uploadingImage.cover}
+            >
+              {loading ? (
+                <>
+                  <Spinner size="sm" className="mr-2" />
+                  Saving...
+                </>
+              ) : (
+                <Save className="size-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {editingSection === 'logo' && (
+        <div className="fixed left-1/2 top-1/2 z-50 min-w-96 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+          {/* Header with close button */}
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Update Logo
+            </h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancelEdit}
+              className="size-8 rounded-full p-2"
+              title="Close"
+            >
+              <X className="size-3" />
+            </Button>
+          </div>
+
+          {/* Current Logo Preview */}
+          {editData.logo_url && (
+            <div className="mb-4">
+              <p className="mb-2 text-sm font-medium text-slate-700">
+                Current Logo:
+              </p>
+              <div className="relative inline-block">
+                <img
+                  src={editData.logo_url}
+                  alt="Logo preview"
+                  className="size-20 rounded-lg border border-slate-200 object-cover"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditData({ ...editData, logo_url: '' })}
+                  className="absolute -right-2 -top-2 size-6 rounded-full border-2 border-white bg-red-500 p-1 text-white hover:bg-red-600"
+                  title="Remove logo"
+                >
+                  <Trash2 className="size-3" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Upload Option */}
+          <div className="space-y-4">
+            <div className="rounded-lg border-2 border-dashed border-slate-300 p-6 transition-colors hover:border-slate-400">
+              <div className="text-center">
+                <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-slate-100">
+                  <ImageIcon className="size-6 text-slate-600" />
+                </div>
+                <p className="mb-2 text-sm font-medium text-slate-900">
+                  Upload a new logo
+                </p>
+                <p className="mb-4 text-xs text-slate-500">
+                  Recommended: Square image, PNG format
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => logoFileInputRef.current?.click()}
+                  disabled={uploadingImage.logo}
+                  className="relative"
+                >
+                  {uploadingImage.logo ? (
+                    <>
+                      <Spinner size="sm" className="mr-2" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 size-4" />
+                      Choose File
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-3 text-slate-500">or</span>
+              </div>
+            </div>
+
+            {/* URL Option */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <LinkIcon className="size-4 text-slate-500" />
+                <label
+                  htmlFor="logo-url"
+                  className="text-sm font-medium text-slate-700"
+                >
+                  Enter logo URL
+                </label>
+              </div>
+              <Input
+                id="logo-url"
+                value={editData.logo_url}
+                onChange={(e) =>
+                  setEditData({ ...editData, logo_url: e.target.value })
+                }
+                placeholder="https://example.com/your-logo.png"
+                className="w-full"
+              />
+              {editData.logo_url && !editData.logo_url.startsWith('http') && (
+                <p className="text-xs text-red-500">
+                  Please enter a valid URL starting with http:// or https://
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="mt-6 flex justify-end gap-2 border-t border-slate-200 pt-4">
+            <Button
+              variant="outline"
+              onClick={handleCancelEdit}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveSection}
+              disabled={loading || uploadingImage.logo}
+            >
+              {loading ? (
+                <>
+                  <Spinner size="sm" className="mr-2" />
+                  Saving...
+                </>
+              ) : (
+                <Save className="size-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Backdrop for modals */}
+      {(editingSection === 'cover' || editingSection === 'logo') && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+          role="button"
+          tabIndex={0}
+          aria-label="Close modal"
+          onClick={handleCancelEdit}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleCancelEdit();
+            }
+          }}
+        />
+      )}
+
+      {/* Rest of the component remains the same... */}
       {/* Main Content - Two Column Layout */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Left Column - Contact Info */}
@@ -511,13 +885,18 @@ const OrganizationProfile = () => {
               </h2>
               {editingSection === 'contact' ? (
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={handleSaveSection}>
+                  <Button
+                    size="sm"
+                    onClick={handleSaveSection}
+                    disabled={loading}
+                  >
                     <Save className="size-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleCancelEdit}
+                    disabled={loading}
                   >
                     <X className="size-4" />
                   </Button>
@@ -527,6 +906,7 @@ const OrganizationProfile = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => handleEditSection('contact')}
+                  disabled={loading}
                 >
                   <Edit2 className="size-4" />
                 </Button>
@@ -595,9 +975,12 @@ const OrganizationProfile = () => {
                   <p className="text-sm font-medium text-slate-900">Phone</p>
                   {editingSection === 'contact' ? (
                     <Input
-                      value={editData.phone}
+                      value={editData.contact_phone}
                       onChange={(e) =>
-                        setEditData({ ...editData, phone: e.target.value })
+                        setEditData({
+                          ...editData,
+                          contact_phone: e.target.value,
+                        })
                       }
                       placeholder="Add a phone number"
                       className="mt-1"
@@ -619,13 +1002,18 @@ const OrganizationProfile = () => {
                 </h3>
                 {editingSection === 'social' ? (
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSaveSection}>
+                    <Button
+                      size="sm"
+                      onClick={handleSaveSection}
+                      disabled={loading}
+                    >
                       <Save className="size-3" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleCancelEdit}
+                      disabled={loading}
                     >
                       <X className="size-3" />
                     </Button>
@@ -635,6 +1023,7 @@ const OrganizationProfile = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => handleEditSection('social')}
+                    disabled={loading}
                   >
                     <Edit2 className="size-3" />
                   </Button>
@@ -843,13 +1232,18 @@ const OrganizationProfile = () => {
               <h2 className="text-xl font-semibold text-slate-900">About Us</h2>
               {editingSection === 'about' ? (
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={handleSaveSection}>
+                  <Button
+                    size="sm"
+                    onClick={handleSaveSection}
+                    disabled={loading}
+                  >
                     <Save className="size-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleCancelEdit}
+                    disabled={loading}
                   >
                     <X className="size-4" />
                   </Button>
@@ -859,6 +1253,7 @@ const OrganizationProfile = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => handleEditSection('about')}
+                  disabled={loading}
                 >
                   <Edit2 className="size-4" />
                 </Button>
