@@ -42,17 +42,8 @@ export const ProjectDescriptionTab = ({
     projectId: project.id,
   });
 
-  // Debug logging
-  console.log('Approved Team Members Data:', approvedData);
-  console.log('Approved Error:', approvedError);
-  console.log('Project ID:', project.id);
-  console.log('Loading:', isLoadingApproved);
-
   const approvedTeamMembers = approvedData?.data || [];
   const approvedCount = approvedData?.count || 0;
-
-  console.log('Final approved team members:', approvedTeamMembers);
-  console.log('Approved count:', approvedCount);
 
   // Show application form if requested
   if (showApplicationForm) {

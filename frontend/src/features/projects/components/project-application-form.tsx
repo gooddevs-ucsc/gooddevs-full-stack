@@ -86,16 +86,10 @@ export const ProjectApplicationForm = ({
         // github_url is required, so don't convert to undefined
       };
 
-      console.log('Submitting application data:', applicationData);
-      console.log('Project ID:', projectId);
-      console.log('Current user role:', user?.role);
-
       const result = await createApplicationMutation.mutateAsync({
         projectId,
         data: applicationData,
       });
-
-      console.log('Application submission result:', result);
     } finally {
       setIsSubmitting(false);
     }

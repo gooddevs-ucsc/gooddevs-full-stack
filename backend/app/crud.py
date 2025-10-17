@@ -300,7 +300,6 @@ def create_comment(
     thread_id: uuid.UUID,
     author_id: uuid.UUID,
 ) -> Comment:
-    print(f"Creating comment for thread: {thread_id}")
     db_comment = Comment(
         body=comment_in.body,
         thread_id=thread_id,
@@ -309,7 +308,6 @@ def create_comment(
     session.add(db_comment)
     session.commit()
     session.refresh(db_comment)
-    print(f"Created comment with ID: {db_comment.id}")
     return db_comment
 
 
@@ -342,7 +340,6 @@ def create_reply(
     reply_in: ReplyCreate,
     author_id: uuid.UUID,
 ) -> Reply:
-    print(f"Creating reply for comment: {reply_in.parent_id}")
     # Verify the parent comment exists
     parent_comment = session.get(Comment, reply_in.parent_id)
     if not parent_comment:
@@ -356,7 +353,6 @@ def create_reply(
     session.add(db_reply)
     session.commit()
     session.refresh(db_reply)
-    print(f"Created reply with ID: {db_reply.id}")
     return db_reply
 
 
@@ -701,7 +697,8 @@ async def create_notification(
             }
         )
     except Exception as e:
-        print(f"Could not send real-time notification (user offline): {e}")
+        # Silently handle notification delivery failure (user may be offline)
+        pass
 
     return notification
 
