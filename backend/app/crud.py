@@ -2,7 +2,7 @@ from sqlalchemy.orm import selectinload
 from app.models import (
     Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread,
     ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate,
-    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate
+    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, UserVolunteerRole, VolunteerRole
 )
 
 import uuid
@@ -27,6 +27,38 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
     session.refresh(db_obj)
     return db_obj
 
+def create_volunteer_roles(
+    *, session: Session, user_id: uuid.UUID, roles: list[str]
+) -> None:
+    """Create volunteer roles for a user"""
+    if not roles:
+        return
+    
+    volunteer_roles = []
+    for role in roles:
+        try:
+            # Validate that the role is a valid VolunteerRole enum value
+            volunteer_role_enum = VolunteerRole(role.upper())
+            volunteer_roles.append(UserVolunteerRole(
+                user_id=user_id,
+                role=volunteer_role_enum
+            ))
+        except ValueError:
+            # Skip invalid roles
+            continue
+    
+    if volunteer_roles:
+        session.add_all(volunteer_roles)
+        session.commit()
+
+def get_volunteer_roles_by_user_id(
+    *, session: Session, user_id: uuid.UUID
+) -> list[UserVolunteerRole]:
+    """Get volunteer roles for a user"""
+    statement = select(UserVolunteerRole).where(
+        UserVolunteerRole.user_id == user_id
+    )
+    return session.exec(statement).all()
 
 def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     user_data = user_in.model_dump(exclude_unset=True)
