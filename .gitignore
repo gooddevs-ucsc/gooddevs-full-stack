@@ -4,3 +4,6 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+ 
+# Local environment variables (do not commit .env)
+.env
