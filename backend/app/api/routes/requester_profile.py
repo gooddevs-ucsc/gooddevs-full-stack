@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -15,6 +15,7 @@ from app.models import (
     UserRole
 )
 import app.crud as crud
+from app.core.cloudinary_utils import upload_image_to_cloudinary
 
 router = APIRouter()
 
@@ -263,3 +264,111 @@ def delete_my_requester_profile(
         )
     
     return {"message": "Requester profile deleted successfully"}
+
+
+@router.put("/upload-logo", response_model=RequesterProfileResponse)
+async def upload_requester_logo(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    file: UploadFile = File(...)
+) -> Any:
+    """
+    Upload logo image for requester profile.
+    This endpoint uploads to Cloudinary AND updates the database.
+    """
+    if current_user.role != UserRole.REQUESTER:
+        raise HTTPException(
+            status_code=403,
+            detail="Only users with REQUESTER role can upload logo"
+        )
+    
+    # Get existing profile
+    profile = crud.get_requester_profile_by_user_id(
+        session=session, user_id=current_user.id
+    )
+    
+    if not profile:
+        raise HTTPException(
+            status_code=404,
+            detail="Requester profile not found"
+        )
+    
+    try:
+        # Upload to Cloudinary
+        logo_url = await upload_image_to_cloudinary(file, folder="profile_logos")
+        
+        # Get database object
+        db_profile = session.get(RequesterProfile, profile.id)
+        if not db_profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        
+        # Update profile with new logo URL
+        profile_update = RequesterProfileUpdate(logo_url=logo_url)
+        updated_profile = crud.update_requester_profile(
+            session=session,
+            db_profile=db_profile,
+            profile_in=profile_update
+        )
+        
+        return RequesterProfileResponse(data=updated_profile)
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to upload logo: {str(e)}"
+        )
+
+
+@router.put("/upload-cover", response_model=RequesterProfileResponse)
+async def upload_requester_cover(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    file: UploadFile = File(...)
+) -> Any:
+    """
+    Upload cover image for requester profile.
+    This endpoint uploads to Cloudinary AND updates the database.
+    """
+    if current_user.role != UserRole.REQUESTER:
+        raise HTTPException(
+            status_code=403,
+            detail="Only users with REQUESTER role can upload cover"
+        )
+    
+    # Get existing profile
+    profile = crud.get_requester_profile_by_user_id(
+        session=session, user_id=current_user.id
+    )
+    
+    if not profile:
+        raise HTTPException(
+            status_code=404,
+            detail="Requester profile not found"
+        )
+    
+    try:
+        # Upload to Cloudinary
+        cover_url = await upload_image_to_cloudinary(file, folder="cover_images")
+        
+        # Get database object
+        db_profile = session.get(RequesterProfile, profile.id)
+        if not db_profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        
+        # Update profile with new cover URL
+        profile_update = RequesterProfileUpdate(cover_image_url=cover_url)
+        updated_profile = crud.update_requester_profile(
+            session=session,
+            db_profile=db_profile,
+            profile_in=profile_update
+        )
+        
+        return RequesterProfileResponse(data=updated_profile)
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to upload cover image: {str(e)}"
+        )
