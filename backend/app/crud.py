@@ -570,13 +570,13 @@ def get_approved_applicants_for_project(
     *,
     session: Session,
     project_id: uuid.UUID
-) -> list[User]:
+) -> list[dict]:
     """
-    Get all approved applicants (volunteers) for a specific project.
-    Filters at database level for efficiency.
+    Get all approved applicants (volunteers) for a specific project with their volunteer roles.
+    Returns combined User and ProjectApplication data.
     """
     statement = (
-        select(User)
+        select(User, ProjectApplication.volunteer_role)
         .join(ProjectApplication, ProjectApplication.volunteer_id == User.id)
         .where(
             ProjectApplication.project_id == project_id,
@@ -584,8 +584,20 @@ def get_approved_applicants_for_project(
         )
         .order_by(User.firstname, User.lastname)
     )
-    volunteers = session.exec(statement).all()
-    return volunteers
+    results = session.exec(statement).all()
+    
+    # Convert to list of dicts with combined data
+    team_members = []
+    for user, volunteer_role in results:
+        team_members.append({
+            "id": user.id,
+            "firstname": user.firstname,
+            "lastname": user.lastname,
+            "email": user.email,
+            "volunteer_role": volunteer_role
+        })
+    
+    return team_members
 
 
 # Payment CRUD operations
