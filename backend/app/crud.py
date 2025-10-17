@@ -566,6 +566,28 @@ def get_all_applications(
     return applications, count
 
 
+def get_approved_applicants_for_project(
+    *,
+    session: Session,
+    project_id: uuid.UUID
+) -> list[User]:
+    """
+    Get all approved applicants (volunteers) for a specific project.
+    Filters at database level for efficiency.
+    """
+    statement = (
+        select(User)
+        .join(ProjectApplication, ProjectApplication.volunteer_id == User.id)
+        .where(
+            ProjectApplication.project_id == project_id,
+            ProjectApplication.status == ApplicationStatus.APPROVED
+        )
+        .order_by(User.firstname, User.lastname)
+    )
+    volunteers = session.exec(statement).all()
+    return volunteers
+
+
 # Payment CRUD operations
 def create_payment(*, session: Session, payment_in: PaymentCreate, merchant_id: str) -> Payment:
 

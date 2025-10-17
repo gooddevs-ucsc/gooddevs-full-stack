@@ -11,7 +11,7 @@ import {
 import { Form, Input, Select, Textarea } from '@/components/ui/form';
 import { Task, TaskPriority, TaskStatus } from '@/types/api';
 
-import { useVolunteers } from '../api/get-volunteers';
+import { useApprovedApplicants } from '../api/get-approved-applicants';
 
 const getVolunteerFullName = (volunteer: {
   firstname?: string;
@@ -28,6 +28,7 @@ interface TaskModalProps {
   onSubmit: (data: TaskFormData) => void;
   task?: Task | null;
   isLoading?: boolean;
+  projectId: string;
 }
 
 // Input schema - what the form accepts (all strings from HTML inputs)
@@ -72,10 +73,11 @@ export const TaskModal: FC<TaskModalProps> = ({
   onSubmit,
   task,
   isLoading = false,
+  projectId,
 }) => {
   const isEditing = !!task;
-  const { data: volunteersData, isLoading: isLoadingVolunteers } =
-    useVolunteers();
+  const { data: approvedApplicantsData, isLoading: isLoadingApplicants } =
+    useApprovedApplicants({ projectId });
 
   const getTodayDate = () => {
     const today = new Date();
@@ -134,16 +136,16 @@ export const TaskModal: FC<TaskModalProps> = ({
   };
 
   // Create volunteer options for the dropdown
-  const volunteerOptions =
-    volunteersData?.data?.map((volunteer) => ({
-      label: `${getVolunteerFullName(volunteer)} (${volunteer.role})`,
-      value: volunteer.id,
+  const approvedApplicantOptions =
+    approvedApplicantsData?.data?.map((applicant) => ({
+      label: `${getVolunteerFullName(applicant)} (${applicant.role})`,
+      value: applicant.id,
     })) || [];
 
   // Add "Select Assignee" option at the beginning
   const assigneeOptions = [
     { label: '- Select Assignee -', value: '' },
-    ...volunteerOptions,
+    ...approvedApplicantOptions,
   ];
 
   return (
@@ -205,11 +207,11 @@ export const TaskModal: FC<TaskModalProps> = ({
 
                   {/* Assignee */}
                   <Select
-                    label="Assign to Volunteer"
+                    label="Assign to Approved Applicant"
                     options={assigneeOptions}
                     registration={register('assignee_id')}
                     error={formState.errors.assignee_id}
-                    disabled={isLoadingVolunteers}
+                    disabled={isLoadingApplicants}
                   />
 
                   {/* Estimated Hours */}
