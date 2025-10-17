@@ -2,7 +2,7 @@ from sqlalchemy.orm import selectinload
 from app.models import (
     Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread,
     ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate,
-    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate
+    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, SponsorProfile, SponsorProfileCreate, SponsorProfileUpdate, SponsorProfilePublic
 )
 
 import uuid
@@ -861,8 +861,6 @@ def count_donations_by_donor_id(
 
 
 # Requester Profile CRUD operations
-
-
 def create_requester_profile(
     *, session: Session, profile_in: RequesterProfileCreate, user_id: uuid.UUID
 ) -> RequesterProfile:
@@ -1068,4 +1066,162 @@ def get_requester_profile_stats(*, session: Session, user_id: uuid.UUID) -> dict
         "total_applications": total_applications,
         "pending_applications": pending_applications,
         "active_volunteers": 0,
+    }
+
+# Sponsor Profile CRUD operations (identical to requester)
+def create_sponsor_profile(
+    *, session: Session, profile_in: SponsorProfileCreate, user_id: uuid.UUID
+) -> SponsorProfile:
+    """Create a new sponsor profile"""
+    db_profile = SponsorProfile.model_validate(
+        profile_in, update={
+            "user_id": user_id,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
+        }
+    )
+    session.add(db_profile)
+    session.commit()
+    session.refresh(db_profile)
+    return db_profile
+
+def get_sponsor_profile(*, session: Session, profile_id: uuid.UUID) -> SponsorProfilePublic | None:
+    """Get sponsor profile by ID with user data"""
+    statement = (
+        select(SponsorProfile)
+        .options(selectinload(SponsorProfile.user))
+        .where(SponsorProfile.id == profile_id)
+    )
+    profile = session.exec(statement).first()
+
+    if not profile:
+        return None
+
+    return SponsorProfilePublic.model_validate(profile, update={"user": profile.user})
+
+def get_sponsor_profile_by_user_id(
+    *, session: Session, user_id: uuid.UUID
+) -> SponsorProfilePublic | None:
+    """Get sponsor profile by user ID with user data"""
+    statement = (
+        select(SponsorProfile)
+        .options(selectinload(SponsorProfile.user))
+        .where(SponsorProfile.user_id == user_id)
+    )
+    profile = session.exec(statement).first()
+
+    if not profile:
+        return None
+
+    return SponsorProfilePublic.model_validate(profile, update={"user": profile.user})
+
+def update_sponsor_profile(
+    *, session: Session, db_profile: SponsorProfile, profile_in: SponsorProfileUpdate
+) -> SponsorProfilePublic:
+    """Update an existing sponsor profile"""
+    profile_data = profile_in.model_dump(exclude_unset=True)
+    profile_data["updated_at"] = datetime.now(timezone.utc)
+
+    db_profile.sqlmodel_update(profile_data)
+    session.add(db_profile)
+    session.commit()
+    session.refresh(db_profile)
+
+    session.refresh(db_profile, ["user"])
+
+    return SponsorProfilePublic.model_validate(db_profile, update={"user": db_profile.user})
+
+def delete_sponsor_profile(*, session: Session, profile_id: uuid.UUID) -> bool:
+    """Delete a sponsor profile"""
+    profile = session.get(SponsorProfile, profile_id)
+    if profile:
+        session.delete(profile)
+        session.commit()
+        return True
+    return False
+
+def get_sponsor_profiles(
+    *, session: Session, skip: int = 0, limit: int = 100
+) -> tuple[list[SponsorProfilePublic], int]:
+    """Get all sponsor profiles with pagination"""
+    statement = select(SponsorProfile).options(selectinload(SponsorProfile.user)).offset(skip).limit(limit)
+    profiles = session.exec(statement).all()
+    count_statement = select(func.count(SponsorProfile.id))
+    count = session.exec(count_statement).one()
+
+    public_profiles = [
+        RequesterProfilePublic.model_validate(
+            profile, update={"user": profile.user})
+        for profile in profiles
+    ]
+
+    return public_profiles, count
+
+def search_sponsor_profiles(
+    *, session: Session, search_query: str | None = None, location: str | None = None, skip: int = 0, limit: int = 100
+) -> tuple[list[SponsorProfilePublic], int]:
+    """Search sponsor profiles by query and filters"""
+    statement = select(SponsorProfile).options(selectinload(SponsorProfile.user))
+
+    filters = []
+    if search_query:
+        search_filter = (
+            User.firstname.ilike(f"%{search_query}%") |
+            User.lastname.ilike(f"%{search_query}%") |
+            User.email.ilike(f"%{search_query}%") |
+            RequesterProfile.tagline.ilike(f"%{search_query}%") |
+            RequesterProfile.about.ilike(f"%{search_query}%")
+        )
+        filters.append(search_filter)
+
+    if location:
+        filters.append(RequesterProfile.location.ilike(f"%{location}%"))
+
+    if filters:
+        statement = statement.where(*filters)
+
+    # Add pagination and ordering
+    count_statement = statement.with_only_columns(
+        func.count(RequesterProfile.id))
+    count = session.exec(count_statement).one()
+
+    profiles = session.exec(
+        statement.offset(skip).limit(limit).order_by(
+            RequesterProfile.created_at.desc())
+    ).all()
+
+    # Convert to public models
+    public_profiles = [
+        RequesterProfilePublic.model_validate(
+            profile, update={"user": profile.user})
+        for profile in profiles
+    ]
+
+    return public_profiles, count
+
+def get_sponsor_profile_stats(*, session: Session, user_id: uuid.UUID) -> dict:
+    """Get statistics for sponsor's dashboard (donations and sponsorships)"""
+    # Count total donations by sponsor (user_id)
+    total_donations = session.exec(
+        select(func.count(Donation.id)).where(Donation.donor_id == user_id)
+    ).one() or 0
+
+    # Count total sponsorships (assuming sponsorships are linked via a separate model or donation type; adjust if needed)
+    # Placeholder: If sponsorships are a subset of donations, filter accordingly. For now, assume all donations are sponsorships or add a flag.
+    total_sponsorships = session.exec(
+        select(func.count(Donation.id)).where(Donation.donor_id == user_id)  # Adjust filter if sponsorships differ
+    ).one() or 0
+
+    # Calculate total amount donated
+    total_amount_donated = session.exec(
+        select(func.sum(Payment.amount))
+        .join(Donation, Payment.order_id == Donation.order_id)
+        .where(Donation.donor_id == user_id)
+    ).one() or 0
+
+    return {
+        "total_donations": total_donations,
+        "total_sponsorships": total_sponsorships,
+        "total_amount_donated": total_amount_donated,
+        "active_sponsorships": total_sponsorships,  # Placeholder; adjust based on status if available
     }
