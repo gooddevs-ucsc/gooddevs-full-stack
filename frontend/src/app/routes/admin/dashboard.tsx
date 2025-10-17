@@ -3,21 +3,12 @@ import {
   Users,
   FolderPlus,
   Clock,
-  CheckCircle,
   Calendar,
-  User,
-  MessageSquare,
   Eye,
-  Plus,
-  Settings,
   Shield,
   AlertTriangle,
-  TrendingUp,
   Database,
-  Mail,
-  FileText,
   UserCheck,
-  Ban,
   Activity,
 } from 'lucide-react';
 
@@ -161,7 +152,7 @@ const AdminDashboardRoute = () => {
         </div>
 
         {/* Key Metrics Cards */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 w-full">
+        <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {stats.map((stat, index) => (
             <div
               key={index}
@@ -202,7 +193,7 @@ const AdminDashboardRoute = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start border-primary/20 text-primary h-10"
+                    className="h-10 w-full justify-start border-primary/20 text-primary"
                   >
                     <div className="flex items-center gap-6">
                       <Users className="size-4" />
@@ -220,7 +211,7 @@ const AdminDashboardRoute = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start h-10"
+                    className="h-10 w-full justify-start"
                   >
                     <div className="flex items-center gap-6">
                       <FolderPlus className="size-4" />
@@ -230,7 +221,7 @@ const AdminDashboardRoute = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start h-10"
+                    className="h-10 w-full justify-start"
                   >
                     <div className="flex items-center gap-6">
                       <Eye className="size-4" />

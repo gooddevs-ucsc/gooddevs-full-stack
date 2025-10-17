@@ -12,6 +12,15 @@ export const paths = {
   projectDetail: {
     path: '/projects/:id',
     getHref: (id: string) => `/projects/${id}`,
+    threadList: {
+      path: '/projects/:id/threads',
+      getHref: (id: string) => `/projects/${id}/threads`,
+    },
+    threadDetail: {
+      path: '/projects/:id/threads/:threadId',
+      getHref: (id: string, threadId: string) =>
+        `/projects/${id}/threads/${threadId}`,
+    },
   },
 
   auth: {
@@ -57,6 +66,10 @@ export const paths = {
       path: 'profile',
       getHref: () => '/app/profile',
     },
+    notifications: {
+      path: 'notifications',
+      getHref: () => '/app/notifications',
+    },
   },
 
   admin: {
@@ -99,6 +112,10 @@ export const paths = {
       path: 'donations-sponsorships',
       getHref: () => '/sponsor/donations-sponsorships',
     },
+    myDonations: {
+      path: 'my-donations',
+      getHref: () => '/sponsor/my-donations',
+    },
     profile: {
       path: 'profile',
       getHref: () => '/sponsor/profile',
@@ -125,6 +142,11 @@ export const paths = {
     createProject: {
       path: 'projects/create',
       getHref: () => '/requester/projects/create',
+    },
+    projectApplications: {
+      path: 'projects/:projectId/applications',
+      getHref: (projectId: string) =>
+        `/requester/projects/${projectId}/applications`,
     },
     sponsorships: {
       path: 'sponsorships',
@@ -163,6 +185,20 @@ export const paths = {
     settings: {
       path: 'settings',
       getHref: () => '/developer/settings',
+    },
+  },
+  payments: {
+    root: {
+      path: '/payments',
+      getHref: () => '/payments',
+    },
+    testPayment: {
+      path: 'test',
+      getHref: () => '/payments/test',
+    },
+    donation: {
+      path: 'donation',
+      getHref: () => '/payments/donation',
     },
   },
 } as const;

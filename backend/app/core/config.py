@@ -1,7 +1,9 @@
 import secrets
 import warnings
+import cloudinary
 from typing import Annotated, Any, Literal
 
+import groq
 from pydantic import (
     AnyUrl,
     BeforeValidator,
@@ -95,6 +97,20 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
 
+    # PayHere configuration
+    PAYHERE_MERCHANT_ID: str | None = None
+    PAYHERE_MERCHANT_SECRET: str | None = None
+    PAYHERE_DEFAULT_RETURN_URL: str | None = None
+    PAYHERE_DEFAULT_CANCEL_URL: str | None = None
+    PAYHERE_DEFAULT_NOTIFY_URL: str | None = None
+
+    # PayHere Retrieval API configuration
+    PAYHERE_APP_ID: str | None = None
+    PAYHERE_APP_SECRET: str | None = None
+    PAYHERE_API_BASE_URL: str = "https://sandbox.payhere.lk"  # Default to sandbox
+    PAYHERE_TOKEN_URL: str = "https://sandbox.payhere.lk/merchant/v1/oauth/token"
+    PAYHERE_RETRIEVAL_URL: str = "https://sandbox.payhere.lk/merchant/v1/payment/search"
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (
@@ -115,6 +131,23 @@ class Settings(BaseSettings):
         )
 
         return self
+    
+    # Cloudinary settings
+    CLOUDINARY_CLOUD_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
 
-
+    # Groq configuration
+    GROQ_API_KEY: str
+    
 settings = Settings()  # type: ignore
+
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+    api_key=settings.CLOUDINARY_API_KEY,
+    api_secret=settings.CLOUDINARY_API_SECRET
+)
+
+# Configure Groq
+groq.api_key = settings.GROQ_API_KEY

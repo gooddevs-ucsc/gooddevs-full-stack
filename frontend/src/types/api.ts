@@ -17,6 +17,15 @@ export type Meta = {
   totalPages: number;
 };
 
+export type Paginated<T> = {
+  data: T[];
+  meta: Meta;
+};
+
+export type ApiResponse<T> = {
+  data: T;
+};
+
 export type User = Entity<{
   firstname: string;
   lastname: string;
@@ -35,18 +44,38 @@ export type Team = Entity<{
   description: string;
 }>;
 
-export type Discussion = Entity<{
+export type Comment = {
+  id: string;
+  body: string;
+  thread_id: string;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+  author: User;
+  replies: Reply[];
+};
+
+export type Reply = {
+  id: string;
+  body: string;
+  parent_id: string;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+  author: User;
+};
+
+export type ProjectThread = {
+  id: string;
   title: string;
   body: string;
-  teamId: string;
+  author_id: string;
+  project_id: string;
+  created_at: string;
+  updated_at: string;
   author: User;
-}>;
-
-export type Comment = Entity<{
-  body: string;
-  discussionId: string;
-  author: User;
-}>;
+  comments: Comment[];
+};
 
 /**
  * Project-related enums that match the backend models
@@ -136,6 +165,8 @@ export interface Task {
   estimated_hours?: number;
   actual_hours?: number;
   due_date?: string;
+  assignee_id?: string;
+  assignee?: User;
   created_at: string;
   updated_at: string;
 }
@@ -148,6 +179,7 @@ export interface TaskCreate {
   estimated_hours?: number;
   actual_hours?: number;
   due_date?: string;
+  assignee_id?: string;
 }
 
 export interface TaskUpdate {
@@ -158,6 +190,7 @@ export interface TaskUpdate {
   estimated_hours?: number;
   actual_hours?: number;
   due_date?: string;
+  assignee_id?: string;
 }
 
 export interface TasksResponse {
@@ -167,4 +200,202 @@ export interface TasksResponse {
 
 export interface TaskResponse {
   data: Task;
+}
+
+// Payment-related types
+export type PaymentDetails = {
+  orderId: string;
+  items: string;
+  currency: string;
+  amount: string;
+};
+
+export type Payment = {
+  merchant_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+  order_id: number;
+  items: string;
+  currency: string;
+  amount: number;
+  return_url: string;
+  cancel_url: string;
+  notify_url: string;
+  hash: string;
+};
+
+export type InitiatePaymentResponse = ApiResponse<Payment>;
+
+// Payment status enum (matches backend)
+export const PAYMENT_STATUS = {
+  PENDING: 0,
+  CANCELLED: -1,
+  FAILED: -2,
+  CHARGEDBACK: -3,
+  SUCCESS: 2,
+} as const;
+
+export type PaymentStatus =
+  (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
+
+// Full payment details (from database)
+export type PaymentPublic = {
+  id: string;
+  merchant_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+  order_id: number;
+  items: string;
+  currency: string;
+  amount: number;
+  status: PaymentStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+// Donation types
+export type Donation = {
+  id: string;
+  donor_id: string;
+  order_id: number;
+  message?: string;
+  created_at: string;
+  donor?: User;
+  payment?: PaymentPublic;
+};
+
+export type DonationsResponse = {
+  data: Donation[];
+  meta: Meta;
+};
+
+// Project Application types
+export const APPLICATION_STATUS = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  WITHDRAWN: 'WITHDRAWN',
+} as const;
+
+export const DEVELOPER_ROLES = {
+  FRONTEND: 'FRONTEND',
+  BACKEND: 'BACKEND',
+  FULLSTACK: 'FULLSTACK',
+  UIUX: 'UIUX',
+  MOBILE: 'MOBILE',
+  DEVOPS: 'DEVOPS',
+  QA: 'QA',
+  PM: 'PM',
+} as const;
+
+export type ApplicationStatus =
+  (typeof APPLICATION_STATUS)[keyof typeof APPLICATION_STATUS];
+export type DeveloperRole =
+  (typeof DEVELOPER_ROLES)[keyof typeof DEVELOPER_ROLES];
+
+export const DEVELOPER_ROLE_OPTIONS = [
+  { label: 'Select your role...', value: '' },
+  { label: 'Frontend Developer', value: DEVELOPER_ROLES.FRONTEND },
+  { label: 'Backend Developer', value: DEVELOPER_ROLES.BACKEND },
+  { label: 'Full-Stack Developer', value: DEVELOPER_ROLES.FULLSTACK },
+  { label: 'UI/UX Designer', value: DEVELOPER_ROLES.UIUX },
+  { label: 'Mobile Developer', value: DEVELOPER_ROLES.MOBILE },
+  { label: 'DevOps Engineer', value: DEVELOPER_ROLES.DEVOPS },
+  { label: 'QA Engineer', value: DEVELOPER_ROLES.QA },
+  { label: 'Project Manager', value: DEVELOPER_ROLES.PM },
+];
+
+export interface ProjectApplication {
+  id: string;
+  project_id: string;
+  volunteer_id: string;
+  volunteer_role: DeveloperRole;
+  cover_letter?: string;
+  skills?: string;
+  experience_years?: number;
+  portfolio_url?: string;
+  linkedin_url?: string;
+  github_url?: string;
+  status: ApplicationStatus;
+  created_at: string;
+  updated_at: string;
+  volunteer?: User;
+  project?: Project;
+}
+
+export interface ProjectApplicationCreate {
+  volunteer_role: DeveloperRole;
+  cover_letter?: string;
+  skills?: string;
+  experience_years?: number;
+  portfolio_url?: string;
+  linkedin_url?: string;
+  github_url?: string;
+}
+
+export interface ProjectApplicationUpdate {
+  volunteer_role?: DeveloperRole;
+  cover_letter?: string;
+  skills?: string;
+  experience_years?: number;
+  portfolio_url?: string;
+  linkedin_url?: string;
+  github_url?: string;
+  status?: ApplicationStatus;
+}
+
+export interface ProjectApplicationResponse {
+  data: ProjectApplication;
+}
+
+export interface ProjectApplicationsResponse {
+  data: ProjectApplication[];
+  meta: Meta;
+}
+
+export const NOTIFICATION_TYPES = {
+  PROJECT_APPROVED: 'PROJECT_APPROVED',
+  PROJECT_REJECTED: 'PROJECT_REJECTED',
+  APPLICATION_RECEIVED: 'APPLICATION_RECEIVED',
+  APPLICATION_APPROVED: 'APPLICATION_APPROVED',
+  APPLICATION_REJECTED: 'APPLICATION_REJECTED',
+  NEW_COMMENT: 'NEW_COMMENT',
+  NEW_REPLY: 'NEW_REPLY',
+  TASK_ASSIGNED: 'TASK_ASSIGNED',
+  PROJECT_STATUS_CHANGED: 'PROJECT_STATUS_CHANGED',
+} as const;
+
+export type NotificationType =
+  (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
+
+export interface NotificationData {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  related_entity_id?: string;
+  related_entity_type?: string;
+  action_url?: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface NotificationsResponse {
+  data: NotificationData[];
+  meta: {
+    page: number;
+    total: number;
+    totalPages: number;
+  };
 }

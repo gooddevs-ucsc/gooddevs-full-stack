@@ -1,9 +1,10 @@
 import uuid
 import enum
 from datetime import datetime
+from typing import Any
 
 from pydantic import EmailStr
-from sqlmodel import Field, Relationship, SQLModel, Column, Enum
+from sqlmodel import Field, Relationship, SQLModel, Column, Enum, Identity, Integer
 
 
 class UserRole(str, enum.Enum):
@@ -86,6 +87,8 @@ class User(UserBase, table=True):
         back_populates="owner", cascade_delete=True)
     projects: list["Project"] = Relationship(
         back_populates="requester", cascade_delete=True)
+    notifications: list["Notification"] = Relationship(
+        back_populates="recipient")
 
 
 # Properties to return via API, id is always required
@@ -103,7 +106,20 @@ class UsersPublic(SQLModel):
     count: int
 
 
+class UserIdNameRole(SQLModel):
+    id: uuid.UUID
+    firstname: str | None
+    lastname: str | None
+    role: UserRole
+
+
+class VolunteersPublic(SQLModel):
+    data: list[UserIdNameRole]
+    count: int
+
 # Shared properties
+
+
 class ItemBase(SQLModel):
     title: str = Field(min_length=1, max_length=255)
     description: str | None = Field(default=None, max_length=255)
@@ -182,6 +198,7 @@ class Project(ProjectBase, table=True):
     requester: User | None = Relationship(back_populates="projects")
     tasks: list["Task"] = Relationship(
         back_populates="project", cascade_delete=True)
+    threads: list["ProjectThread"] = Relationship(back_populates="project")
 
 
 # Properties to return via API, id is always required
@@ -238,49 +255,6 @@ class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
 
-
-class ProjectThread(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    project_id: uuid.UUID = Field(foreign_key="project.id")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-
-
-class ProjectComment(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    content: str
-    project_id: uuid.UUID = Field(foreign_key="project.id")
-    author_id: uuid.UUID = Field(foreign_key="user.id")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-
-# Request/Response models
-
-
-class ProjectCommentCreate(SQLModel):
-    content: str
-
-
-class ProjectCommentUpdate(SQLModel):
-    content: str | None = None
-
-
-class ProjectCommentPublic(SQLModel):
-    id: uuid.UUID
-    content: str
-    project_id: uuid.UUID
-    author: UserPublic
-    created_at: datetime
-    updated_at: datetime
-
-
-class ProjectThreadPublic(SQLModel):
-    id: uuid.UUID
-    project_id: uuid.UUID
-    comments: list[ProjectCommentPublic]
-    created_at: datetime
-    updated_at: datetime
-
 # Task status enum
 
 
@@ -317,7 +291,7 @@ class TaskBase(SQLModel):
 
 
 class TaskCreate(TaskBase):
-    pass
+    assignee_id: uuid.UUID | None = Field(default=None)
 
 
 class TaskUpdate(SQLModel):
@@ -328,6 +302,7 @@ class TaskUpdate(SQLModel):
     estimated_hours: int | None = Field(default=None, ge=1)
     actual_hours: int | None = Field(default=None, ge=0)
     due_date: datetime | None = Field(default=None)
+    assignee_id: uuid.UUID | None = Field(default=None)
 
 # Database models
 
@@ -336,11 +311,13 @@ class Task(TaskBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     project_id: uuid.UUID = Field(
         foreign_key="project.id", nullable=False, ondelete="CASCADE")
+    assignee_id: uuid.UUID | None = Field(default=None, foreign_key="user.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationships
     project: Project | None = Relationship(back_populates="tasks")
+    assignee: User | None = Relationship()
 
 # Public Api models
 
@@ -348,6 +325,8 @@ class Task(TaskBase, table=True):
 class TaskPublic(TaskBase):
     id: uuid.UUID
     project_id: uuid.UUID
+    assignee_id: uuid.UUID | None = None
+    assignee: UserPublic | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -361,3 +340,556 @@ class TasksPublic(SQLModel):
 
 class TaskResponse(SQLModel):
     data: TaskPublic
+
+
+# Project Thread models
+class ProjectThreadBase(SQLModel):
+    title: str = Field(min_length=1, max_length=255)
+    body: str = Field(min_length=1, max_length=10000)
+
+
+class ProjectThreadCreate(ProjectThreadBase):
+    pass
+
+
+class ProjectThreadUpdate(SQLModel):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    body: str | None = Field(default=None, min_length=1, max_length=10000)
+
+
+class ProjectThread(ProjectThreadBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    author_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
+    project_id: uuid.UUID = Field(foreign_key="project.id", nullable=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={
+                                 "onupdate": datetime.utcnow})
+
+    author: "User" = Relationship()
+    project: "Project" = Relationship(back_populates="threads")
+    comments: list["Comment"] = Relationship(
+        back_populates="thread", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+
+
+class ProjectThreadPublic(ProjectThreadBase):
+    id: uuid.UUID
+    author_id: uuid.UUID
+    project_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    author: UserPublic
+    comments: list["CommentPublic"] = []
+
+
+class ProjectThreadsPublic(SQLModel):
+    data: list[ProjectThreadPublic]
+    meta: Meta
+
+
+# Refactored Comment models - now without parent_id
+class CommentBase(SQLModel):
+    body: str = Field(min_length=1, max_length=10000)
+
+
+class CommentCreate(CommentBase):
+    pass  # Remove parent_id from here
+
+
+class CommentUpdate(SQLModel):
+    body: str | None = Field(default=None, min_length=1, max_length=10000)
+
+
+class Comment(CommentBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    author_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
+    thread_id: uuid.UUID = Field(
+        foreign_key="projectthread.id", nullable=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={
+                                 "onupdate": datetime.utcnow})
+
+    author: "User" = Relationship()
+    thread: ProjectThread = Relationship(back_populates="comments")
+    replies: list["Reply"] = Relationship(
+        back_populates="comment", cascade_delete=True)
+
+
+class CommentPublic(CommentBase):
+    id: uuid.UUID
+    author_id: uuid.UUID
+    thread_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    author: UserPublic
+    replies: list["ReplyPublic"] = []
+
+
+class CommentsPublic(SQLModel):
+    data: list[CommentPublic]
+    meta: Meta
+
+
+# New Reply models
+class ReplyBase(SQLModel):
+    body: str = Field(min_length=1, max_length=10000)
+
+
+class ReplyCreate(ReplyBase):
+    parent_id: uuid.UUID  # This is the comment ID this reply belongs to
+
+
+class ReplyUpdate(SQLModel):
+    body: str | None = Field(default=None, min_length=1, max_length=10000)
+
+
+class Reply(ReplyBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    author_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
+    parent_id: uuid.UUID = Field(
+        foreign_key="comment.id", nullable=False)  # References comment.id
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={
+                                 "onupdate": datetime.utcnow})
+
+    author: "User" = Relationship()
+    comment: Comment = Relationship(back_populates="replies")
+
+
+class ReplyPublic(ReplyBase):
+    id: uuid.UUID
+    author_id: uuid.UUID
+    parent_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    author: UserPublic
+
+
+class RepliesPublic(SQLModel):
+    data: list[ReplyPublic]
+    meta: Meta
+
+
+# Project Application Status enum
+class ApplicationStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    WITHDRAWN = "WITHDRAWN"
+
+
+# Volunteer roles for projects (matches existing database enum)
+class DeveloperRole(str, enum.Enum):
+    FRONTEND = "FRONTEND"
+    BACKEND = "BACKEND"
+    FULLSTACK = "FULLSTACK"
+    UIUX = "UIUX"
+    MOBILE = "MOBILE"
+    DEVOPS = "DEVOPS"
+    QA = "QA"
+    PM = "PM"
+
+
+# Base Application model
+class ProjectApplicationBase(SQLModel):
+    volunteer_role: DeveloperRole = Field(
+        sa_column=Column(Enum(DeveloperRole)))
+    cover_letter: str | None = Field(default=None, max_length=2000)
+    skills: str | None = Field(default=None, max_length=1000)
+    experience_years: int | None = Field(default=None, ge=0, le=50)
+    portfolio_url: str | None = Field(default=None, max_length=500)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    github_url: str | None = Field(default=None, max_length=500)
+
+
+# API models for creating application
+class ProjectApplicationCreate(ProjectApplicationBase):
+    pass
+
+
+# API model for updating application
+class ProjectApplicationUpdate(SQLModel):
+    volunteer_role: DeveloperRole | None = Field(default=None)
+    cover_letter: str | None = Field(default=None, max_length=2000)
+    skills: str | None = Field(default=None, max_length=1000)
+    experience_years: int | None = Field(default=None, ge=0, le=50)
+    portfolio_url: str | None = Field(default=None, max_length=500)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    github_url: str | None = Field(default=None, max_length=500)
+    status: ApplicationStatus | None = Field(default=None)
+
+
+# Database model
+class ProjectApplication(ProjectApplicationBase, table=True):
+    __table_args__ = (
+        # Unique constraint to prevent duplicate applications
+        {"sqlite_autoincrement": True},
+    )
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    project_id: uuid.UUID = Field(
+        foreign_key="project.id", nullable=False, ondelete="CASCADE"
+    )
+    volunteer_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    status: ApplicationStatus = Field(
+        default=ApplicationStatus.PENDING, sa_column=Column(
+            Enum(ApplicationStatus))
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationships
+    project: Project | None = Relationship()
+    volunteer: User | None = Relationship()
+
+
+# Public API model
+class ProjectApplicationPublic(ProjectApplicationBase):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    volunteer_id: uuid.UUID
+    status: ApplicationStatus
+    created_at: datetime
+    updated_at: datetime
+    volunteer: UserPublic | None = None
+    project: ProjectPublic | None = None
+
+
+# Response wrapper for single application
+class ProjectApplicationResponse(SQLModel):
+    data: ProjectApplicationPublic
+
+
+# Response wrapper for multiple applications
+class ProjectApplicationsPublic(SQLModel):
+    data: list[ProjectApplicationPublic]
+    meta: Meta
+
+
+# Payment status enum with numeric values
+class PaymentStatus(int, enum.Enum):
+    PENDING = 0
+    CANCELLED = -1
+    FAILED = -2
+    CHARGEDBACK = -3
+    SUCCESS = 2
+
+
+# Payment currency enum
+class PaymentCurrency(str, enum.Enum):
+    LKR = "LKR"
+    USD = "USD"
+
+
+# Base Payment model
+class PaymentBase(SQLModel):
+    merchant_id: str = Field(max_length=255)
+    first_name: str = Field(max_length=255)
+    last_name: str = Field(max_length=255)
+    email: EmailStr = Field(max_length=255)
+    phone: str = Field(max_length=50)
+    address: str = Field(max_length=500)
+    city: str = Field(max_length=255)
+    country: str = Field(max_length=255)
+    order_id: int = Field(unique=True, index=True)
+    items: str = Field(max_length=1000)  # Item title or Order/Invoice number
+    currency: PaymentCurrency = Field(sa_column=Column(Enum(PaymentCurrency)))
+    amount: float = Field(ge=0)
+
+
+# API models for creation - only fields sent from frontend
+class PaymentCreate(SQLModel):
+    first_name: str | None = Field(default=None, max_length=255)
+    last_name: str | None = Field(default=None, max_length=255)
+    email: EmailStr | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=50)
+    address: str | None = Field(default=None, max_length=500)
+    city: str | None = Field(default=None, max_length=255)
+    country: str | None = Field(default=None, max_length=255)
+    amount: float = Field(ge=0)
+    # order_id, items, and currency will be generated by backend
+
+
+# Database model
+class Payment(PaymentBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    order_id: int = Field(sa_column=Column(
+        "order_id", Integer, Identity(), unique=True))
+    status: PaymentStatus = Field(
+        default=PaymentStatus.PENDING, sa_column=Column(Enum(PaymentStatus)))
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# Public API models
+class PaymentPublic(PaymentBase):
+    id: uuid.UUID
+    status: PaymentStatus
+    created_at: datetime
+    updated_at: datetime
+
+
+class PaymentInitiationPublic(PaymentBase):
+    return_url: str
+    cancel_url: str
+    notify_url: str
+    hash: str
+
+
+class PaymentInitiationResponse(SQLModel):
+    data: PaymentInitiationPublic
+
+
+# PayHere Webhook models
+class PayhereCheckoutAPIVerificationResponse(SQLModel):
+    """Model for PayHere webhook form data"""
+    merchant_id: str | None = None
+    order_id: str | None = None
+    payment_id: str | None = None
+    payhere_amount: str | None = None
+    payhere_currency: str | None = None
+    status_code: str | None = None
+    md5sig: str | None = None
+    custom_1: str | None = None
+    custom_2: str | None = None
+    method: str | None = None
+    status_message: str | None = None
+    card_holder_name: str | None = None
+    card_no: str | None = None
+    card_expiry: str | None = None
+
+
+# PayHere Retrieval API models
+class PayHereOAuthTokenResponse(SQLModel):
+    """Response from PayHere OAuth token endpoint"""
+    access_token: str
+    token_type: str
+    expires_in: int
+    scope: str
+
+
+class PayHereCustomerDetails(SQLModel):
+    """Customer details from PayHere retrieval response"""
+    fist_name: str | None = None  # Note: PayHere API has typo "fist_name"
+    last_name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    delivery_details: dict | None = None
+
+
+class PayHereAmountDetail(SQLModel):
+    """Amount details from PayHere retrieval response"""
+    currency: str
+    gross: float
+    fee: float
+    net: float
+    exchange_rate: float
+    exchange_from: str
+    exchange_to: str
+
+
+class PayHerePaymentMethod(SQLModel):
+    """Payment method details from PayHere retrieval response"""
+    method: str
+    card_customer_name: str | None = None
+    card_no: str | None = None
+
+
+class PayHerePaymentData(SQLModel):
+    """Individual payment data from PayHere retrieval response"""
+    payment_id: int
+    order_id: str
+    date: str
+    description: str
+    status: str  # RECEIVED, REFUNDED, CHARGEBACKED, etc.
+    currency: str
+    amount: float
+    customer: PayHereCustomerDetails | None = None
+    amount_detail: PayHereAmountDetail | None = None
+    payment_method: PayHerePaymentMethod | None = None
+    items: Any | None = None
+
+
+class PayHereRetrievalResponse(SQLModel):
+    """Full response from PayHere payment retrieval API"""
+    status: int  # 1 = success, -1 = not found, -2 = auth error
+    msg: str
+    data: list[PayHerePaymentData] | None = None
+
+
+# Notification
+
+
+class NotificationPublic(SQLModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    type: str
+    title: str
+    message: str
+    related_entity_id: uuid.UUID | None = None
+    related_entity_type: str | None = None
+    action_url: str | None = None
+    is_read: bool
+    created_at: datetime
+
+
+class NotificationsPublic(SQLModel):
+    data: list[NotificationPublic]
+    meta: Meta
+
+
+class NotificationType(str, enum.Enum):
+    PROJECT_APPROVED = "PROJECT_APPROVED"
+    PROJECT_REJECTED = "PROJECT_REJECTED"
+    APPLICATION_RECEIVED = "APPLICATION_RECEIVED"
+    APPLICATION_APPROVED = "APPLICATION_APPROVED"
+    APPLICATION_REJECTED = "APPLICATION_REJECTED"
+    NEW_COMMENT = "NEW_COMMENT"
+    NEW_REPLY = "NEW_REPLY"
+    TASK_ASSIGNED = "TASK_ASSIGNED"
+    PROJECT_STATUS_CHANGED = "PROJECT_STATUS_CHANGED"
+
+# Database model
+
+
+class Notification(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    type: NotificationType = Field(sa_column=Column(Enum(NotificationType)))
+    title: str = Field(max_length=255)
+    message: str = Field(max_length=1000)
+
+    related_entity_id: uuid.UUID | None = Field(default=None)
+    related_entity_type: str | None = Field(default=None, max_length=50)
+    action_url: str | None = Field(default=None, max_length=500)
+
+    is_read: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Fix: Use consistent naming
+    recipient: User = Relationship(back_populates="notifications")
+
+
+# Donation models
+class DonationBase(SQLModel):
+    message: str | None = Field(default=None, max_length=500)
+
+
+class DonationCreate(DonationBase):
+    amount: float = Field(ge=0)
+    phone: str = Field(max_length=50)
+    address: str = Field(max_length=500)
+    city: str = Field(max_length=255)
+    country: str = Field(max_length=255)
+
+
+class Donation(DonationBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    donor_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    order_id: int = Field(
+        foreign_key="payment.order_id", nullable=False, unique=True
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationships
+    donor: User | None = Relationship()
+    payment: Payment | None = Relationship()
+
+
+class DonationPublic(DonationBase):
+    id: uuid.UUID
+    donor_id: uuid.UUID
+    order_id: int
+    created_at: datetime
+    donor: UserPublic | None = None
+    payment: PaymentPublic | None = None
+
+
+class DonationResponse(SQLModel):
+    data: DonationPublic
+
+
+class DonationsPublic(SQLModel):
+    data: list[DonationPublic]
+    meta: Meta
+
+# Enhanced Requester Profile models
+
+
+class RequesterProfileBase(SQLModel):
+    tagline: str | None = Field(default=None, max_length=500)
+    logo_url: str | None = Field(default=None, max_length=500)
+    cover_image_url: str | None = Field(default=None, max_length=500)
+    website: str | None = Field(default=None, max_length=255)
+    location: str | None = Field(default=None, max_length=255)
+    about: str | None = Field(default=None, max_length=2000)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    twitter_url: str | None = Field(default=None, max_length=500)
+    facebook_url: str | None = Field(default=None, max_length=500)
+    instagram_url: str | None = Field(default=None, max_length=500)
+    contact_phone: str | None = Field(default=None, max_length=20)
+
+
+class RequesterProfileCreate(RequesterProfileBase):
+    pass
+
+
+class RequesterProfileUpdate(SQLModel):
+    tagline: str | None = Field(default=None, max_length=500)
+    logo_url: str | None = Field(default=None, max_length=500)
+    cover_image_url: str | None = Field(default=None, max_length=500)
+    website: str | None = Field(default=None, max_length=255)
+    location: str | None = Field(default=None, max_length=255)
+    about: str | None = Field(default=None, max_length=2000)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    twitter_url: str | None = Field(default=None, max_length=500)
+    facebook_url: str | None = Field(default=None, max_length=500)
+    instagram_url: str | None = Field(default=None, max_length=500)
+    contact_phone: str | None = Field(default=None, max_length=20)
+
+
+class RequesterProfile(RequesterProfileBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE", unique=True
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationship
+    user: User | None = Relationship()
+
+
+class RequesterProfilePublic(RequesterProfileBase):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    # Include user info so frontend can access name and email
+    user: UserPublic | None = None
+
+    # Computed properties that can be derived from user data
+    @property
+    def organization_name(self) -> str:
+        if self.user:
+            return f"{self.user.firstname} {self.user.lastname}"
+        return "Unknown Organization"
+
+    @property
+    def organization_email(self) -> str:
+        if self.user:
+            return self.user.email
+        return ""
+
+
+class RequesterProfileResponse(SQLModel):
+    data: RequesterProfilePublic
+
+
+class RequesterProfilesPublic(SQLModel):
+    data: list[RequesterProfilePublic]
+    count: int

@@ -6,8 +6,10 @@ import {
   MoreVertical,
   Trash2,
   Users,
+  UserCheck,
 } from 'lucide-react';
 import { FC } from 'react';
+import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,8 +20,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown';
 import { Progress } from '@/components/ui/progress';
+import { paths } from '@/config/paths';
 
-interface RequesterProject {
+export interface RequesterProject {
   id: string;
   title: string;
   description: string;
@@ -27,7 +30,9 @@ interface RequesterProject {
   progress: number;
   createdAt: string;
   teamSize: number;
-  estimatedCompletion: string;
+  estimatedCompletion: string | null;
+  projectType: string;
+  technologies: string[];
 }
 
 interface ProjectCardProps {
@@ -56,6 +61,8 @@ const formatDate = (dateString: string) => {
 };
 
 export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
+  const navigate = useNavigate();
+
   const handleEdit = () => {
     console.log('Edit project:', project.id);
     // Implement edit functionality
@@ -69,6 +76,11 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
   const handleViewDetails = () => {
     console.log('View project details:', project.id);
     // Implement view details functionality
+    navigate(`/projects/${project.id}`);
+  };
+
+  const handleViewApplications = () => {
+    navigate(paths.requester.projectApplications.getHref(project.id));
   };
 
   return (
@@ -108,6 +120,13 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
               >
                 <ExternalLink className="mr-2 size-4" />
                 View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleViewApplications}
+                className="cursor-pointer"
+              >
+                <UserCheck className="mr-2 size-4" />
+                View Applications
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
                 <Edit className="mr-2 size-4" />
@@ -168,13 +187,24 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
             </div>
             <span className="font-medium">Est. Completion:</span>
             <span className="ml-2 text-slate-700">
-              {formatDate(project.estimatedCompletion)}
+              {project.estimatedCompletion
+                ? formatDate(project.estimatedCompletion)
+                : 'Not set'}
             </span>
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="mt-6 flex justify-end">
+        {/* Action Buttons */}
+        <div className="mt-6 flex justify-end gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleViewApplications}
+            className="border-blue-300/50 bg-white text-blue-600 shadow-sm transition-all duration-200 hover:border-blue-400 hover:bg-blue-50"
+          >
+            <UserCheck className="mr-2 size-4" />
+            Applications
+          </Button>
           <Button
             variant="outline"
             size="sm"

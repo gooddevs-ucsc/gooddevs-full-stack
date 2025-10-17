@@ -2,7 +2,7 @@ from collections.abc import Generator
 from typing import Annotated, Optional
 
 import jwt
-from fastapi import Depends, HTTPException, status, Request, Cookie
+from fastapi import Depends, HTTPException, status, Request, Cookie, UploadFile
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
@@ -12,6 +12,8 @@ from app.core import security
 from app.core.config import settings
 from app.core.db import engine
 from app.models import TokenPayload, User
+
+from app.services.payhere_service import PayHereService
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token",
@@ -117,3 +119,28 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
             status_code=403, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+def get_payhere_service(session: SessionDep) -> PayHereService:
+    return PayHereService(session=session)
+
+
+PayHereServiceDep = Annotated[PayHereService, Depends(get_payhere_service)]
+
+
+def validate_image_file(max_size: int = 5 * 1024 * 1024):
+    async def validator(file: UploadFile) -> UploadFile:
+        file_content = await file.read()
+        file_size = len(file_content)
+
+        if file_size > max_size:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Maximum size is {max_size // (1024*1024)}MB"
+            )
+
+        # Reset file pointer
+        await file.seek(0)
+        return file
+
+    return validator

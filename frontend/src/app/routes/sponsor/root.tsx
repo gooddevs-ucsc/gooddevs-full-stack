@@ -1,9 +1,10 @@
-import { Home, DollarSign, Settings, User } from 'lucide-react';
+import { DollarSign, Home, Settings, User, Ribbon } from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
 import { ForbiddenFallback } from '@/components/ui/forbidden-fallback';
 import { paths } from '@/config/paths';
+import { NotificationBell } from '@/features/notifications';
 import { Authorization } from '@/lib/authorization';
 import { ROLES } from '@/lib/roles';
 
@@ -18,6 +19,11 @@ const SponsorRoot = () => {
       name: 'My Donations & Sponsorships',
       to: paths.sponsor.donationsSponshorships.getHref(),
       icon: DollarSign,
+    },
+    {
+      name: 'My Donations',
+      to: paths.sponsor.myDonations.getHref(),
+      icon: Ribbon,
     },
     {
       name: 'Profile',
@@ -36,7 +42,10 @@ const SponsorRoot = () => {
       forbiddenFallback={<ForbiddenFallback roles={[ROLES.SPONSOR]} />}
       allowedRoles={[ROLES.SPONSOR]}
     >
-      <DashboardLayout navigation={navigation}>
+      <DashboardLayout
+        navigation={navigation}
+        headerExtras={<NotificationBell />}
+      >
         <Outlet />
       </DashboardLayout>
     </Authorization>

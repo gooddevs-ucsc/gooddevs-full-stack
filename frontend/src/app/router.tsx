@@ -41,6 +41,18 @@ export const createAppRouter = (queryClient: QueryClient) =>
     {
       path: paths.projectDetail.path,
       lazy: () => import('./routes/project-detail').then(convert(queryClient)),
+      children: [
+        {
+          path: paths.projectDetail.threadList.path,
+          lazy: () =>
+            import('./routes/project-thread-list').then(convert(queryClient)),
+        },
+        {
+          path: 'threads/:threadId',
+          lazy: () =>
+            import('./routes/project-thread-detail').then(convert(queryClient)),
+        },
+      ],
     },
     {
       path: paths.aboutUs.path,
@@ -90,6 +102,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
           lazy: () =>
             import('./routes/app/dashboard').then(convert(queryClient)),
         },
+        {
+          path: paths.app.notifications.path,
+          lazy: () =>
+            import('./routes/app/notifications').then(convert(queryClient)),
+        },
       ],
     },
     {
@@ -134,6 +151,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
             ),
         },
         {
+          path: paths.sponsor.myDonations.path,
+          lazy: () =>
+            import('./routes/sponsor/my-donations').then(convert(queryClient)),
+        },
+        {
           path: paths.sponsor.profile.path,
           lazy: () =>
             import('./routes/sponsor/profile').then(convert(queryClient)),
@@ -168,6 +190,13 @@ export const createAppRouter = (queryClient: QueryClient) =>
           path: paths.requester.createProject.path,
           lazy: () =>
             import('./routes/requester/project-create').then(
+              convert(queryClient),
+            ),
+        },
+        {
+          path: paths.requester.projectApplications.path,
+          lazy: () =>
+            import('./routes/requester/project-applications').then(
               convert(queryClient),
             ),
         },
@@ -228,6 +257,22 @@ export const createAppRouter = (queryClient: QueryClient) =>
         },
       ],
     },
+    {
+      path: paths.payments.root.path,
+      children: [
+        {
+          path: paths.payments.testPayment.path,
+          lazy: () =>
+            import('./routes/payments/test-payment').then(convert(queryClient)),
+        },
+        {
+          path: paths.payments.donation.path,
+          lazy: () =>
+            import('./routes/payments/donation').then(convert(queryClient)),
+        },
+      ],
+    },
+
     {
       path: '*',
       lazy: () => import('./routes/not-found').then(convert(queryClient)),

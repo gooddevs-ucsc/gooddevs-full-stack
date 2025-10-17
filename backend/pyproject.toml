@@ -22,6 +22,8 @@ dependencies = [
     "sentry-sdk[fastapi]<2.0.0,>=1.40.6",
     "pyjwt<3.0.0,>=2.8.0",
     "alembic-postgresql-enum>=1.7.0",
+    "cloudinary>=1.44.1",
+    "groq>=0.32.0",
 ]
 
 [tool.uv]

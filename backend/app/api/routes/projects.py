@@ -8,8 +8,8 @@ from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 
 from app.api.deps import CurrentUser, SessionDep, OptionalCurrentUser
-from app.models import Project, ProjectCreate, ProjectPublic, ProjectsPublic, ProjectUpdate, Message, UserRole, ProjectStatus, User, TokenPayload, Meta, ProjectResponse
-from app.core import security
+from app.models import NotificationType, Project, ProjectCreate, ProjectPublic, ProjectsPublic, ProjectUpdate, Message, UserRole, ProjectStatus, User, TokenPayload, Meta, ProjectResponse
+from app.core import groq_utils, security
 from app.core.config import settings
 from app import crud
 from app.utils import calculate_pagination_meta, page_to_skip, calculate_pagination_meta_from_page
@@ -68,6 +68,38 @@ def read_projects(
         return ProjectsPublic(data=projects, meta=meta)
     raise HTTPException(status_code=403, detail="Insufficient permissions")
 
+@router.get("/my-projects", response_model=ProjectsPublic)
+def read_user_projects(
+    session: SessionDep,
+    current_user: CurrentUser,
+    page: int = 1,
+    limit: int = 100
+) -> Any:
+    """
+    Retrieve projects created by the current user.
+    """
+    count_statement = (
+        select(func.count())
+        .select_from(Project)
+        .where(Project.requester_id == current_user.id)
+    )
+    total = session.exec(count_statement).one()
+
+    # Convert page to skip
+    skip = page_to_skip(page, limit)
+    
+    statement = (
+        select(Project)
+        .where(Project.requester_id == current_user.id)
+        .offset(skip)
+        .limit(limit)
+    )
+    projects = session.exec(statement).all()
+
+    # Calculate pagination metadata
+    meta = calculate_pagination_meta_from_page(
+        total=total, page=page, limit=limit)
+    return ProjectsPublic(data=projects, meta=meta)
 
 @router.get("/approved", response_model=ProjectsPublic)
 def read_approved_projects(
@@ -248,7 +280,7 @@ def delete_project(
 
 
 @router.put("/{id}/approve", response_model=ProjectResponse)
-def approve_project(
+async def approve_project(
     *,
     session: SessionDep,
     current_user: CurrentUser,
@@ -271,6 +303,21 @@ def approve_project(
     project_update = ProjectUpdate(status=ProjectStatus.APPROVED)
     project = crud.update_project(
         session=session, db_project=project, project_in=project_update)
+    
+    try:
+        await crud.create_notification(
+            session=session,    
+            user_id=project.requester_id,
+            type=NotificationType.PROJECT_APPROVED,
+            title="Project Approved",
+            message=f"Your project '{project.title}' has been approved.",
+            related_entity_id=project.id,
+            related_entity_type="Project",
+            action_url=f"/projects/{project.id}"
+        )
+    except Exception as e:
+        # Log the error but do not fail the approval process
+        print(f"Failed to create notification: {e}")
     return ProjectResponse(data=project)
 
 
@@ -299,3 +346,16 @@ def reject_project(
     project = crud.update_project(
         session=session, db_project=project, project_in=project_update)
     return ProjectResponse(data=project)
+
+@router.post("/generate-details")
+async def generate_project_details_endpoint(prompt: str):
+    try:
+        details = await groq_utils.generate_project_details(prompt)
+        return details
+    except ValueError as e:
+        # Send a 400 Bad Request error to the frontend
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        # Generic server error for other unexpected issues
+        raise HTTPException(status_code=500, detail="An unexpected error occurred.")
+    
