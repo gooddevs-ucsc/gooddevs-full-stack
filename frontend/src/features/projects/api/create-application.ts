@@ -9,6 +9,26 @@ import {
   ProjectApplicationResponse,
 } from '@/types/api';
 
+// Custom URL validation that requires proper TLD
+const validateUrlWithTLD = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
+
+    // Check if hostname has at least one dot and a valid TLD
+    const parts = hostname.split('.');
+    if (parts.length < 2) return false;
+
+    // Get the TLD (last part)
+    const tld = parts[parts.length - 1];
+
+    // TLD must be at least 2 characters and contain only letters
+    return tld.length >= 2 && /^[a-zA-Z]+$/.test(tld);
+  } catch {
+    return false;
+  }
+};
+
 export const createApplicationInputSchema = z.object({
   volunteer_role: z.enum(
     [
@@ -71,19 +91,31 @@ export const createApplicationInputSchema = z.object({
     .string()
     .url('Please enter a valid URL')
     .max(500, 'URL must not exceed 500 characters')
+    .refine(
+      (url) => url === '' || validateUrlWithTLD(url),
+      'Please enter a valid URL with a proper domain (e.g., .com, .org)',
+    )
     .optional()
     .or(z.literal('')),
   linkedin_url: z
     .string()
     .url('Please enter a valid LinkedIn URL')
     .max(500, 'URL must not exceed 500 characters')
+    .refine(
+      (url) => url === '' || validateUrlWithTLD(url),
+      'Please enter a valid LinkedIn URL with a proper domain',
+    )
     .optional()
     .or(z.literal('')),
   github_url: z
     .string()
     .min(1, 'GitHub profile is required')
     .url('Please enter a valid GitHub URL')
-    .max(500, 'URL must not exceed 500 characters'),
+    .max(500, 'URL must not exceed 500 characters')
+    .refine(
+      (url) => validateUrlWithTLD(url),
+      'Please enter a valid GitHub URL with a proper domain',
+    ),
 });
 
 export type CreateApplicationInput = z.infer<
