@@ -6,7 +6,6 @@ import {
   FileText,
   Heart,
   MessageCircle,
-  Share2,
   Tag,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -125,16 +124,6 @@ export const ProjectDetail = () => {
                 Posted {formatDate(new Date(project.created_at).getTime())}
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Heart className="mr-2 size-4" />
-              Save
-            </Button>
-            <Button variant="outline" size="sm">
-              <Share2 className="mr-2 size-4" />
-              Share
-            </Button>
           </div>
         </div>
       </div>

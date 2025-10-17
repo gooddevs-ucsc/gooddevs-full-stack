@@ -86,7 +86,7 @@ export const ProjectApplicationForm = ({
         // github_url is required, so don't convert to undefined
       };
 
-      const result = await createApplicationMutation.mutateAsync({
+      await createApplicationMutation.mutateAsync({
         projectId,
         data: applicationData,
       });
