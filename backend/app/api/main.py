@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import items, login, private, users, utils, projects, project_threads, tasks, project_applications, notifications, payments, requester_profile
+from app.api.routes import items, login, private, users, utils, projects, project_threads, tasks, project_applications, notifications, payments, requester_profile, donations
 from app.core.config import settings
 
 api_router = APIRouter()
@@ -13,11 +13,12 @@ api_router.include_router(project_threads.router)
 api_router.include_router(tasks.router)
 api_router.include_router(project_applications.router)
 api_router.include_router(payments.router)
+api_router.include_router(donations.router)
 api_router.include_router(notifications.router)
 
 api_router.include_router(
-    requester_profile.router, 
-    prefix="/requester-profile", 
+    requester_profile.router,
+    prefix="/requester-profile",
     tags=["requester-profile"]
 )
 

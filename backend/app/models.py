@@ -614,7 +614,8 @@ class PaymentCreate(SQLModel):
 # Database model
 class Payment(PaymentBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    order_id: int = Field(sa_column=Column("order_id", Integer, Identity()))
+    order_id: int = Field(sa_column=Column(
+        "order_id", Integer, Identity(), unique=True))
     status: PaymentStatus = Field(
         default=PaymentStatus.PENDING, sa_column=Column(Enum(PaymentStatus)))
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -770,7 +771,55 @@ class Notification(SQLModel, table=True):
     # Fix: Use consistent naming
     recipient: User = Relationship(back_populates="notifications")
 
-# Enhanced Requester Profile models 
+
+# Donation models
+class DonationBase(SQLModel):
+    message: str | None = Field(default=None, max_length=500)
+
+
+class DonationCreate(DonationBase):
+    amount: float = Field(ge=0)
+    phone: str = Field(max_length=50)
+    address: str = Field(max_length=500)
+    city: str = Field(max_length=255)
+    country: str = Field(max_length=255)
+
+
+class Donation(DonationBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    donor_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    order_id: int = Field(
+        foreign_key="payment.order_id", nullable=False, unique=True
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationships
+    donor: User | None = Relationship()
+    payment: Payment | None = Relationship()
+
+
+class DonationPublic(DonationBase):
+    id: uuid.UUID
+    donor_id: uuid.UUID
+    order_id: int
+    created_at: datetime
+    donor: UserPublic | None = None
+    payment: PaymentPublic | None = None
+
+
+class DonationResponse(SQLModel):
+    data: DonationPublic
+
+
+class DonationsPublic(SQLModel):
+    data: list[DonationPublic]
+    meta: Meta
+
+# Enhanced Requester Profile models
+
+
 class RequesterProfileBase(SQLModel):
     tagline: str | None = Field(default=None, max_length=500)
     logo_url: str | None = Field(default=None, max_length=500)
@@ -810,7 +859,7 @@ class RequesterProfile(RequesterProfileBase, table=True):
     )
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     # Relationship
     user: User | None = Relationship()
 
@@ -822,14 +871,14 @@ class RequesterProfilePublic(RequesterProfileBase):
     updated_at: datetime
     # Include user info so frontend can access name and email
     user: UserPublic | None = None
-    
+
     # Computed properties that can be derived from user data
     @property
     def organization_name(self) -> str:
         if self.user:
             return f"{self.user.firstname} {self.user.lastname}"
         return "Unknown Organization"
-    
+
     @property
     def organization_email(self) -> str:
         if self.user:

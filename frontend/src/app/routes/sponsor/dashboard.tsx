@@ -300,9 +300,9 @@ const SponsorDashboardRoute = () => {
         {/* Volunteer Sponsorship Actions */}
         <div className="rounded-xl border border-slate-200/60 bg-gradient-to-r from-green-50 to-blue-50 p-6 shadow-sm">
           <h2 className="mb-4 text-xl font-semibold text-slate-900">
-            Volunteer Sponsorship Actions
+            Quick Actions
           </h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <button className="flex items-center gap-3 rounded-lg bg-white p-4 shadow-sm transition-all hover:shadow-md">
               <Users className="size-6 text-blue-600" />
               <div className="text-left">
@@ -325,6 +325,18 @@ const SponsorDashboardRoute = () => {
                 </div>
               </div>
             </button>
+            <a
+              href="/sponsor/donations-sponsorships"
+              className="flex items-center gap-3 rounded-lg bg-white p-4 shadow-sm transition-all hover:shadow-md"
+            >
+              <Heart className="size-6 text-red-600" />
+              <div className="text-left">
+                <div className="font-medium text-slate-900">My Donations</div>
+                <div className="text-sm text-slate-600">
+                  View donation history
+                </div>
+              </div>
+            </a>
           </div>
         </div>
       </div>
