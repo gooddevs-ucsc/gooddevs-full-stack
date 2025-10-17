@@ -754,7 +754,6 @@ def create_requester_profile(
     *, session: Session, profile_in: RequesterProfileCreate, user_id: uuid.UUID
 ) -> RequesterProfile:
     """Create a new requester profile"""
-    from app.models import RequesterProfile
     
     db_profile = RequesterProfile.model_validate(
         profile_in, update={
@@ -771,7 +770,6 @@ def create_requester_profile(
 
 def get_requester_profile(*, session: Session, profile_id: uuid.UUID) -> RequesterProfilePublic | None:
     """Get requester profile by ID with user data"""
-    from app.models import RequesterProfile
     
     statement = (
         select(RequesterProfile)
@@ -791,7 +789,6 @@ def get_requester_profile_by_user_id(
     *, session: Session, user_id: uuid.UUID
 ) -> RequesterProfilePublic | None:
     """Get requester profile by user ID with user data"""
-    from app.models import RequesterProfile
     
     statement = (
         select(RequesterProfile)
@@ -827,7 +824,6 @@ def update_requester_profile(
 
 def delete_requester_profile(*, session: Session, profile_id: uuid.UUID) -> bool:
     """Delete a requester profile"""
-    from app.models import RequesterProfile
     
     profile = session.get(RequesterProfile, profile_id)
     if profile:
@@ -841,7 +837,6 @@ def get_requester_profiles(
     *, session: Session, skip: int = 0, limit: int = 100
 ) -> tuple[list[RequesterProfilePublic], int]:
     """Get all requester profiles with pagination"""
-    from app.models import RequesterProfile
     
     statement = (
         select(RequesterProfile)
@@ -873,7 +868,6 @@ def search_requester_profiles(
     limit: int = 100
 ) -> tuple[list[RequesterProfilePublic], int]:
     """Search requester profiles with filters"""
-    from app.models import RequesterProfile, User
     
     statement = (
         select(RequesterProfile)
