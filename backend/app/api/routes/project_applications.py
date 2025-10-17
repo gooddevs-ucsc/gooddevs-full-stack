@@ -173,6 +173,32 @@ def read_project_applications(
     return ProjectApplicationsPublic(data=applications, meta=meta)
 
 
+@router.get("/projects/{project_id}/approved-applicants", response_model=VolunteersPublic)
+def get_approved_applicants_for_project(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    project_id: uuid.UUID
+) -> Any:
+    """
+    Get all approved applicants (volunteers) for a specific project.
+    This is used for task assignment - only approved applicants can be assigned tasks.
+    Filtering is done at database level for efficiency.
+    """
+    # Check if project exists
+    project = crud.get_project_by_id(session=session, project_id=project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Get approved applicants directly from database with filtering
+    approved_volunteers = crud.get_approved_applicants_for_project(
+        session=session,
+        project_id=project_id
+    )
+
+    return VolunteersPublic(data=approved_volunteers, count=len(approved_volunteers))
+
+
 @router.get("/{application_id}", response_model=ProjectApplicationResponse)
 def read_application(
     session: SessionDep,
