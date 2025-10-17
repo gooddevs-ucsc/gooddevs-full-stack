@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
 import { Button } from '@/components/ui/button';
-import { Form, Input, Label, Select } from '@/components/ui/form';
+import { Form, Input, Label } from '@/components/ui/form'; // Removed Select import
 import { paths } from '@/config/paths';
 import { registerInputSchema, useRegister } from '@/lib/auth';
 
@@ -19,6 +19,25 @@ const developmentRoles = [
   { id: 'uiux', label: 'UI/UX Designer' },
   { id: 'projectmanager', label: 'Project Manager' },
   { id: 'qa', label: 'QA Engineer' },
+];
+
+// Role options for radio buttons
+const roleOptions = [
+  {
+    label: 'Volunteer',
+    value: 'VOLUNTEER',
+    description: 'Join as a developer volunteer',
+  },
+  {
+    label: 'Requester',
+    value: 'REQUESTER',
+    description: 'Post projects and find developers',
+  },
+  {
+    label: 'Sponsor',
+    value: 'SPONSOR',
+    description: 'Support projects financially',
+  },
 ];
 
 export const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
@@ -98,16 +117,48 @@ export const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
                 error={formState.errors['password']}
                 registration={register('password')}
               />
-              <Select
-                label="Role"
-                error={formState.errors['role']}
-                registration={register('role')}
-                options={[
-                  { label: 'Volunteer', value: 'VOLUNTEER' },
-                  { label: 'Requester', value: 'REQUESTER' },
-                  { label: 'Sponsor', value: 'SPONSOR' },
-                ]}
-              />
+
+              {/* Role Selection with Radio Buttons */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-slate-700">
+                  Role *
+                </Label>
+
+                <div className="space-y-3">
+                  {roleOptions.map((option) => (
+                    <div
+                      key={option.value}
+                      className="flex items-start space-x-3"
+                    >
+                      <input
+                        type="radio"
+                        id={`role-${option.value}`}
+                        value={option.value}
+                        {...register('role')}
+                        className="mt-1 size-4 border-slate-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      />
+                      <div className="flex-1">
+                        <label
+                          htmlFor={`role-${option.value}`}
+                          className="cursor-pointer text-sm font-medium text-slate-900"
+                        >
+                          {option.label}
+                        </label>
+                        <p className="mt-1 text-xs text-slate-600">
+                          {option.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Error display */}
+                {formState.errors['role'] && (
+                  <p className="text-sm text-red-600">
+                    {formState.errors['role'].message}
+                  </p>
+                )}
+              </div>
 
               {/* Conditional Development Roles Section */}
               {currentRole === 'VOLUNTEER' && (
