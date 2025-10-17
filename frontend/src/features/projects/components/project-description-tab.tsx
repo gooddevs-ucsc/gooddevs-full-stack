@@ -1,20 +1,15 @@
 import {
   Clock,
-  MapPin,
   Users,
-  Eye,
   ArrowLeft,
   Code,
-  Calendar,
   Target,
-  Lightbulb,
   CheckCircle,
-  Star,
   Heart,
-  MessageCircle,
   GitBranch,
-  Award,
   Zap,
+  Calendar,
+  Eye,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -68,64 +63,6 @@ export const ProjectDescriptionTab = ({
               {project.description ||
                 'This project aims to create a meaningful solution that addresses real community needs while providing volunteer developers with valuable learning opportunities and portfolio contributions.'}
             </p>
-          </div>
-        </div>
-
-        {/* About the Organization */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-full bg-emerald-100 p-2">
-              <Users className="size-5 text-emerald-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-slate-900">
-              About the Organization
-            </h2>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <h4 className="mb-2 font-medium text-slate-900">
-                Organization Details
-              </h4>
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full bg-blue-500"></div>
-                  <span className="text-sm text-slate-600">
-                    <strong>Type:</strong>{' '}
-                    {project.organization_type || 'Non-profit Organization'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full bg-green-500"></div>
-                  <span className="text-sm text-slate-600">
-                    <strong>Founded:</strong>{' '}
-                    {project.organization_founded || '2018'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full bg-purple-500"></div>
-                  <span className="text-sm text-slate-600">
-                    <strong>Location:</strong>{' '}
-                    {project.organization_location || 'Sri Lanka, Colombo'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full bg-orange-500"></div>
-                  <span className="text-sm text-slate-600">
-                    <strong>Size:</strong>{' '}
-                    {project.organization_size || '50-100 staff members'}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h4 className="mb-2 font-medium text-slate-900">
-                Mission & Impact
-              </h4>
-              <p className="text-sm leading-relaxed text-slate-600">
-                {project.organization_mission ||
-                  'Dedicated to creating positive social impact through technology solutions. Our organization has helped over 10,000 individuals access essential services and resources through digital platforms.'}
-              </p>
-            </div>
           </div>
         </div>
 
@@ -260,73 +197,6 @@ export const ProjectDescriptionTab = ({
                 >
                   View Profile
                 </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Project Goals & Impact */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-full bg-blue-100 p-2">
-              <Target className="size-5 text-blue-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-slate-900">
-              Goals & Expected Impact
-            </h2>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="mt-1 rounded-full bg-green-100 p-1">
-                  <CheckCircle className="size-3 text-green-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-slate-900">
-                    Community Impact
-                  </h4>
-                  <p className="text-sm text-slate-600">
-                    Address real needs of nonprofit organizations and their
-                    beneficiaries
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="mt-1 rounded-full bg-blue-100 p-1">
-                  <Lightbulb className="size-3 text-blue-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-slate-900">Innovation</h4>
-                  <p className="text-sm text-slate-600">
-                    Implement modern solutions using cutting-edge technologies
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="mt-1 rounded-full bg-purple-100 p-1">
-                  <Users className="size-3 text-purple-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-slate-900">Team Growth</h4>
-                  <p className="text-sm text-slate-600">
-                    Provide learning opportunities and skill development for
-                    volunteers
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="mt-1 rounded-full bg-orange-100 p-1">
-                  <Award className="size-3 text-orange-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-slate-900">Sustainability</h4>
-                  <p className="text-sm text-slate-600">
-                    Create maintainable solutions for long-term community
-                    benefit
-                  </p>
-                </div>
               </div>
             </div>
           </div>
@@ -474,143 +344,6 @@ export const ProjectDescriptionTab = ({
             </div>
           </div>
         </div>
-
-        {/* Project Scope & Features */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-full bg-emerald-100 p-2">
-              <Lightbulb className="size-5 text-emerald-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-slate-900">
-              Project Scope & Key Features
-            </h2>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <h4 className="mb-3 font-medium text-slate-900">Core Features</h4>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="mt-0.5 size-3 text-green-500" />
-                  <span>User authentication and profile management</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="mt-0.5 size-3 text-green-500" />
-                  <span>Interactive dashboard with real-time data</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="mt-0.5 size-3 text-green-500" />
-                  <span>Document upload and management system</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="mt-0.5 size-3 text-green-500" />
-                  <span>Notification and alert system</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="mt-0.5 size-3 text-green-500" />
-                  <span>Reporting and analytics module</span>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-3 font-medium text-slate-900">
-                Technical Requirements
-              </h4>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="mt-0.5 size-3 text-blue-500" />
-                  <span>Responsive design for mobile and desktop</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="mt-0.5 size-3 text-blue-500" />
-                  <span>WCAG accessibility compliance</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="mt-0.5 size-3 text-blue-500" />
-                  <span>Data security and privacy protection</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="mt-0.5 size-3 text-blue-500" />
-                  <span>Performance optimization (&lt; 3s load time)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="mt-0.5 size-3 text-blue-500" />
-                  <span>Cross-browser compatibility</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Requirements & Skills */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-full bg-green-100 p-2">
-              <Zap className="size-5 text-green-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-slate-900">
-              Skills & Requirements
-            </h2>
-          </div>
-          <div className="grid gap-6 md:grid-cols-2">
-            <div>
-              <h4 className="mb-3 font-medium text-slate-900">
-                Required Skills
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {project.preferred_technologies
-                  ?.split(',')
-                  .map((tech: string, index: number) => (
-                    <span
-                      key={index}
-                      className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800"
-                    >
-                      {tech.trim()}
-                    </span>
-                  )) || (
-                  <>
-                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
-                      React
-                    </span>
-                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
-                      TypeScript
-                    </span>
-                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
-                      FastAPI
-                    </span>
-                    <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800">
-                      PostgreSQL
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-            <div>
-              <h4 className="mb-3 font-medium text-slate-900">
-                Experience Level
-              </h4>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full bg-green-500"></div>
-                  <span className="text-sm text-slate-600">
-                    Beginner friendly - mentorship available
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full bg-blue-500"></div>
-                  <span className="text-sm text-slate-600">
-                    Collaborative learning environment
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full bg-purple-500"></div>
-                  <span className="text-sm text-slate-600">
-                    Portfolio building opportunity
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Sidebar */}
@@ -643,15 +376,6 @@ export const ProjectDescriptionTab = ({
                   : 'Only volunteers can apply to projects'}
               </p>
             )}
-            <Button
-              variant="outline"
-              className="flex w-full items-center justify-center"
-            >
-              <div className="flex items-center gap-2">
-                <Heart className="size-4" />
-                <span>Save for Later</span>
-              </div>
-            </Button>
           </div>
         </div>
 
@@ -663,12 +387,15 @@ export const ProjectDescriptionTab = ({
           <div className="space-y-4">
             <div className="flex items-start">
               <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-blue-100">
-                <Users className="size-4 text-blue-600" />
+                <Code className="size-4 text-blue-600" />
               </div>
               <div>
-                <p className="font-medium text-slate-900">Organization</p>
+                <p className="font-medium text-slate-900">Project Type</p>
                 <p className="text-sm text-slate-600">
-                  {project.organization || 'GoodDevs Community'}
+                  {project.project_type
+                    ?.replace(/_/g, ' ')
+                    .replace(/\b\w/g, (l: string) => l.toUpperCase()) ||
+                    'Not specified'}
                 </p>
               </div>
             </div>
@@ -682,23 +409,38 @@ export const ProjectDescriptionTab = ({
                 <p className="text-sm text-slate-600">
                   {project.estimated_timeline
                     ? formatEstimatedTimeline(project.estimated_timeline)
-                    : '12-16 weeks'}
+                    : 'Not specified'}
                 </p>
               </div>
             </div>
 
             <div className="flex items-start">
               <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-purple-100">
-                <MapPin className="size-4 text-purple-600" />
+                <CheckCircle className="size-4 text-purple-600" />
               </div>
               <div>
                 <p className="font-medium text-slate-900">Status</p>
                 <p className="text-sm text-slate-600">
                   {project.status?.charAt(0).toUpperCase() +
-                    project.status?.slice(1).toLowerCase() || 'Active'}
+                    project.status?.slice(1).toLowerCase().replace(/_/g, ' ') ||
+                    'Pending'}
                 </p>
               </div>
             </div>
+
+            {project.preferred_technologies && (
+              <div className="flex items-start">
+                <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-indigo-100">
+                  <Zap className="size-4 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-slate-900">Technologies</p>
+                  <p className="text-sm text-slate-600">
+                    {project.preferred_technologies}
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-start">
               <div className="mr-3 flex size-8 items-center justify-center rounded-full bg-orange-100">
@@ -898,153 +640,6 @@ export const ProjectDescriptionTab = ({
                 </div>
                 <span className="ml-2 text-xs text-orange-700">0/1 filled</span>
               </div>
-            </div>
-
-            {/* Team Progress Summary */}
-            <div className="mt-6 rounded-lg bg-gradient-to-r from-slate-50 to-slate-100 p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-900">
-                  Overall Team Progress
-                </span>
-                <span className="text-xs text-slate-600">
-                  3/9 positions filled
-                </span>
-              </div>
-              <div className="h-3 rounded-full bg-slate-200">
-                <div className="h-3 w-1/3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"></div>
-              </div>
-              <div className="mt-2 text-center text-xs text-slate-600">
-                🎯 Ready to welcome 6 more talented developers!
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Project Metrics */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-semibold text-slate-900">
-            Project Engagement
-          </h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Eye className="size-4 text-slate-500" />
-                <span className="text-sm text-slate-600">Views</span>
-              </div>
-              <span className="font-medium text-slate-900">247</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Heart className="size-4 text-red-500" />
-                <span className="text-sm text-slate-600">Interested</span>
-              </div>
-              <span className="font-medium text-slate-900">18</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="size-4 text-blue-500" />
-                <span className="text-sm text-slate-600">Discussions</span>
-              </div>
-              <span className="font-medium text-slate-900">7</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Star className="size-4 text-yellow-500" />
-                <span className="text-sm text-slate-600">Rating</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="font-medium text-slate-900">4.8</span>
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`size-3 ${
-                        star <= 5
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-slate-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-semibold text-slate-900">
-            Recent Updates
-          </h3>
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="mt-1 flex size-6 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle className="size-3 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-slate-900">
-                  Project approved
-                </p>
-                <p className="text-xs text-slate-500">Ready for development</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="mt-1 flex size-6 items-center justify-center rounded-full bg-blue-100">
-                <GitBranch className="size-3 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-slate-900">
-                  Repository created
-                </p>
-                <p className="text-xs text-slate-500">
-                  Development environment ready
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="mt-1 flex size-6 items-center justify-center rounded-full bg-purple-100">
-                <Users className="size-3 text-purple-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-slate-900">
-                  Team lead assigned
-                </p>
-                <p className="text-xs text-slate-500">
-                  Project mentor available
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Timeline & Commitment - Moved to Sidebar */}
-        <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-orange-50 to-yellow-50 p-6 shadow-sm">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-full bg-gradient-to-r from-orange-500 to-red-500 p-2">
-              <Calendar className="size-5 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold text-slate-900">
-              Timeline & Commitment
-            </h3>
-          </div>
-          <div className="space-y-4">
-            <div className="rounded-lg bg-white p-4 text-center shadow-sm">
-              <div className="mb-2 text-2xl font-bold text-blue-600">
-                {project.estimated_timeline
-                  ? formatEstimatedTimeline(project.estimated_timeline)
-                  : '12-16 weeks'}
-              </div>
-              <div className="text-sm text-slate-600">Project Duration</div>
-            </div>
-            <div className="rounded-lg bg-white p-4 text-center shadow-sm">
-              <div className="mb-2 text-2xl font-bold text-green-600">5-10</div>
-              <div className="text-sm text-slate-600">Hours per week</div>
-            </div>
-            <div className="rounded-lg bg-white p-4 text-center shadow-sm">
-              <div className="mb-2 text-2xl font-bold text-purple-600">
-                Remote
-              </div>
-              <div className="text-sm text-slate-600">Work Style</div>
             </div>
           </div>
         </div>
