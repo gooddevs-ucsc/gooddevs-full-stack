@@ -3,6 +3,7 @@ import enum
 import re
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
 from pydantic import EmailStr, field_validator, ValidationError
 from sqlmodel import Field, Relationship, SQLModel, Column, Enum, Identity, Integer
@@ -536,6 +537,62 @@ class ProjectApplicationCreate(ProjectApplicationBase):
             raise ValueError('Cover letter must contain at least 8 meaningful words')
         
         return trimmed
+    
+    @classmethod
+    def _validate_url_with_tld(cls, url: str) -> bool:
+        """Validate that URL has a proper domain with TLD"""
+        try:
+            parsed = urlparse(url)
+            hostname = parsed.hostname
+            
+            if not hostname:
+                return False
+            
+            # Check if hostname has at least one dot and a valid TLD
+            parts = hostname.split('.')
+            if len(parts) < 2:
+                return False
+            
+            # Get the TLD (last part)
+            tld = parts[-1]
+            
+            # TLD must be at least 2 characters and contain only letters
+            return len(tld) >= 2 and tld.isalpha()
+        except Exception:
+            return False
+    
+    @field_validator('portfolio_url')
+    @classmethod
+    def validate_portfolio_url(cls, v: str | None) -> str | None:
+        if v is None or v == '':
+            return v
+        
+        if not cls._validate_url_with_tld(v):
+            raise ValueError('Please enter a valid portfolio URL with a proper domain (e.g., .com, .org)')
+        
+        return v
+    
+    @field_validator('linkedin_url')
+    @classmethod
+    def validate_linkedin_url(cls, v: str | None) -> str | None:
+        if v is None or v == '':
+            return v
+        
+        if not cls._validate_url_with_tld(v):
+            raise ValueError('Please enter a valid LinkedIn URL with a proper domain')
+        
+        return v
+    
+    @field_validator('github_url')
+    @classmethod
+    def validate_github_url(cls, v: str | None) -> str | None:
+        if v is None or v == '':
+            raise ValueError('GitHub profile is required')
+        
+        if not cls._validate_url_with_tld(v):
+            raise ValueError('Please enter a valid GitHub URL with a proper domain')
+        
+        return v
 
 
 # API model for updating application
