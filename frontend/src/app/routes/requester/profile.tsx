@@ -1,68 +1,122 @@
-import {
-  Building2,
-  Calendar,
-  Edit2,
-  ExternalLink,
-  Facebook,
-  Globe,
-  Linkedin,
-  Mail,
-  MapPin,
-  Twitter,
-  Save,
-  X,
-  Plus,
-  Phone,
-} from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Calendar, Edit2, Save, X, Plus } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useNotifications } from '@/components/ui/notifications';
 import { Spinner } from '@/components/ui/spinner';
 import { paths } from '@/config/paths';
 import { useUserProjects } from '@/features/projects/api/get-user-projects';
-import { api } from '@/lib/api-client';
-import { useUser } from '@/lib/auth';
-import { Project } from '@/types/api';
-
-// Define the requester profile interface
-interface RequesterProfile {
-  id: string;
-  user_id: string;
-  tagline: string | null;
-  logo_url: string | null;
-  cover_image_url: string | null;
-  website: string | null;
-  location: string | null;
-  about: string | null;
-  linkedin_url: string | null;
-  twitter_url: string | null;
-  facebook_url: string | null;
-  contact_phone: string | null;
-  created_at: string;
-  updated_at: string;
-  user: {
-    id: string;
-    firstname: string;
-    lastname: string;
-    email: string;
-  } | null;
-}
+import {
+  useRequesterProfile,
+  useUpdateRequesterProfile,
+  UpdateRequesterProfileInput,
+  useUploadRequesterLogo,
+  useUploadRequesterCover,
+  ContactInfoCard,
+  SocialMediaCard,
+  ProfileHeader,
+  ImageUploadModal,
+} from '@/features/requester';
 
 const OrganizationProfile = () => {
-  const { data: user } = useUser();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<RequesterProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [, setIsEditing] = useState(false);
+  const { addNotification } = useNotifications();
+
+  // Fetch profile
+  const {
+    data: profileResponse,
+    isLoading: profileLoading,
+    error: profileError,
+  } = useRequesterProfile();
+
+  const profile = profileResponse?.data;
+
+  // Update profile mutation
+  const updateProfileMutation = useUpdateRequesterProfile({
+    mutationConfig: {
+      onSuccess: () => {
+        addNotification({
+          type: 'success',
+          title: 'Profile Updated',
+          message: 'Your profile has been updated successfully.',
+        });
+        setEditingSection(null);
+      },
+      onError: () => {
+        addNotification({
+          type: 'error',
+          title: 'Update Failed',
+          message: 'Failed to update profile. Please try again.',
+        });
+      },
+    },
+  });
+
+  // Upload logo mutation
+  const uploadLogoMutation = useUploadRequesterLogo({
+    mutationConfig: {
+      onSuccess: () => {
+        addNotification({
+          type: 'success',
+          title: 'Logo Uploaded',
+          message: 'Logo uploaded and saved successfully!',
+        });
+        setEditingSection(null);
+        setUploadingImage({ logo: false, cover: false });
+      },
+      onError: (error: any) => {
+        const errorMessage =
+          error.response?.data?.detail ||
+          error.response?.data?.message ||
+          'Failed to upload logo. Please try again.';
+        addNotification({
+          type: 'error',
+          title: 'Upload Failed',
+          message: errorMessage,
+        });
+        setUploadingImage({ logo: false, cover: false });
+      },
+    },
+  });
+
+  // Upload cover mutation
+  const uploadCoverMutation = useUploadRequesterCover({
+    mutationConfig: {
+      onSuccess: () => {
+        addNotification({
+          type: 'success',
+          title: 'Cover Uploaded',
+          message: 'Cover image uploaded and saved successfully!',
+        });
+        setEditingSection(null);
+        setUploadingImage({ logo: false, cover: false });
+      },
+      onError: (error: any) => {
+        const errorMessage =
+          error.response?.data?.detail ||
+          error.response?.data?.message ||
+          'Failed to upload cover. Please try again.';
+        addNotification({
+          type: 'error',
+          title: 'Upload Failed',
+          message: errorMessage,
+        });
+        setUploadingImage({ logo: false, cover: false });
+      },
+    },
+  });
+
   const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState({
+    logo: false,
+    cover: false,
+  });
   const [editData, setEditData] = useState({
     tagline: '',
     location: '',
     website: '',
-    phone: '',
+    contact_phone: '',
     about: '',
     linkedin_url: '',
     twitter_url: '',
@@ -79,6 +133,37 @@ const OrganizationProfile = () => {
 
   const projects = projectsData?.data || [];
 
+  // Handle file select for upload
+  const handleFileSelect = (file: File, type: 'logo' | 'cover') => {
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      addNotification({
+        type: 'error',
+        title: 'File Too Large',
+        message: 'Please select an image smaller than 5MB.',
+      });
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      addNotification({
+        type: 'error',
+        title: 'Invalid File Type',
+        message: 'Please select an image file.',
+      });
+      return;
+    }
+
+    setUploadingImage((prev) => ({ ...prev, [type]: true }));
+
+    if (type === 'logo') {
+      uploadLogoMutation.mutate({ file });
+    } else {
+      uploadCoverMutation.mutate({ file });
+    }
+  };
+
   // Calculate project counts by status (same as dashboard)
   const getProjectCountsByStatus = () => {
     const counts = {
@@ -88,7 +173,7 @@ const OrganizationProfile = () => {
       completed: 0,
     };
 
-    projects.forEach((project: Project) => {
+    projects.forEach((project) => {
       switch (project.status) {
         case 'APPROVED':
           counts.active++;
@@ -108,7 +193,7 @@ const OrganizationProfile = () => {
   const projectCounts = getProjectCountsByStatus();
 
   // Transform projects for display (same as dashboard)
-  const transformedProjects = projects.map((project: Project) => {
+  const transformedProjects = projects.map((project) => {
     const getStatusInfo = (status: string) => {
       switch (status) {
         case 'APPROVED':
@@ -142,7 +227,6 @@ const OrganizationProfile = () => {
       description: project.description,
       status: statusInfo.status,
       statusColor: statusInfo.statusColor,
-      developers: 0,
       lastUpdate: new Date(
         project.updated_at || project.created_at,
       ).toLocaleDateString(),
@@ -155,40 +239,6 @@ const OrganizationProfile = () => {
     (project) => project.status === 'Active',
   );
 
-  // Fetch requester profile data
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get('/requester-profile/');
-        setProfile(response.data);
-
-        // Initialize edit data
-        setEditData({
-          tagline: response.data.tagline || '',
-          location: response.data.location || '',
-          website: response.data.website || '',
-          phone: response.data.contact_phone || '',
-          about: response.data.about || '',
-          linkedin_url: response.data.linkedin_url || '',
-          twitter_url: response.data.twitter_url || '',
-          facebook_url: response.data.facebook_url || '',
-          logo_url: response.data.logo_url || '',
-          cover_image_url: response.data.cover_image_url || '',
-        });
-      } catch (error: any) {
-        console.error('Failed to fetch profile:', error);
-        setError('Failed to load profile data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchProfile();
-    }
-  }, [user]);
-
   const handleEditSection = (section: string) => {
     if (!profile) return;
 
@@ -197,7 +247,7 @@ const OrganizationProfile = () => {
       tagline: profile.tagline || '',
       location: profile.location || '',
       website: profile.website || '',
-      phone: profile.contact_phone || '',
+      contact_phone: profile.contact_phone || '',
       about: profile.about || '',
       linkedin_url: profile.linkedin_url || '',
       twitter_url: profile.twitter_url || '',
@@ -210,7 +260,7 @@ const OrganizationProfile = () => {
   const handleSaveSection = async () => {
     if (!profile) return;
 
-    let payload: any = {};
+    let payload: UpdateRequesterProfileInput = {};
 
     if (editingSection === 'header') {
       payload = {
@@ -220,7 +270,7 @@ const OrganizationProfile = () => {
     } else if (editingSection === 'contact') {
       payload = {
         website: editData.website,
-        contact_phone: editData.phone,
+        contact_phone: editData.contact_phone,
       };
     } else if (editingSection === 'social') {
       payload = {
@@ -242,25 +292,16 @@ const OrganizationProfile = () => {
       };
     }
 
-    try {
-      await api.put('/requester-profile/', payload);
-      setProfile((prevProfile) => ({
-        ...prevProfile!,
-        ...payload,
-      }));
-      setEditingSection(null);
-    } catch (error) {
-      console.error('Failed to update profile:', error);
-      alert('Failed to update profile. Please try again.');
-    }
+    updateProfileMutation.mutate({ data: payload });
   };
 
   const handleCancelEdit = () => {
     setEditingSection(null);
-    setIsEditing(false);
   };
 
-  if (loading) {
+  const loading = profileLoading || updateProfileMutation.isPending;
+
+  if (profileLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Spinner size="lg" />
@@ -268,26 +309,22 @@ const OrganizationProfile = () => {
     );
   }
 
-  if (error || !profile) {
+  if (profileError || !profile) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <p className="mb-4 text-red-600">{error || 'Profile not found'}</p>
+          <p className="mb-4 text-red-600">
+            {profileError?.message || 'Profile not found'}
+          </p>
           <Button onClick={() => window.location.reload()}>Try Again</Button>
         </div>
       </div>
     );
   }
 
-  const organizationName = profile.user
-    ? `${profile.user.firstname} ${profile.user.lastname}`
-    : 'Unknown Organization';
-
-  const organizationEmail = profile.user?.email || '';
-
   return (
     <div className="mx-auto max-w-7xl space-y-8">
-      {/* Profile Header */}
+      {/* Profile Header with Cover */}
       <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm">
         {/* Cover Image */}
         <div className="relative h-72 bg-gradient-to-r from-slate-500 to-slate-600">
@@ -302,12 +339,13 @@ const OrganizationProfile = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
 
           {/* Cover Image Edit Button */}
-          <div className="absolute right-4 top-4 ">
+          <div className="absolute right-4 top-4">
             {editingSection === 'cover' ? (
               <div className="flex gap-2">
                 <Button
                   size="sm"
                   onClick={handleSaveSection}
+                  disabled={loading}
                   className="bg-white/90 backdrop-blur-sm hover:bg-white"
                 >
                   <Save className="size-3" />
@@ -316,6 +354,7 @@ const OrganizationProfile = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleCancelEdit}
+                  disabled={loading}
                   className="bg-white/90 backdrop-blur-sm hover:bg-white"
                 >
                   <X className="size-3" />
@@ -326,6 +365,7 @@ const OrganizationProfile = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => handleEditSection('cover')}
+                disabled={loading}
                 className="border-white/30 bg-white/20 text-white backdrop-blur-sm hover:bg-white/30"
                 title="Edit cover image"
               >
@@ -333,468 +373,86 @@ const OrganizationProfile = () => {
               </Button>
             )}
           </div>
-
-          {/* Cover Image Edit Form */}
-          {editingSection === 'cover' && (
-            <div className="absolute left-4 top-16 min-w-80 rounded-lg bg-white/95 p-4 shadow-lg backdrop-blur-sm">
-              <label
-                htmlFor="cover-image-url"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
-                Cover Image URL
-              </label>
-              <Input
-                id="cover-image-url"
-                value={editData.cover_image_url}
-                onChange={(e) =>
-                  setEditData({ ...editData, cover_image_url: e.target.value })
-                }
-                placeholder="https://example.com/cover.png"
-                className="w-full"
-              />
-            </div>
-          )}
         </div>
 
-        {/* Profile Content */}
-        <div className="relative px-8 pb-8">
-          {/* Logo */}
-          <div className="absolute -top-16 left-8">
-            <div className="relative">
-              <img
-                src={
-                  profile.logo_url ||
-                  `https://placehold.co/100x100/E2E8F0/475569?text=${organizationName.charAt(0)}`
-                }
-                alt={organizationName}
-                className="size-40 rounded-2xl border-4 border-white bg-white object-cover shadow-lg"
-              />
-              <div className="absolute -bottom-2 -right-2 rounded-full bg-green-500 p-2">
-                <Building2 className="size-4 text-white" />
-              </div>
-
-              {/* Logo Edit Button */}
-              <div className="absolute -right-2 -top-2">
-                {editingSection === 'logo' ? (
-                  <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      onClick={handleSaveSection}
-                      className="size-8 rounded-full border-2 border-white bg-slate-600 p-2 text-white shadow-lg hover:bg-slate-700"
-                      title="Save logo"
-                    >
-                      <Save className="size-3" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCancelEdit}
-                      className="size-8 rounded-full border-2 border-white bg-slate-500 p-2 text-white shadow-lg hover:bg-slate-600"
-                      title="Cancel"
-                    >
-                      <X className="size-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditSection('logo')}
-                    className="size-8 rounded-full border-2 border-white bg-slate-600 p-2 text-white opacity-80 shadow-lg transition-all hover:bg-slate-700 hover:opacity-100"
-                    title="Edit logo"
-                  >
-                    <Edit2 className="size-3" />
-                  </Button>
-                )}
-              </div>
-
-              {/* Logo Edit Form */}
-              {editingSection === 'logo' && (
-                <div className="absolute left-0 top-12 z-10 min-w-80 rounded-lg border bg-white p-4 shadow-lg">
-                  <label
-                    htmlFor="logo-image-url"
-                    className="mb-2 block text-sm font-medium text-slate-700"
-                  >
-                    Logo Image URL
-                  </label>
-                  <Input
-                    id="logo-image-url"
-                    value={editData.logo_url}
-                    onChange={(e) =>
-                      setEditData({ ...editData, logo_url: e.target.value })
-                    }
-                    placeholder="https://example.com/logo.png"
-                    className="w-full"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Edit Button */}
-          <div className="absolute right-8 top-4">
-            {editingSection === 'header' ? (
-              <div className="flex gap-2">
-                <Button size="sm" onClick={handleSaveSection}>
-                  <Save className="size-4" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleCancelEdit}>
-                  <X className="size-4" />
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleEditSection('header')}
-              >
-                <Edit2 className="size-4" />
-              </Button>
-            )}
-          </div>
-
-          {/* Requester Info */}
-          <div className="ml-48 mt-8 space-y-2">
-            <h1 className="text-3xl font-bold text-slate-900">
-              {organizationName}
-            </h1>
-
-            {editingSection === 'header' ? (
-              <Input
-                value={editData.tagline}
-                onChange={(e) =>
-                  setEditData({ ...editData, tagline: e.target.value })
-                }
-                className="max-w-2xl border-2 border-blue-300 bg-white text-lg"
-                placeholder="Add a tagline"
-              />
-            ) : (
-              <p className="max-w-2xl text-lg text-slate-600">
-                {profile.tagline || 'Add a tagline'}
-              </p>
-            )}
-
-            <div className="flex items-center gap-4 text-sm text-slate-500">
-              <div className="flex items-center gap-1">
-                <MapPin className="size-4" />
-                {editingSection === 'header' ? (
-                  <Input
-                    value={editData.location}
-                    onChange={(e) =>
-                      setEditData({ ...editData, location: e.target.value })
-                    }
-                    className="h-8 w-48 border-2 border-blue-300 bg-white"
-                    placeholder="Add a location"
-                  />
-                ) : (
-                  profile.location || 'Add a location'
-                )}
-              </div>
-              <div className="flex items-center gap-1">
-                <Calendar className="size-4" />
-                Member since {new Date(profile.created_at).getFullYear()}
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Profile Header Component */}
+        <ProfileHeader
+          profile={profile}
+          onEdit={handleEditSection}
+          onSave={handleSaveSection}
+          onCancel={handleCancelEdit}
+          editingSection={editingSection}
+          editData={{ tagline: editData.tagline, location: editData.location }}
+          onEditDataChange={(data) => setEditData({ ...editData, ...data })}
+          loading={loading}
+        />
       </div>
+
+      {/* Image Upload Modals */}
+      {editingSection === 'logo' && (
+        <ImageUploadModal
+          type="logo"
+          currentImageUrl={editData.logo_url}
+          onImageUrlChange={(url) =>
+            setEditData({ ...editData, logo_url: url })
+          }
+          onFileSelect={(file: File) => handleFileSelect(file, 'logo')}
+          onSave={handleSaveSection}
+          onCancel={handleCancelEdit}
+          uploading={uploadingImage.logo}
+          loading={loading}
+        />
+      )}
+
+      {editingSection === 'cover' && (
+        <ImageUploadModal
+          type="cover"
+          currentImageUrl={editData.cover_image_url}
+          onImageUrlChange={(url) =>
+            setEditData({ ...editData, cover_image_url: url })
+          }
+          onFileSelect={(file: File) => handleFileSelect(file, 'cover')}
+          onSave={handleSaveSection}
+          onCancel={handleCancelEdit}
+          uploading={uploadingImage.cover}
+          loading={loading}
+        />
+      )}
 
       {/* Main Content - Two Column Layout */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Left Column - Contact Info */}
         <div className="space-y-6 lg:col-span-1">
           {/* Contact Information Card */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">
-                Contact Information
-              </h2>
-              {editingSection === 'contact' ? (
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleSaveSection}>
-                    <Save className="size-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCancelEdit}
-                  >
-                    <X className="size-4" />
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEditSection('contact')}
-                >
-                  <Edit2 className="size-4" />
-                </Button>
-              )}
-            </div>
+          <ContactInfoCard
+            profile={profile}
+            onEdit={handleEditSection}
+            onSave={handleSaveSection}
+            onCancel={handleCancelEdit}
+            editingSection={editingSection}
+            editData={{
+              website: editData.website,
+              contact_phone: editData.contact_phone,
+            }}
+            onEditDataChange={(data) => setEditData({ ...editData, ...data })}
+            loading={loading}
+          />
 
-            <div className="space-y-4">
-              {/* Website */}
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 rounded-lg bg-blue-100 p-2">
-                  <Globe className="size-4 text-blue-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900">Website</p>
-                  {editingSection === 'contact' ? (
-                    <Input
-                      value={editData.website}
-                      onChange={(e) =>
-                        setEditData({ ...editData, website: e.target.value })
-                      }
-                      placeholder="Add a website"
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="text-sm text-slate-600">
-                      {profile.website ? (
-                        <a
-                          href={`https://${profile.website}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 break-all text-primary hover:text-primary/80"
-                        >
-                          {profile.website}
-                          <ExternalLink className="size-3 shrink-0" />
-                        </a>
-                      ) : (
-                        'Add a website'
-                      )}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Email */}
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 rounded-lg bg-green-100 p-2">
-                  <Mail className="size-4 text-green-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900">Email</p>
-                  <a
-                    href={`mailto:${organizationEmail}`}
-                    className="break-all text-sm text-slate-600 hover:text-primary"
-                  >
-                    {organizationEmail}
-                  </a>
-                </div>
-              </div>
-
-              {/* Phone */}
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 rounded-lg bg-purple-100 p-2">
-                  <Phone className="size-4 text-purple-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900">Phone</p>
-                  {editingSection === 'contact' ? (
-                    <Input
-                      value={editData.phone}
-                      onChange={(e) =>
-                        setEditData({ ...editData, phone: e.target.value })
-                      }
-                      placeholder="Add a phone number"
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="text-sm text-slate-600">
-                      {profile.contact_phone || 'Add a phone number'}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Social Media Links */}
-            <div className="mt-6 border-t border-slate-200 pt-6">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-slate-900">
-                  Connect With Us
-                </h3>
-                {editingSection === 'social' ? (
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSaveSection}>
-                      <Save className="size-3" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCancelEdit}
-                    >
-                      <X className="size-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditSection('social')}
-                  >
-                    <Edit2 className="size-3" />
-                  </Button>
-                )}
-              </div>
-
-              {editingSection === 'social' ? (
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 rounded-lg bg-blue-100 p-2">
-                      <Linkedin className="size-4 text-blue-600" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900">
-                        LinkedIn
-                      </p>
-                      <Input
-                        value={editData.linkedin_url}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            linkedin_url: e.target.value,
-                          })
-                        }
-                        placeholder="https://linkedin.com/company/your-org"
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 rounded-lg bg-sky-100 p-2">
-                      <Twitter className="size-4 text-sky-600" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900">
-                        Twitter
-                      </p>
-                      <Input
-                        value={editData.twitter_url}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            twitter_url: e.target.value,
-                          })
-                        }
-                        placeholder="https://twitter.com/your-org"
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 rounded-lg bg-indigo-100 p-2">
-                      <Facebook className="size-4 text-indigo-600" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900">
-                        Facebook
-                      </p>
-                      <Input
-                        value={editData.facebook_url}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            facebook_url: e.target.value,
-                          })
-                        }
-                        placeholder="https://facebook.com/your-org"
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* LinkedIn */}
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 rounded-lg bg-blue-100 p-2">
-                      <Linkedin className="size-4 text-blue-600" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900">
-                        LinkedIn
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        {profile.linkedin_url ? (
-                          <a
-                            href={profile.linkedin_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 break-all text-primary hover:text-primary/80"
-                          >
-                            {profile.linkedin_url}
-                            <ExternalLink className="size-3 shrink-0" />
-                          </a>
-                        ) : (
-                          'Add LinkedIn profile'
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Twitter */}
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 rounded-lg bg-sky-100 p-2">
-                      <Twitter className="size-4 text-sky-600" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900">
-                        Twitter
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        {profile.twitter_url ? (
-                          <a
-                            href={profile.twitter_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 break-all text-primary hover:text-primary/80"
-                          >
-                            {profile.twitter_url}
-                            <ExternalLink className="size-3 shrink-0" />
-                          </a>
-                        ) : (
-                          'Add Twitter profile'
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Facebook */}
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 rounded-lg bg-indigo-100 p-2">
-                      <Facebook className="size-4 text-indigo-600" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900">
-                        Facebook
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        {profile.facebook_url ? (
-                          <a
-                            href={profile.facebook_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 break-all text-primary hover:text-primary/80"
-                          >
-                            {profile.facebook_url}
-                            <ExternalLink className="size-3 shrink-0" />
-                          </a>
-                        ) : (
-                          'Add Facebook page'
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* Social Media Card */}
+          <SocialMediaCard
+            profile={profile}
+            onEdit={handleEditSection}
+            onSave={handleSaveSection}
+            onCancel={handleCancelEdit}
+            editingSection={editingSection}
+            editData={{
+              linkedin_url: editData.linkedin_url,
+              twitter_url: editData.twitter_url,
+              facebook_url: editData.facebook_url,
+            }}
+            onEditDataChange={(data) => setEditData({ ...editData, ...data })}
+            loading={loading}
+          />
 
           {/* Requester Stats Card */}
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -843,13 +501,18 @@ const OrganizationProfile = () => {
               <h2 className="text-xl font-semibold text-slate-900">About Us</h2>
               {editingSection === 'about' ? (
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={handleSaveSection}>
+                  <Button
+                    size="sm"
+                    onClick={handleSaveSection}
+                    disabled={loading}
+                  >
                     <Save className="size-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleCancelEdit}
+                    disabled={loading}
                   >
                     <X className="size-4" />
                   </Button>
@@ -859,6 +522,7 @@ const OrganizationProfile = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => handleEditSection('about')}
+                  disabled={loading}
                 >
                   <Edit2 className="size-4" />
                 </Button>
