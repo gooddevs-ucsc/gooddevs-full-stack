@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
 import { Button } from '@/components/ui/button';
-import { Form, Input, Label } from '@/components/ui/form'; // Removed Select import
+import { Form, Input, Label } from '@/components/ui/form';
 import { paths } from '@/config/paths';
 import { registerInputSchema, useRegister } from '@/lib/auth';
 
@@ -13,12 +13,12 @@ type RegisterFormProps = {
 
 // Development roles options
 const developmentRoles = [
-  { id: 'frontend', label: 'Frontend Developer' },
-  { id: 'backend', label: 'Backend Developer' },
-  { id: 'fullstack', label: 'Full-Stack Developer' },
-  { id: 'uiux', label: 'UI/UX Designer' },
-  { id: 'projectmanager', label: 'Project Manager' },
-  { id: 'qa', label: 'QA Engineer' },
+  { id: 'frontend', label: 'Frontend Developer', value: 'FRONTEND' },
+  { id: 'backend', label: 'Backend Developer', value: 'BACKEND' },
+  { id: 'fullstack', label: 'Full-Stack Developer', value: 'FULLSTACK' },
+  { id: 'uiux', label: 'UI/UX Designer', value: 'UIUX' },
+  { id: 'projectmanager', label: 'Project Manager', value: 'PROJECTMANAGER' },
+  { id: 'qa', label: 'QA Engineer', value: 'QA' },
 ];
 
 // Role options for radio buttons
@@ -70,8 +70,11 @@ export const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
       <Form
         onSubmit={(values) => {
           // You can access selectedDevRoles here if needed for future backend integration
-          // const submissionData = { ...values, developmentRoles: selectedDevRoles };
-          registering.mutate(values);
+          const submissionData = {
+            ...values,
+            volunteer_roles: selectedDevRoles,
+          };
+          registering.mutate(submissionData);
         }}
         schema={registerInputSchema}
         options={{
