@@ -15,6 +15,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { useApprovedApplicants } from '@/features/projects/api/get-approved-applicants';
 import { useUser } from '@/lib/auth';
 import { formatDate, formatEstimatedTimeline } from '@/utils/format';
 
@@ -30,6 +32,27 @@ export const ProjectDescriptionTab = ({
   const navigate = useNavigate();
   const { data: user } = useUser();
   const [showApplicationForm, setShowApplicationForm] = useState(false);
+
+  // Fetch approved team members using the public endpoint
+  const {
+    data: approvedData,
+    isLoading: isLoadingApproved,
+    error: approvedError,
+  } = useApprovedApplicants({
+    projectId: project.id,
+  });
+
+  // Debug logging
+  console.log('Approved Team Members Data:', approvedData);
+  console.log('Approved Error:', approvedError);
+  console.log('Project ID:', project.id);
+  console.log('Loading:', isLoadingApproved);
+
+  const approvedTeamMembers = approvedData?.data || [];
+  const approvedCount = approvedData?.count || 0;
+
+  console.log('Final approved team members:', approvedTeamMembers);
+  console.log('Approved count:', approvedCount);
 
   // Show application form if requested
   if (showApplicationForm) {
@@ -73,133 +96,137 @@ export const ProjectDescriptionTab = ({
               <Users className="size-5 text-indigo-600" />
             </div>
             <h2 className="text-xl font-semibold text-slate-900">
-              Current Team Members
+              Current Team Members ({approvedCount})
             </h2>
           </div>
-          <div className="space-y-4">
-            {/* Project Lead */}
-            <div className="flex items-start gap-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
-              <img
-                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face&auto=format"
-                alt="Alex Kumar"
-                className="size-12 rounded-full object-cover"
-              />
-              <div className="flex-1">
-                <div className="mb-2 flex items-center gap-3">
-                  <h4 className="font-semibold text-slate-900">
-                    Ravindra Fernando
-                  </h4>
-                  <span className="rounded-full bg-indigo-200 px-2 py-1 text-xs font-medium text-indigo-800">
-                    Project Lead
-                  </span>
-                </div>
-                <p className="mb-3 text-sm text-slate-600">
-                  Full-stack developer with 5+ years experience leading
-                  nonprofit tech projects
-                </p>
-                <div className="mb-3 flex flex-wrap gap-2">
-                  <span className="rounded bg-indigo-200 px-2 py-1 text-xs text-indigo-800">
-                    Leadership
-                  </span>
-                  <span className="rounded bg-indigo-200 px-2 py-1 text-xs text-indigo-800">
-                    React
-                  </span>
-                  <span className="rounded bg-indigo-200 px-2 py-1 text-xs text-indigo-800">
-                    Node.js
-                  </span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                >
-                  View Profile
-                </Button>
-              </div>
-            </div>
 
-            {/* Developer 1 */}
-            <div className="flex items-start gap-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-              <img
-                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face&auto=format"
-                alt="Sarah Patel"
-                className="size-12 rounded-full object-cover"
-              />
-              <div className="flex-1">
-                <div className="mb-2 flex items-center gap-3">
-                  <h4 className="font-semibold text-slate-900">
-                    Aksha Kumarasooriya
-                  </h4>
-                  <span className="rounded-full bg-emerald-200 px-2 py-1 text-xs font-medium text-emerald-800">
-                    Frontend Developer
-                  </span>
-                </div>
-                <p className="mb-3 text-sm text-slate-600">
-                  UI/UX focused developer passionate about creating accessible
-                  and beautiful interfaces
-                </p>
-                <div className="mb-3 flex flex-wrap gap-2">
-                  <span className="rounded bg-emerald-200 px-2 py-1 text-xs text-emerald-800">
-                    React
-                  </span>
-                  <span className="rounded bg-emerald-200 px-2 py-1 text-xs text-emerald-800">
-                    TypeScript
-                  </span>
-                  <span className="rounded bg-emerald-200 px-2 py-1 text-xs text-emerald-800">
-                    Design
-                  </span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                >
-                  View Profile
-                </Button>
-              </div>
+          {isLoadingApproved ? (
+            <div className="flex items-center justify-center py-8">
+              <Spinner className="size-6" />
             </div>
+          ) : approvedTeamMembers.length > 0 ? (
+            <div className="space-y-4">
+              {approvedTeamMembers.map((member) => {
+                const getRoleStyles = (role: string) => {
+                  switch (role) {
+                    case 'FRONTEND':
+                      return {
+                        border: 'border-emerald-200',
+                        bg: 'bg-emerald-50',
+                        avatar: 'bg-emerald-200 text-emerald-700',
+                        badge: 'bg-emerald-200 text-emerald-800',
+                      };
+                    case 'BACKEND':
+                      return {
+                        border: 'border-purple-200',
+                        bg: 'bg-purple-50',
+                        avatar: 'bg-purple-200 text-purple-700',
+                        badge: 'bg-purple-200 text-purple-800',
+                      };
+                    case 'FULLSTACK':
+                      return {
+                        border: 'border-blue-200',
+                        bg: 'bg-blue-50',
+                        avatar: 'bg-blue-200 text-blue-700',
+                        badge: 'bg-blue-200 text-blue-800',
+                      };
+                    case 'UIUX':
+                      return {
+                        border: 'border-pink-200',
+                        bg: 'bg-pink-50',
+                        avatar: 'bg-pink-200 text-pink-700',
+                        badge: 'bg-pink-200 text-pink-800',
+                      };
+                    case 'MOBILE':
+                      return {
+                        border: 'border-orange-200',
+                        bg: 'bg-orange-50',
+                        avatar: 'bg-orange-200 text-orange-700',
+                        badge: 'bg-orange-200 text-orange-800',
+                      };
+                    case 'DEVOPS':
+                      return {
+                        border: 'border-indigo-200',
+                        bg: 'bg-indigo-50',
+                        avatar: 'bg-indigo-200 text-indigo-700',
+                        badge: 'bg-indigo-200 text-indigo-800',
+                      };
+                    default:
+                      return {
+                        border: 'border-slate-200',
+                        bg: 'bg-slate-50',
+                        avatar: 'bg-slate-200 text-slate-700',
+                        badge: 'bg-slate-200 text-slate-800',
+                      };
+                  }
+                };
 
-            {/* Developer 2 */}
-            <div className="flex items-start gap-4 rounded-lg border border-purple-200 bg-purple-50 p-4">
-              <img
-                src="https://images.unsplash.com/photo-1556157382-97eda2d62296?w=150&h=150&fit=crop&crop=face&auto=format"
-                alt="Mike Rodriguez"
-                className="size-12 rounded-full object-cover"
-              />
-              <div className="flex-1">
-                <div className="mb-2 flex items-center gap-3">
-                  <h4 className="font-semibold text-slate-900">
-                    Mahesh Withanage
-                  </h4>
-                  <span className="rounded-full bg-purple-200 px-2 py-1 text-xs font-medium text-purple-800">
-                    Backend Developer
-                  </span>
-                </div>
-                <p className="mb-3 text-sm text-slate-600">
-                  Database and API specialist with expertise in scalable backend
-                  architecture
-                </p>
-                <div className="mb-3 flex flex-wrap gap-2">
-                  <span className="rounded bg-purple-200 px-2 py-1 text-xs text-purple-800">
-                    Python
-                  </span>
-                  <span className="rounded bg-purple-200 px-2 py-1 text-xs text-purple-800">
-                    FastAPI
-                  </span>
-                  <span className="rounded bg-purple-200 px-2 py-1 text-xs text-purple-800">
-                    PostgreSQL
-                  </span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                >
-                  View Profile
-                </Button>
-              </div>
+                const styles = getRoleStyles(member.volunteer_role);
+
+                return (
+                  <div
+                    key={member.id}
+                    className={`flex items-start gap-4 rounded-lg border p-4 ${styles.border} ${styles.bg}`}
+                  >
+                    <div
+                      className={`flex size-12 items-center justify-center rounded-full ${styles.avatar}`}
+                    >
+                      <Users className="size-6" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="mb-2 flex items-center gap-3">
+                        <h4 className="font-semibold text-slate-900">
+                          {member.firstname} {member.lastname}
+                        </h4>
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-medium ${styles.badge}`}
+                        >
+                          {member.volunteer_role.replace('_', ' ')}
+                        </span>
+                      </div>
+                      {member.email && (
+                        <p className="text-sm text-slate-600">{member.email}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          ) : (
+            <div className="py-8">
+              <div className="text-center">
+                <Users className="mx-auto mb-3 size-12 text-slate-400" />
+                <h3 className="mb-2 text-lg font-medium text-slate-900">
+                  No approved team members yet
+                </h3>
+                <p className="text-slate-600">
+                  This project is waiting for volunteers to join the team.
+                </p>
+              </div>
+
+              {/* Debug section - show approved team members */}
+              {approvedError && (
+                <div className="mt-6 rounded-lg bg-red-50 p-4">
+                  <h4 className="mb-2 text-sm font-medium text-red-800">
+                    Error loading team members:
+                  </h4>
+                  <p className="text-xs text-red-700">
+                    {approvedError.message}
+                  </p>
+                </div>
+              )}
+              {approvedData && (
+                <div className="mt-6 rounded-lg bg-blue-50 p-4">
+                  <h4 className="mb-2 text-sm font-medium text-blue-800">
+                    Debug: Approved Team Members API Response
+                  </h4>
+                  <pre className="text-xs text-blue-700">
+                    {JSON.stringify(approvedData, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Roles We Need */}
