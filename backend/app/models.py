@@ -1,9 +1,10 @@
 import uuid
 import enum
+import re
 from datetime import datetime
 from typing import Any
 
-from pydantic import EmailStr
+from pydantic import EmailStr, field_validator, ValidationError
 from sqlmodel import Field, Relationship, SQLModel, Column, Enum, Identity, Integer
 
 
@@ -503,7 +504,38 @@ class ProjectApplicationBase(SQLModel):
 
 # API models for creating application
 class ProjectApplicationCreate(ProjectApplicationBase):
-    pass
+    
+    @field_validator('cover_letter')
+    @classmethod
+    def validate_cover_letter(cls, v: str | None) -> str | None:
+        if v is None:
+            raise ValueError('Cover letter is required')
+        
+        # Clean and validate the content
+        trimmed = v.strip()
+        
+        if len(trimmed) < 50:
+            raise ValueError('Cover letter must be at least 50 characters')
+        
+        if len(trimmed) > 2000:
+            raise ValueError('Cover letter must not exceed 2000 characters')
+        
+        # Check if it's just repeated characters or numbers
+        if re.match(r'^(.)\1{49,}$', trimmed):  # 50+ of the same character
+            raise ValueError('Cover letter must contain meaningful text, not repeated characters')
+        
+        if re.match(r'^[0-9\s]*$', trimmed):  # Only numbers and spaces
+            raise ValueError('Cover letter must contain meaningful text, not just numbers')
+        
+        if re.match(r'^[^a-zA-Z]*$', trimmed):  # No letters at all
+            raise ValueError('Cover letter must contain meaningful text with actual words')
+        
+        # Check for minimum word count (at least 8 words)
+        words = [word for word in trimmed.split() if len(word) > 0]
+        if len(words) < 8:
+            raise ValueError('Cover letter must contain at least 8 meaningful words')
+        
+        return trimmed
 
 
 # API model for updating application
