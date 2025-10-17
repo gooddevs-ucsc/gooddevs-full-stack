@@ -233,6 +233,7 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }: TasksTabProps) => {
         onSubmit={handleSubmitTask}
         task={editingTask}
         isLoading={createTaskMutation.isPending || updateTaskMutation.isPending}
+        projectId={projectId}
       />
 
       {/* Delete Confirmation Dialog */}
