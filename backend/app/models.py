@@ -1,9 +1,11 @@
 import uuid
 import enum
+import re
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
-from pydantic import EmailStr
+from pydantic import EmailStr, field_validator, ValidationError
 from sqlmodel import Field, Relationship, SQLModel, Column, Enum, Identity, Integer
 
 
@@ -503,7 +505,94 @@ class ProjectApplicationBase(SQLModel):
 
 # API models for creating application
 class ProjectApplicationCreate(ProjectApplicationBase):
-    pass
+    
+    @field_validator('cover_letter')
+    @classmethod
+    def validate_cover_letter(cls, v: str | None) -> str | None:
+        if v is None:
+            raise ValueError('Cover letter is required')
+        
+        # Clean and validate the content
+        trimmed = v.strip()
+        
+        if len(trimmed) < 50:
+            raise ValueError('Cover letter must be at least 50 characters')
+        
+        if len(trimmed) > 2000:
+            raise ValueError('Cover letter must not exceed 2000 characters')
+        
+        # Check if it's just repeated characters or numbers
+        if re.match(r'^(.)\1{49,}$', trimmed):  # 50+ of the same character
+            raise ValueError('Cover letter must contain meaningful text, not repeated characters')
+        
+        if re.match(r'^[0-9\s]*$', trimmed):  # Only numbers and spaces
+            raise ValueError('Cover letter must contain meaningful text, not just numbers')
+        
+        if re.match(r'^[^a-zA-Z]*$', trimmed):  # No letters at all
+            raise ValueError('Cover letter must contain meaningful text with actual words')
+        
+        # Check for minimum word count (at least 8 words)
+        words = [word for word in trimmed.split() if len(word) > 0]
+        if len(words) < 8:
+            raise ValueError('Cover letter must contain at least 8 meaningful words')
+        
+        return trimmed
+    
+    @classmethod
+    def _validate_url_with_tld(cls, url: str) -> bool:
+        """Validate that URL has a proper domain with TLD"""
+        try:
+            parsed = urlparse(url)
+            hostname = parsed.hostname
+            
+            if not hostname:
+                return False
+            
+            # Check if hostname has at least one dot and a valid TLD
+            parts = hostname.split('.')
+            if len(parts) < 2:
+                return False
+            
+            # Get the TLD (last part)
+            tld = parts[-1]
+            
+            # TLD must be at least 2 characters and contain only letters
+            return len(tld) >= 2 and tld.isalpha()
+        except Exception:
+            return False
+    
+    @field_validator('portfolio_url')
+    @classmethod
+    def validate_portfolio_url(cls, v: str | None) -> str | None:
+        if v is None or v == '':
+            return v
+        
+        if not cls._validate_url_with_tld(v):
+            raise ValueError('Please enter a valid portfolio URL with a proper domain (e.g., .com, .org)')
+        
+        return v
+    
+    @field_validator('linkedin_url')
+    @classmethod
+    def validate_linkedin_url(cls, v: str | None) -> str | None:
+        if v is None or v == '':
+            return v
+        
+        if not cls._validate_url_with_tld(v):
+            raise ValueError('Please enter a valid LinkedIn URL with a proper domain')
+        
+        return v
+    
+    @field_validator('github_url')
+    @classmethod
+    def validate_github_url(cls, v: str | None) -> str | None:
+        if v is None or v == '':
+            raise ValueError('GitHub profile is required')
+        
+        if not cls._validate_url_with_tld(v):
+            raise ValueError('Please enter a valid GitHub URL with a proper domain')
+        
+        return v
 
 
 # API model for updating application

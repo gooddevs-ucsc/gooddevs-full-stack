@@ -9,6 +9,26 @@ import {
   ProjectApplicationResponse,
 } from '@/types/api';
 
+// Custom URL validation that requires proper TLD
+const validateUrlWithTLD = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
+
+    // Check if hostname has at least one dot and a valid TLD
+    const parts = hostname.split('.');
+    if (parts.length < 2) return false;
+
+    // Get the TLD (last part)
+    const tld = parts[parts.length - 1];
+
+    // TLD must be at least 2 characters and contain only letters
+    return tld.length >= 2 && /^[a-zA-Z]+$/.test(tld);
+  } catch {
+    return false;
+  }
+};
+
 export const createApplicationInputSchema = z.object({
   volunteer_role: z.enum(
     [
@@ -27,9 +47,37 @@ export const createApplicationInputSchema = z.object({
   ),
   cover_letter: z
     .string()
+    .min(1, 'Cover letter is required')
     .min(50, 'Cover letter must be at least 50 characters')
     .max(2000, 'Cover letter must not exceed 2000 characters')
-    .optional(),
+    .refine(
+      (value) => {
+        // Check if the text contains meaningful content
+        const trimmed = value.trim();
+
+        // Check if it's just repeated characters or numbers
+        const isRepeatedChar = /^(.)\1{49,}$/.test(trimmed); // 50+ of the same character
+        const isOnlyNumbers = /^[0-9\s]*$/.test(trimmed); // Only numbers and spaces
+        const isOnlySpecialChars = /^[^a-zA-Z]*$/.test(trimmed); // No letters at all
+
+        // Check for minimum word count (at least 8 words)
+        const wordCount = trimmed
+          .split(/\s+/)
+          .filter((word) => word.length > 0).length;
+        const hasMinWords = wordCount >= 8;
+
+        return (
+          !isRepeatedChar &&
+          !isOnlyNumbers &&
+          !isOnlySpecialChars &&
+          hasMinWords
+        );
+      },
+      {
+        message:
+          'Cover letter must contain meaningful text with at least 8 words. Please avoid using only numbers, repeated characters, or special characters.',
+      },
+    ),
   skills: z
     .string()
     .max(1000, 'Skills must not exceed 1000 characters')
@@ -43,19 +91,31 @@ export const createApplicationInputSchema = z.object({
     .string()
     .url('Please enter a valid URL')
     .max(500, 'URL must not exceed 500 characters')
+    .refine(
+      (url) => url === '' || validateUrlWithTLD(url),
+      'Please enter a valid URL with a proper domain (e.g., .com, .org)',
+    )
     .optional()
     .or(z.literal('')),
   linkedin_url: z
     .string()
     .url('Please enter a valid LinkedIn URL')
     .max(500, 'URL must not exceed 500 characters')
+    .refine(
+      (url) => url === '' || validateUrlWithTLD(url),
+      'Please enter a valid LinkedIn URL with a proper domain',
+    )
     .optional()
     .or(z.literal('')),
   github_url: z
     .string()
     .min(1, 'GitHub profile is required')
     .url('Please enter a valid GitHub URL')
-    .max(500, 'URL must not exceed 500 characters'),
+    .max(500, 'URL must not exceed 500 characters')
+    .refine(
+      (url) => validateUrlWithTLD(url),
+      'Please enter a valid GitHub URL with a proper domain',
+    ),
 });
 
 export type CreateApplicationInput = z.infer<
