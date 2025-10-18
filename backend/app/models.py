@@ -354,22 +354,29 @@ class Task(TaskBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     project_id: uuid.UUID = Field(
         foreign_key="project.id", nullable=False, ondelete="CASCADE")
+    creator_id: uuid.UUID | None = Field(default=None, foreign_key="user.id")
     assignee_id: uuid.UUID | None = Field(default=None, foreign_key="user.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    # Relationships
+    # Relationships - Use sa_relationship_kwargs for SQLModel
     project: Project | None = Relationship(back_populates="tasks")
-    assignee: User | None = Relationship()
+    assignee: User | None = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[Task.assignee_id]"}
+    )
+    creator: User | None = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[Task.creator_id]"}
+    )
 
 # Public Api models
-
 
 class TaskPublic(TaskBase):
     id: uuid.UUID
     project_id: uuid.UUID
+    creator_id: uuid.UUID | None = None
     assignee_id: uuid.UUID | None = None
     assignee: UserPublic | None = None
+    creator: UserPublic | None = None
     created_at: datetime
     updated_at: datetime
 

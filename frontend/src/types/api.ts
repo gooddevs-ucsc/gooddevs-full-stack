@@ -170,6 +170,7 @@ export enum TaskPriority {
 export interface Task {
   id: string;
   project_id: string;
+  creator_id: string;
   title: string;
   description?: string;
   status: TaskStatus;
@@ -178,6 +179,7 @@ export interface Task {
   actual_hours?: number;
   due_date?: string;
   assignee_id?: string;
+  creator?: User;
   assignee?: User;
   created_at: string;
   updated_at: string;
