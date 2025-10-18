@@ -17,6 +17,7 @@ export * from './components/project-detail';
 export * from './components/project-description-tab';
 export * from './components/project-create-form';
 export * from './components/edit-thread-form';
+export * from './components/manage-reviewer-permissions';
 export * from './api/get-user-projects';
 export * from './components/generate-project-details-modal';
 export * from './api/generate-project-details';
