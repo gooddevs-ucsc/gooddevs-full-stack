@@ -8,6 +8,7 @@ export * from './api/delete-application';
 export * from './api/get-reviewer-permissions';
 export * from './api/grant-reviewer-permission';
 export * from './api/revoke-reviewer-permission';
+export * from './api/can-review-project';
 export { ProjectThread as ProjectThreadComponent } from './components/project-thread';
 export * from './components/projects-list';
 export * from './components/project-approvals-list';
