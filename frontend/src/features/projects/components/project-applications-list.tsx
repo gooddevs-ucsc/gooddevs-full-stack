@@ -118,12 +118,9 @@ export const ProjectApplicationsList = ({
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-200 pb-4">
-        <h2 className="text-2xl font-bold text-gray-900">Applications</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Manage developer applications for &quot;
-          {projectData?.data?.title || 'Loading...'}
-          &quot;
-        </p>
+        <h2 className="text-2xl font-bold text-gray-900">
+          Applications for {projectData?.data?.title || 'Loading...'}
+        </h2>
       </div>
 
       {/* Status Tabs */}

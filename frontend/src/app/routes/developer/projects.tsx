@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { useDeleteApplication } from '@/features/projects/api/delete-application';
 import { useApplications } from '@/features/projects/api/get-applications';
 import { useApprovedProjects } from '@/features/projects/api/get-approved-projects';
+import { ReviewerActionButton } from '@/features/projects/components/reviewer-action-button';
 import { PROJECT_TYPE_STYLES } from '@/lib/constants/ui';
 import { APPLICATION_STATUS, ProjectApplication, Project } from '@/types/api';
 import { formatDate, formatEstimatedTimeline } from '@/utils/format';
@@ -393,7 +394,7 @@ const ProjectsRoute = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="mt-4 flex gap-2">
+                  <div className="mt-4 flex flex-wrap gap-2">
                     <Button
                       size="sm"
                       className="flex-1"
@@ -404,6 +405,12 @@ const ProjectsRoute = () => {
                     >
                       View Details
                     </Button>
+
+                    {/* Reviewer button for accepted applications - show if user can review */}
+                    {application &&
+                      application.status === APPLICATION_STATUS.APPROVED && (
+                        <ReviewerActionButton projectId={project.id} />
+                      )}
 
                     {/* Delete button for pending applications */}
                     {application &&
