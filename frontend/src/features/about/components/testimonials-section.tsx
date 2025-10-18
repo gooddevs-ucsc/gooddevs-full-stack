@@ -100,43 +100,6 @@ export const TestimonialsSection: FC = () => {
             </div>
           ))}
         </div>
-
-        {/* Trust indicators */}
-        <div className="mt-16 border-t border-slate-200 pt-16">
-          <div className="mb-12 text-center">
-            <h3 className="mb-4 text-2xl font-bold text-slate-900">
-              Trusted by Organizations & Supported by Sponsors
-            </h3>
-            <p className="text-slate-600">
-              Join hundreds of organizations and generous sponsors who believe
-              in technology for social good
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 items-center justify-items-center gap-8 opacity-60 md:grid-cols-4">
-            {/* Placeholder logos - replace with actual client logos */}
-            <div className="flex size-16 w-32 items-center justify-center rounded-lg bg-slate-100">
-              <span className="text-sm font-medium text-slate-500">
-                Education NGO
-              </span>
-            </div>
-            <div className="flex size-16 w-32 items-center justify-center rounded-lg bg-slate-100">
-              <span className="text-sm font-medium text-slate-500">
-                Health Initiative
-              </span>
-            </div>
-            <div className="flex size-16 w-32 items-center justify-center rounded-lg bg-slate-100">
-              <span className="text-sm font-medium text-slate-500">
-                Climate Action
-              </span>
-            </div>
-            <div className="flex size-16 w-32 items-center justify-center rounded-lg bg-slate-100">
-              <span className="text-sm font-medium text-slate-500">
-                Rural Development
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
