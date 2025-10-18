@@ -199,7 +199,6 @@ export const ImageUploadModal = ({
             ) : (
               <>
                 <Save className="mr-2 size-4" />
-                Save Changes
               </>
             )}
           </Button>
