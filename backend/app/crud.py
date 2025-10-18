@@ -2,7 +2,8 @@ from sqlalchemy.orm import selectinload
 from app.models import (
     Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread,
     ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate,
-    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, UserVolunteerRole, VolunteerRole
+    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, UserVolunteerRole, VolunteerRole,
+    ApplicationReviewerPermission, ApplicationReviewerPermissionCreate, ApplicationReviewerPermissionPublic, ReviewerPermissionStatus
 )
 
 import uuid
@@ -1110,3 +1111,189 @@ def get_requester_profile_stats(*, session: Session, user_id: uuid.UUID) -> dict
         "pending_applications": pending_applications,
         "active_volunteers": 0,
     }
+
+
+# Application Reviewer Permissions
+
+def grant_reviewer_permission(
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    reviewer_id: uuid.UUID,
+    granted_by: uuid.UUID
+) -> ApplicationReviewerPermission:
+    """
+    Grant permission to a volunteer to review applications for a project.
+    Only approved volunteers for the project can be granted this permission.
+    If a revoked permission exists, it will be reactivated.
+    """
+    # Check if a permission already exists (active or revoked)
+    statement = select(ApplicationReviewerPermission).where(
+        ApplicationReviewerPermission.project_id == project_id,
+        ApplicationReviewerPermission.reviewer_id == reviewer_id
+    )
+    existing_permission = session.exec(statement).first()
+    
+    if existing_permission:
+        # Reactivate if revoked
+        if existing_permission.status == ReviewerPermissionStatus.REVOKED:
+            existing_permission.status = ReviewerPermissionStatus.ACTIVE
+            existing_permission.revoked_at = None
+            existing_permission.granted_by = granted_by
+            session.add(existing_permission)
+            session.commit()
+            session.refresh(existing_permission)
+            return existing_permission
+        else:
+            # Already active
+            return existing_permission
+    
+    # Create new permission record
+    db_permission = ApplicationReviewerPermission(
+        project_id=project_id,
+        reviewer_id=reviewer_id,
+        granted_by=granted_by,
+        status=ReviewerPermissionStatus.ACTIVE
+    )
+    session.add(db_permission)
+    session.commit()
+    session.refresh(db_permission)
+    return db_permission
+
+
+def revoke_reviewer_permission(
+    *,
+    session: Session,
+    permission_id: uuid.UUID
+) -> bool:
+    """Revoke reviewer permission by setting status to REVOKED"""
+    permission = session.get(ApplicationReviewerPermission, permission_id)
+    if permission and permission.status == ReviewerPermissionStatus.ACTIVE:
+        permission.status = ReviewerPermissionStatus.REVOKED
+        permission.revoked_at = datetime.now(timezone.utc)
+        session.add(permission)
+        session.commit()
+        return True
+    return False
+
+
+def revoke_reviewer_permission_by_ids(
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    reviewer_id: uuid.UUID
+) -> bool:
+    """Revoke reviewer permission by project and reviewer IDs"""
+    statement = select(ApplicationReviewerPermission).where(
+        ApplicationReviewerPermission.project_id == project_id,
+        ApplicationReviewerPermission.reviewer_id == reviewer_id,
+        ApplicationReviewerPermission.status == ReviewerPermissionStatus.ACTIVE
+    )
+    permission = session.exec(statement).first()
+    if permission:
+        permission.status = ReviewerPermissionStatus.REVOKED
+        permission.revoked_at = datetime.now(timezone.utc)
+        session.add(permission)
+        session.commit()
+        return True
+    return False
+
+
+def check_reviewer_permission(
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    user_id: uuid.UUID
+) -> bool:
+    """
+    Check if a user has permission to review applications for a project.
+    Returns True if the user is the project owner OR has an ACTIVE reviewer permission.
+    """
+    # Check if user is the project owner
+    project = session.get(Project, project_id)
+    if project and project.requester_id == user_id:
+        return True
+    
+    # Check if user has an active reviewer permission
+    statement = select(ApplicationReviewerPermission).where(
+        ApplicationReviewerPermission.project_id == project_id,
+        ApplicationReviewerPermission.reviewer_id == user_id,
+        ApplicationReviewerPermission.status == ReviewerPermissionStatus.ACTIVE
+    )
+    permission = session.exec(statement).first()
+    return permission is not None
+
+
+def get_reviewer_permissions_for_project(
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    include_revoked: bool = False
+) -> list[ApplicationReviewerPermission]:
+    """
+    Get all reviewer permissions for a specific project with reviewer info.
+    By default, only returns ACTIVE permissions.
+    """
+    statement = (
+        select(ApplicationReviewerPermission)
+        .where(ApplicationReviewerPermission.project_id == project_id)
+        .options(selectinload(ApplicationReviewerPermission.reviewer))
+        .order_by(ApplicationReviewerPermission.created_at.desc())
+    )
+    
+    if not include_revoked:
+        statement = statement.where(
+            ApplicationReviewerPermission.status == ReviewerPermissionStatus.ACTIVE
+        )
+    
+    return list(session.exec(statement).all())
+
+
+def get_projects_user_can_review(
+    *,
+    session: Session,
+    user_id: uuid.UUID
+) -> list[Project]:
+    """
+    Get all projects where the user has permission to review applications.
+    This includes projects they own and projects where they have ACTIVE reviewer permission.
+    """
+    # Get projects owned by user
+    owned_projects_statement = select(Project).where(
+        Project.requester_id == user_id
+    )
+    owned_projects = list(session.exec(owned_projects_statement).all())
+    
+    # Get projects where user has active reviewer permission
+    permission_statement = (
+        select(Project)
+        .join(ApplicationReviewerPermission, 
+              ApplicationReviewerPermission.project_id == Project.id)
+        .where(
+            ApplicationReviewerPermission.reviewer_id == user_id,
+            ApplicationReviewerPermission.status == ReviewerPermissionStatus.ACTIVE
+        )
+    )
+    permitted_projects = list(session.exec(permission_statement).all())
+    
+    # Combine and deduplicate
+    all_projects = {p.id: p for p in owned_projects + permitted_projects}
+    return list(all_projects.values())
+
+
+def check_user_is_approved_volunteer(
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    user_id: uuid.UUID
+) -> bool:
+    """
+    Check if a user is an approved volunteer for a specific project.
+    """
+    statement = select(ProjectApplication).where(
+        ProjectApplication.project_id == project_id,
+        ProjectApplication.volunteer_id == user_id,
+        ProjectApplication.status == ApplicationStatus.APPROVED
+    )
+    application = session.exec(statement).first()
+    return application is not None

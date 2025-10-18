@@ -3,6 +3,7 @@ import {
   // Users, Folder,
   DollarSign,
   Home,
+  Settings,
 } from 'lucide-react';
 import { Outlet } from 'react-router';
 
@@ -33,6 +34,11 @@ const AdminRoot = () => {
       name: 'Donations & Sponsorships',
       to: paths.admin.donationsSponshorships.getHref(),
       icon: DollarSign,
+    },
+    {
+      name: 'Settings',
+      to: paths.admin.settings.getHref(),
+      icon: Settings,
     },
   ].filter(Boolean) as SideNavigationItem[];
 
