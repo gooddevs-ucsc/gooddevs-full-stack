@@ -607,6 +607,20 @@ class ProjectApplicationUpdate(SQLModel):
     status: ApplicationStatus | None = Field(default=None)
 
 
+# Models for approved team members (with volunteer role information)
+class ApprovedTeamMember(SQLModel):
+    id: uuid.UUID
+    firstname: str | None
+    lastname: str | None
+    email: str
+    volunteer_role: DeveloperRole
+
+
+class ApprovedTeamMembersPublic(SQLModel):
+    data: list[ApprovedTeamMember]
+    count: int
+
+
 # Database model
 class ProjectApplication(ProjectApplicationBase, table=True):
     __table_args__ = (
