@@ -202,6 +202,10 @@ export interface TaskResponse {
   data: Task;
 }
 
+export interface CanCreateTaskResponse {
+  can_create: boolean;
+}
+
 // Payment-related types
 export type PaymentDetails = {
   orderId: string;
