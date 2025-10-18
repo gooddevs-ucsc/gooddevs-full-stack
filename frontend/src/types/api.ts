@@ -339,7 +339,7 @@ export interface ProjectApplication {
 
 export interface ProjectApplicationCreate {
   volunteer_role: DeveloperRole;
-  cover_letter?: string;
+  cover_letter: string;
   skills?: string;
   experience_years?: number;
   portfolio_url?: string;
