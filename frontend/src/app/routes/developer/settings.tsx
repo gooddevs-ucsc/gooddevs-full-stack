@@ -213,14 +213,14 @@ const DeveloperSettingsRoute = () => {
                 value={email}
                 onChange={handleEmailChange}
                 placeholder="Enter new email"
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                className="w-full rounded-lg border border-blue-100 px-4 py-3 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 active:border-blue-600 active:ring-blue-300"
                 required
               />
             </div>
             <button
               type="submit"
               disabled={isUpdatingEmail || !email.trim()}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300 disabled:text-blue-100"
             >
               {isUpdatingEmail ? 'Updating Email...' : 'Update Email'}
             </button>
@@ -309,7 +309,7 @@ const DeveloperSettingsRoute = () => {
                 !newPassword ||
                 !confirmPassword
               }
-              className="w-full rounded-lg bg-emerald-600 px-4 py-3 text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300 disabled:text-blue-100"
             >
               {isUpdatingPassword ? 'Updating Password...' : 'Update Password'}
             </button>
