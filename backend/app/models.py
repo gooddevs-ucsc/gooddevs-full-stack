@@ -39,6 +39,13 @@ class EstimatedTimeline(str, enum.Enum):
     THREE_TO_SIX_MONTHS = "THREE_TO_SIX_MONTHS"
     MORE_THAN_SIX_MONTHS = "MORE_THAN_SIX_MONTHS"
 
+class VolunteerRole(str, enum.Enum):
+    FRONTEND = "FRONTEND"
+    BACKEND = "BACKEND"
+    FULLSTACK = "FULLSTACK"
+    UIUX = "UIUX"
+    PROJECTMANAGER = "PROJECTMANAGER"
+    QA = "QA"
 
 # Shared properties
 class UserBase(SQLModel):
@@ -62,6 +69,7 @@ class UserRegister(SQLModel):
     firstname: str = Field(max_length=255)
     lastname: str = Field(max_length=255)
     role: UserRole
+    volunteer_roles: list[str] | None = Field(default=None)
 
 
 # Properties to receive via API on update, all are optional
@@ -91,7 +99,19 @@ class User(UserBase, table=True):
         back_populates="requester", cascade_delete=True)
     notifications: list["Notification"] = Relationship(
         back_populates="recipient")
+    volunteer_roles: list["UserVolunteerRole"] = Relationship(
+        back_populates="user", cascade_delete=True)
 
+class UserVolunteerRole(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    role: VolunteerRole = Field(sa_column=Column(Enum(VolunteerRole)))
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationships
+    user: User | None = Relationship(back_populates="volunteer_roles")
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
@@ -342,6 +362,11 @@ class TasksPublic(SQLModel):
 
 class TaskResponse(SQLModel):
     data: TaskPublic
+
+
+# Response for can create task endpoint
+class CanCreateTaskResponse(SQLModel):
+    can_create: bool
 
 
 # Project Thread models
@@ -605,6 +630,20 @@ class ProjectApplicationUpdate(SQLModel):
     linkedin_url: str | None = Field(default=None, max_length=500)
     github_url: str | None = Field(default=None, max_length=500)
     status: ApplicationStatus | None = Field(default=None)
+
+
+# Models for approved team members (with volunteer role information)
+class ApprovedTeamMember(SQLModel):
+    id: uuid.UUID
+    firstname: str | None
+    lastname: str | None
+    email: str
+    volunteer_role: DeveloperRole
+
+
+class ApprovedTeamMembersPublic(SQLModel):
+    data: list[ApprovedTeamMember]
+    count: int
 
 
 # Database model
