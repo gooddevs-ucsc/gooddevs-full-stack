@@ -59,6 +59,10 @@ export const createAppRouter = (queryClient: QueryClient) =>
       lazy: () => import('./routes/about-us').then(convert(queryClient)),
     },
     {
+      path: paths.profile.path,
+      lazy: () => import('./routes/public-profile').then(convert(queryClient)),
+    },
+    {
       path: paths.auth.register.path,
       lazy: () => import('./routes/auth/register').then(convert(queryClient)),
     },
