@@ -39,10 +39,23 @@ const loginWithEmailAndPassword = (data: LoginInput): Promise<AuthResponse> => {
 
 export const registerInputSchema = z.object({
   email: z.string().min(1, 'Required').email('Invalid email'),
-  firstname: z.string().min(1, 'Required'),
-  lastname: z.string().min(1, 'Required'),
+  firstname: z
+    .string()
+    .min(1, 'Required')
+    .regex(
+      /^[a-zA-Z\s'-]+$/,
+      'First name can only contain letters, spaces, hyphens, and apostrophes',
+    ),
+  lastname: z
+    .string()
+    .min(1, 'Required')
+    .regex(
+      /^[a-zA-Z\s'-]+$/,
+      'Last name can only contain letters, spaces, hyphens, and apostrophes',
+    ),
   password: z.string().min(8, 'Should be at least 8 characters'),
   role: z.enum([ROLES.ADMIN, ROLES.SPONSOR, ROLES.VOLUNTEER, ROLES.REQUESTER]),
+  volunteer_roles: z.array(z.string()).optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerInputSchema>;

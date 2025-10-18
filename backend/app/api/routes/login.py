@@ -56,6 +56,14 @@ def signup(
 
     user_create = UserCreate.model_validate(user_in)
     user = crud.create_user(session=session, user_create=user_create)
+    
+    # Create volunteer roles if user is registering as volunteer and provided roles
+    if user_in.role == UserRole.VOLUNTEER and user_in.volunteer_roles:
+        crud.create_volunteer_roles(
+            session=session,
+            user_id=user.id,
+            roles=user_in.volunteer_roles
+        )
 
     # Create and set access token just like the login endpoint
     access_token_expires = timedelta(

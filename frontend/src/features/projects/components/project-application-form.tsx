@@ -81,21 +81,15 @@ export const ProjectApplicationForm = ({
         ...data,
         portfolio_url: data.portfolio_url || undefined,
         linkedin_url: data.linkedin_url || undefined,
-        cover_letter: data.cover_letter || undefined,
         skills: data.skills || undefined,
+        // cover_letter is required, so don't convert to undefined
         // github_url is required, so don't convert to undefined
       };
 
-      console.log('Submitting application data:', applicationData);
-      console.log('Project ID:', projectId);
-      console.log('Current user role:', user?.role);
-
-      const result = await createApplicationMutation.mutateAsync({
+      await createApplicationMutation.mutateAsync({
         projectId,
         data: applicationData,
       });
-
-      console.log('Application submission result:', result);
     } finally {
       setIsSubmitting(false);
     }

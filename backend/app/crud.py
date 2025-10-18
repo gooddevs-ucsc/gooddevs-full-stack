@@ -2,7 +2,7 @@ from sqlalchemy.orm import selectinload
 from app.models import (
     Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread,
     ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate,
-    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate
+    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, UserVolunteerRole, VolunteerRole
 )
 
 import uuid
@@ -27,6 +27,38 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
     session.refresh(db_obj)
     return db_obj
 
+def create_volunteer_roles(
+    *, session: Session, user_id: uuid.UUID, roles: list[str]
+) -> None:
+    """Create volunteer roles for a user"""
+    if not roles:
+        return
+    
+    volunteer_roles = []
+    for role in roles:
+        try:
+            # Validate that the role is a valid VolunteerRole enum value
+            volunteer_role_enum = VolunteerRole(role.upper())
+            volunteer_roles.append(UserVolunteerRole(
+                user_id=user_id,
+                role=volunteer_role_enum
+            ))
+        except ValueError:
+            # Skip invalid roles
+            continue
+    
+    if volunteer_roles:
+        session.add_all(volunteer_roles)
+        session.commit()
+
+def get_volunteer_roles_by_user_id(
+    *, session: Session, user_id: uuid.UUID
+) -> list[UserVolunteerRole]:
+    """Get volunteer roles for a user"""
+    statement = select(UserVolunteerRole).where(
+        UserVolunteerRole.user_id == user_id
+    )
+    return session.exec(statement).all()
 
 def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     user_data = user_in.model_dump(exclude_unset=True)
@@ -300,7 +332,6 @@ def create_comment(
     thread_id: uuid.UUID,
     author_id: uuid.UUID,
 ) -> Comment:
-    print(f"Creating comment for thread: {thread_id}")
     db_comment = Comment(
         body=comment_in.body,
         thread_id=thread_id,
@@ -309,7 +340,6 @@ def create_comment(
     session.add(db_comment)
     session.commit()
     session.refresh(db_comment)
-    print(f"Created comment with ID: {db_comment.id}")
     return db_comment
 
 
@@ -342,7 +372,6 @@ def create_reply(
     reply_in: ReplyCreate,
     author_id: uuid.UUID,
 ) -> Reply:
-    print(f"Creating reply for comment: {reply_in.parent_id}")
     # Verify the parent comment exists
     parent_comment = session.get(Comment, reply_in.parent_id)
     if not parent_comment:
@@ -356,7 +385,6 @@ def create_reply(
     session.add(db_reply)
     session.commit()
     session.refresh(db_reply)
-    print(f"Created reply with ID: {db_reply.id}")
     return db_reply
 
 
@@ -566,6 +594,40 @@ def get_all_applications(
     return applications, count
 
 
+def get_approved_applicants_for_project(
+    *,
+    session: Session,
+    project_id: uuid.UUID
+) -> list[dict]:
+    """
+    Get all approved applicants (volunteers) for a specific project with their volunteer roles.
+    Returns combined User and ProjectApplication data.
+    """
+    statement = (
+        select(User, ProjectApplication.volunteer_role)
+        .join(ProjectApplication, ProjectApplication.volunteer_id == User.id)
+        .where(
+            ProjectApplication.project_id == project_id,
+            ProjectApplication.status == ApplicationStatus.APPROVED
+        )
+        .order_by(User.firstname, User.lastname)
+    )
+    results = session.exec(statement).all()
+    
+    # Convert to list of dicts with combined data
+    team_members = []
+    for user, volunteer_role in results:
+        team_members.append({
+            "id": user.id,
+            "firstname": user.firstname,
+            "lastname": user.lastname,
+            "email": user.email,
+            "volunteer_role": volunteer_role
+        })
+    
+    return team_members
+
+
 # Payment CRUD operations
 def create_payment(*, session: Session, payment_in: PaymentCreate, merchant_id: str) -> Payment:
 
@@ -667,7 +729,8 @@ async def create_notification(
             }
         )
     except Exception as e:
-        print(f"Could not send real-time notification (user offline): {e}")
+        # Silently handle notification delivery failure (user may be offline)
+        pass
 
     return notification
 
