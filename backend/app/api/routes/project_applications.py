@@ -22,7 +22,8 @@ from app.models import (
     ApprovedTeamMembersPublic,
     ApplicationReviewerPermissionCreate,
     ApplicationReviewerPermissionPublic,
-    ApplicationReviewerPermissionsPublic
+    ApplicationReviewerPermissionsPublic,
+    CanReviewResponse
 )
 from app import crud
 from app.utils import calculate_pagination_meta_from_page, page_to_skip
@@ -633,3 +634,29 @@ def revoke_reviewer_permission(
         )
 
     return Message(message="Reviewer permission revoked successfully")
+
+
+@router.get("/projects/{project_id}/can-review", response_model=CanReviewResponse)
+def can_review_applications(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    project_id: uuid.UUID
+) -> CanReviewResponse:
+    """
+    Check if the current user can review applications for this project.
+    Returns True if user is the project owner or has active reviewer permissions.
+    """
+    # Check if project exists
+    project = session.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Check if user can review (owner or has active permission)
+    can_review = crud.check_reviewer_permission(
+        session=session,
+        project_id=project_id,
+        user_id=current_user.id
+    )
+
+    return CanReviewResponse(can_review=can_review)

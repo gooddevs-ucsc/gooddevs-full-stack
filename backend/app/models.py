@@ -110,14 +110,16 @@ class User(UserBase, table=True):
     volunteer_roles: list["UserVolunteerRole"] = Relationship(
         back_populates="user", cascade_delete=True)
     reviewer_permissions: list["ApplicationReviewerPermission"] = Relationship(
-        back_populates="reviewer", 
+        back_populates="reviewer",
         cascade_delete=True,
-        sa_relationship_kwargs={"foreign_keys": "[ApplicationReviewerPermission.reviewer_id]"}
+        sa_relationship_kwargs={
+            "foreign_keys": "[ApplicationReviewerPermission.reviewer_id]"}
     )
     granted_permissions: list["ApplicationReviewerPermission"] = Relationship(
-        back_populates="granter", 
+        back_populates="granter",
         cascade_delete=True,
-        sa_relationship_kwargs={"foreign_keys": "[ApplicationReviewerPermission.granted_by]"}
+        sa_relationship_kwargs={
+            "foreign_keys": "[ApplicationReviewerPermission.granted_by]"}
     )
 
 
@@ -369,6 +371,7 @@ class Task(TaskBase, table=True):
     )
 
 # Public Api models
+
 
 class TaskPublic(TaskBase):
     id: uuid.UUID
@@ -1009,12 +1012,14 @@ class ApplicationReviewerPermission(SQLModel, table=True):
     # Relationships
     project: Project | None = Relationship()
     reviewer: User | None = Relationship(
-        back_populates="reviewer_permissions", 
-        sa_relationship_kwargs={"foreign_keys": "[ApplicationReviewerPermission.reviewer_id]"}
+        back_populates="reviewer_permissions",
+        sa_relationship_kwargs={
+            "foreign_keys": "[ApplicationReviewerPermission.reviewer_id]"}
     )
     granter: User | None = Relationship(
-        back_populates="granted_permissions", 
-        sa_relationship_kwargs={"foreign_keys": "[ApplicationReviewerPermission.granted_by]"}
+        back_populates="granted_permissions",
+        sa_relationship_kwargs={
+            "foreign_keys": "[ApplicationReviewerPermission.granted_by]"}
     )
 
 
@@ -1037,6 +1042,10 @@ class ApplicationReviewerPermissionPublic(SQLModel):
 class ApplicationReviewerPermissionsPublic(SQLModel):
     data: list[ApplicationReviewerPermissionPublic]
     count: int
+
+
+class CanReviewResponse(SQLModel):
+    can_review: bool
 
 
 # Enhanced Requester Profile models
