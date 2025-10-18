@@ -117,7 +117,7 @@ async def create_task(  # Make this async
         )
 
     task = crud.create_task(
-        session=session, task_in=task_in, project_id=project_id)
+        session=session, task_in=task_in, project_id=project_id, creator_id=current_user.id)
 
     # Send notification if task is assigned
     if getattr(task, "assignee_id", None):

@@ -41,6 +41,11 @@ export const paths = {
     getHref: () => '/about-us',
   },
 
+  profile: {
+    path: '/profile/:userId',
+    getHref: (userId: string) => `/profile/${userId}`,
+  },
+
   app: {
     root: {
       path: '/app',

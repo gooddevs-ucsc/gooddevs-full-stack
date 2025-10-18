@@ -10,9 +10,11 @@ import {
   Zap,
   Calendar,
   Eye,
+  User,
+  ExternalLink,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -78,6 +80,34 @@ export const ProjectDescriptionTab = ({
                 'This project aims to create a meaningful solution that addresses real community needs while providing volunteer developers with valuable learning opportunities and portfolio contributions.'}
             </p>
           </div>
+        </div>
+
+        {/* Product Owner Section */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-full bg-blue-100 p-2">
+              <User className="size-5 text-blue-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              Product Owner
+            </h2>
+          </div>
+
+          <Link
+            to={`/profile/${project.requester_id}`}
+            className="group flex items-center rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 transition-all duration-200 hover:from-blue-100 hover:to-indigo-100"
+          >
+            <div className="mr-4 flex size-12 items-center justify-center rounded-full bg-blue-600 text-white">
+              <User className="size-6" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-slate-900 transition-colors group-hover:text-blue-600">
+                Project Requester
+              </h4>
+              <p className="text-sm text-slate-600">Click to view profile</p>
+            </div>
+            <ExternalLink className="size-4 text-slate-400 transition-colors group-hover:text-blue-600" />
+          </Link>
         </div>
 
         {/* Current Team Members */}
@@ -194,28 +224,6 @@ export const ProjectDescriptionTab = ({
                   This project is waiting for volunteers to join the team.
                 </p>
               </div>
-
-              {/* Debug section - show approved team members */}
-              {approvedError && (
-                <div className="mt-6 rounded-lg bg-red-50 p-4">
-                  <h4 className="mb-2 text-sm font-medium text-red-800">
-                    Error loading team members:
-                  </h4>
-                  <p className="text-xs text-red-700">
-                    {approvedError.message}
-                  </p>
-                </div>
-              )}
-              {approvedData && (
-                <div className="mt-6 rounded-lg bg-blue-50 p-4">
-                  <h4 className="mb-2 text-sm font-medium text-blue-800">
-                    Debug: Approved Team Members API Response
-                  </h4>
-                  <pre className="text-xs text-blue-700">
-                    {JSON.stringify(approvedData, null, 2)}
-                  </pre>
-                </div>
-              )}
             </div>
           )}
         </div>
