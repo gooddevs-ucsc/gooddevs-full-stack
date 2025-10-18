@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useApprovedApplicants } from '@/features/projects/api/get-approved-applicants';
 import { useUser } from '@/lib/auth';
+import { usePublicUserProfile } from '@/lib/public-profile-api';
 import { formatDate, formatEstimatedTimeline } from '@/utils/format';
 
 import { ProjectApplicationForm } from './project-application-form';
@@ -35,6 +36,15 @@ export const ProjectDescriptionTab = ({
   const { data: user } = useUser();
   const [showApplicationForm, setShowApplicationForm] = useState(false);
 
+  // Fetch requester profile to get the name
+  const { data: requesterData, isLoading: isLoadingRequester } =
+    usePublicUserProfile({
+      userId: project.requester_id,
+      queryConfig: {
+        enabled: !!project.requester_id,
+      },
+    });
+
   // Fetch approved team members using the public endpoint
   const {
     data: approvedData,
@@ -46,6 +56,12 @@ export const ProjectDescriptionTab = ({
 
   const approvedTeamMembers = approvedData?.data || [];
   const approvedCount = approvedData?.count || 0;
+
+  // Get requester name from profile data
+  const requesterProfile = requesterData?.data;
+  const requesterName = requesterProfile
+    ? `${requesterProfile.firstname} ${requesterProfile.lastname}`.trim()
+    : 'Project Requester';
 
   // Show application form if requested
   if (showApplicationForm) {
@@ -102,7 +118,7 @@ export const ProjectDescriptionTab = ({
             </div>
             <div className="flex-1">
               <h4 className="font-semibold text-slate-900 transition-colors group-hover:text-blue-600">
-                Project Requester
+                {isLoadingRequester ? 'Loading...' : requesterName}
               </h4>
               <p className="text-sm text-slate-600">Click to view profile</p>
             </div>
