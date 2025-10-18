@@ -43,7 +43,7 @@ export const SocialMediaCard = ({
   loading,
 }: SocialMediaCardProps) => {
   return (
-    <div className="mt-6 border-t border-slate-200 pt-6">
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-slate-900">Connect With Us</h3>
         {editingSection === 'social' ? (
