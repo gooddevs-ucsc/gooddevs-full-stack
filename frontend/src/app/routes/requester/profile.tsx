@@ -125,6 +125,10 @@ const OrganizationProfile = () => {
     cover_image_url: '',
   });
 
+  // Add pagination state for active projects
+  const [currentPage, setCurrentPage] = useState(1);
+  const projectsPerPage = 4;
+
   // Fetch user's projects using the same hook as dashboard
   const { data: projectsData, isLoading: projectsLoading } = useUserProjects({
     page: 1,
@@ -237,6 +241,13 @@ const OrganizationProfile = () => {
   // Get only active projects
   const activeProjects = transformedProjects.filter(
     (project) => project.status === 'Active',
+  );
+
+  // Calculate pagination for active projects
+  const totalPages = Math.ceil(activeProjects.length / projectsPerPage);
+  const displayedProjects = activeProjects.slice(
+    (currentPage - 1) * projectsPerPage,
+    currentPage * projectsPerPage,
   );
 
   const handleEditSection = (section: string) => {
@@ -582,7 +593,7 @@ const OrganizationProfile = () => {
             ) : activeProjects.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-1">
-                  {activeProjects.slice(0, 6).map((project) => (
+                  {displayedProjects.map((project) => (
                     <button
                       key={project.id}
                       className="cursor-pointer rounded-lg border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/50 p-4 text-left transition-all hover:shadow-md"
@@ -612,16 +623,30 @@ const OrganizationProfile = () => {
                   ))}
                 </div>
 
-                {activeProjects.length > 6 && (
-                  <div className="mt-4 text-center">
+                {totalPages > 1 && (
+                  <div className="mt-4 flex items-center justify-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        navigate(paths.requester.projects.getHref())
+                        setCurrentPage((prev) => Math.max(prev - 1, 1))
                       }
+                      disabled={currentPage === 1}
                     >
-                      View All {activeProjects.length} Active Projects
+                      Previous
+                    </Button>
+                    <span className="text-sm text-slate-600">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
                     </Button>
                   </div>
                 )}
