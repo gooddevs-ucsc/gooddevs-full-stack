@@ -89,9 +89,9 @@ const RequesterSettingsRoute = () => {
         {user && (
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg">
             <div className="mb-4 flex items-center gap-3">
-              <div className="rounded-full bg-indigo-100 p-2">
+              <div className="rounded-full bg-purple-100 p-2">
                 <svg
-                  className="size-5 text-indigo-600"
+                  className="size-5 text-purple-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -186,9 +186,9 @@ const RequesterSettingsRoute = () => {
         {/* Change Password Form */}
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg">
           <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-full bg-orange-100 p-2">
+            <div className="rounded-full bg-purple-100 p-2">
               <svg
-                className="size-5 text-orange-600"
+                className="size-5 text-purple-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
