@@ -8,6 +8,7 @@ interface TaskListProps {
   tasks: Task[];
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  onViewDetails: (task: Task) => void;
 }
 
 const getStatusTitle = (status: TaskStatus) => {
@@ -40,7 +41,7 @@ const getStatusColor = (status: TaskStatus) => {
   }
 };
 
-export const TaskList: FC<TaskListProps> = ({ tasks, onEdit, onDelete }) => {
+export const TaskList: FC<TaskListProps> = ({ tasks, onViewDetails }) => {
   const tasksByStatus = {
     [TaskStatus.TODO]: tasks.filter((task) => task.status === TaskStatus.TODO),
     [TaskStatus.IN_PROGRESS]: tasks.filter(
@@ -70,12 +71,7 @@ export const TaskList: FC<TaskListProps> = ({ tasks, onEdit, onDelete }) => {
         </div>
         <div className="space-y-3">
           {tasksByStatus[TaskStatus.TODO].map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
+            <TaskCard key={task.id} task={task} onViewDetails={onViewDetails} />
           ))}
           {tasksByStatus[TaskStatus.TODO].length === 0 && (
             <div className="rounded-lg border-2 border-dashed border-slate-200 p-6 text-center">
@@ -99,12 +95,7 @@ export const TaskList: FC<TaskListProps> = ({ tasks, onEdit, onDelete }) => {
         </div>
         <div className="space-y-3">
           {tasksByStatus[TaskStatus.IN_PROGRESS].map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
+            <TaskCard key={task.id} task={task} onViewDetails={onViewDetails} />
           ))}
           {tasksByStatus[TaskStatus.IN_PROGRESS].length === 0 && (
             <div className="rounded-lg border-2 border-dashed border-slate-200 p-6 text-center">
@@ -128,12 +119,7 @@ export const TaskList: FC<TaskListProps> = ({ tasks, onEdit, onDelete }) => {
         </div>
         <div className="space-y-3">
           {tasksByStatus[TaskStatus.COMPLETED].map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
+            <TaskCard key={task.id} task={task} onViewDetails={onViewDetails} />
           ))}
           {tasksByStatus[TaskStatus.COMPLETED].length === 0 && (
             <div className="rounded-lg border-2 border-dashed border-slate-200 p-6 text-center">
