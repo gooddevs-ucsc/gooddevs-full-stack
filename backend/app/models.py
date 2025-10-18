@@ -364,6 +364,11 @@ class TaskResponse(SQLModel):
     data: TaskPublic
 
 
+# Response for can create task endpoint
+class CanCreateTaskResponse(SQLModel):
+    can_create: bool
+
+
 # Project Thread models
 class ProjectThreadBase(SQLModel):
     title: str = Field(min_length=1, max_length=255)

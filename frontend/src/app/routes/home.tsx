@@ -1,6 +1,7 @@
 import { Head } from '@/components/seo';
 import { Footer } from '@/components/ui/footer/footer';
 import { Navbar } from '@/components/ui/navbar/navbar';
+import { TestimonialsSection } from '@/features/about/components';
 import { AboutSection, HeroSection } from '@/features/home/components';
 
 const HomeRoute = () => {
@@ -11,6 +12,7 @@ const HomeRoute = () => {
         <Navbar />
         <HeroSection />
         <AboutSection />
+        <TestimonialsSection />
         <Footer />
       </div>
     </>
