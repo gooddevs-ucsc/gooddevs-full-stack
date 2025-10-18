@@ -102,6 +102,10 @@ export const paths = {
       path: 'project-approvals',
       getHref: () => '/admin/project-approvals',
     },
+    settings: {
+      path: 'settings',
+      getHref: () => '/admin/settings',
+    },
   },
 
   sponsor: {

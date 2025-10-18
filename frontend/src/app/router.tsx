@@ -136,6 +136,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
               convert(queryClient),
             ),
         },
+        {
+          path: paths.admin.settings.path,
+          lazy: () =>
+            import('./routes/admin/settings').then(convert(queryClient)),
+        },
       ],
     },
     {
