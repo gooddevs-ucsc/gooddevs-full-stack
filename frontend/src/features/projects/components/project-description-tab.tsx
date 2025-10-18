@@ -194,28 +194,6 @@ export const ProjectDescriptionTab = ({
                   This project is waiting for volunteers to join the team.
                 </p>
               </div>
-
-              {/* Debug section - show approved team members */}
-              {approvedError && (
-                <div className="mt-6 rounded-lg bg-red-50 p-4">
-                  <h4 className="mb-2 text-sm font-medium text-red-800">
-                    Error loading team members:
-                  </h4>
-                  <p className="text-xs text-red-700">
-                    {approvedError.message}
-                  </p>
-                </div>
-              )}
-              {approvedData && (
-                <div className="mt-6 rounded-lg bg-blue-50 p-4">
-                  <h4 className="mb-2 text-sm font-medium text-blue-800">
-                    Debug: Approved Team Members API Response
-                  </h4>
-                  <pre className="text-xs text-blue-700">
-                    {JSON.stringify(approvedData, null, 2)}
-                  </pre>
-                </div>
-              )}
             </div>
           )}
         </div>
