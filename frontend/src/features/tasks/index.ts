@@ -1,3 +1,4 @@
+export * from './api/can-create-task';
 export * from './api/create-task';
 export * from './api/delete-task';
 export * from './api/get-tasks';

@@ -3,15 +3,44 @@ import uuid
 import json
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Path
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.models import Task, TaskCreate, TaskPublic, TasksPublic, TaskUpdate, TaskResponse, UserRole, Meta, NotificationType, ApplicationStatus
+from app.models import Task, TaskCreate, TaskPublic, TasksPublic, TaskUpdate, TaskResponse, UserRole, Meta, NotificationType, ApplicationStatus, CanCreateTaskResponse
 from app import crud
 from app.utils import calculate_pagination_meta_from_page
 
 router = APIRouter(prefix="/projects/{project_id}/tasks", tags=["tasks"])
+
+
+def check_user_can_create_task(session: SessionDep, project_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+    """
+    Check if the user can create a task for the project.
+    Returns True if user is either:
+    - The project owner (requester)
+    - An approved applicant for the project
+    """
+    # Get the project
+    project = crud.get_project_by_id(session=session, project_id=project_id)
+    if not project:
+        return False
+
+    # Check if user is the project owner
+    if project.requester_id == user_id:
+        return True
+
+    # Check if user is an approved applicant
+    application = crud.get_application_by_project_and_volunteer(
+        session=session,
+        project_id=project_id,
+        volunteer_id=user_id
+    )
+
+    if application and application.status == ApplicationStatus.APPROVED:
+        return True
+
+    return False
 
 
 def validate_assignee_is_approved_applicant(session: SessionDep, project_id: uuid.UUID, assignee_id: uuid.UUID) -> None:
@@ -38,6 +67,22 @@ def validate_assignee_is_approved_applicant(session: SessionDep, project_id: uui
         )
 
 
+@router.get("/can-create", response_model=CanCreateTaskResponse)
+def can_create_task(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    project_id: uuid.UUID = Path(...)
+) -> Any:
+    """Check if the current user can create tasks for this project."""
+    can_create = check_user_can_create_task(
+        session=session,
+        project_id=project_id,
+        user_id=current_user.id
+    )
+    return CanCreateTaskResponse(can_create=can_create)
+
+
 @router.post("/", response_model=TaskResponse)
 async def create_task(  # Make this async
     *,
@@ -46,15 +91,22 @@ async def create_task(  # Make this async
     project_id: uuid.UUID,
     task_in: TaskCreate
 ) -> Any:
-    """Create a new task for a project."""
-    # Check if project exists and user has permission
+    """
+    Create a new task for a project.
+
+    Only users who are either the project owner or have an approved application for the project are permitted to create tasks.
+    """
+    # Check if project exists
     project = crud.get_project_by_id(session=session, project_id=project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Check permissions
-    if current_user.role not in [UserRole.VOLUNTEER, UserRole.ADMIN]:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    # Check if user can create task (must be project owner or approved applicant)
+    if not check_user_can_create_task(session=session, project_id=project_id, user_id=current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="Only project owner or approved applicants can create tasks for this project"
+        )
 
     # Validate assignee if provided
     if task_in.assignee_id:
