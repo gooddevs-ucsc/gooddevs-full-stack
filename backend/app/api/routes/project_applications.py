@@ -19,7 +19,10 @@ from app.models import (
     Meta,
     Project,
     VolunteersPublic,
-    ApprovedTeamMembersPublic
+    ApprovedTeamMembersPublic,
+    ApplicationReviewerPermissionCreate,
+    ApplicationReviewerPermissionPublic,
+    ApplicationReviewerPermissionsPublic
 )
 from app import crud
 from app.utils import calculate_pagination_meta_from_page, page_to_skip
@@ -149,6 +152,7 @@ def read_project_applications(
     Retrieve applications for a specific project.
     - ADMIN users can see applications for any project
     - REQUESTER users can see applications for their own projects
+    - VOLUNTEER users with reviewer permission can see applications
     """
     # Check if project exists
     project = crud.get_project_by_id(session=session, project_id=project_id)
@@ -159,12 +163,17 @@ def read_project_applications(
     if current_user.role == UserRole.ADMIN:
         # Admins can see applications for any project
         pass
-    elif current_user.role == UserRole.REQUESTER:
-        # Requesters can only see applications for their own projects
-        if project.requester_id != current_user.id:
+    elif current_user.role in [UserRole.REQUESTER, UserRole.VOLUNTEER]:
+        # Check if user has permission to review applications for this project
+        has_permission = crud.check_reviewer_permission(
+            session=session,
+            project_id=project_id,
+            user_id=current_user.id
+        )
+        if not has_permission:
             raise HTTPException(
                 status_code=403,
-                detail="You can only view applications for your own projects"
+                detail="You don't have permission to view applications for this project"
             )
     else:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
@@ -259,7 +268,7 @@ def update_application(
     """
     Update an application.
     - ADMIN users can update any application (including status changes)
-    - VOLUNTEER users can update their own applications (excluding status)
+    - VOLUNTEER users can update their own applications (excluding status), or update status if they have reviewer permission
     - REQUESTER users can update status of applications for their own projects
     """
     application = crud.get_application_by_id(
@@ -271,23 +280,51 @@ def update_application(
         # Admins can update any application
         pass
     elif current_user.role == UserRole.VOLUNTEER:
-        # Volunteers can only update their own applications (excluding status)
-        if application.volunteer_id != current_user.id:
+        # Check if it's their own application
+        is_own_application = application.volunteer_id == current_user.id
+
+        # Check if they have reviewer permission for this project
+        has_reviewer_permission = crud.check_reviewer_permission(
+            session=session,
+            project_id=application.project_id,
+            user_id=current_user.id
+        )
+
+        if is_own_application:
+            # Volunteers can update their own applications but not the status
+            if application_in.status is not None and not has_reviewer_permission:
+                raise HTTPException(
+                    status_code=403,
+                    detail="You cannot change application status for your own application"
+                )
+        elif has_reviewer_permission:
+            # Volunteers with reviewer permission can only change status
+            if any([
+                application_in.volunteer_role is not None,
+                application_in.cover_letter is not None,
+                application_in.skills is not None,
+                application_in.experience_years is not None,
+                application_in.portfolio_url is not None,
+                application_in.linkedin_url is not None,
+                application_in.github_url is not None
+            ]):
+                raise HTTPException(
+                    status_code=403,
+                    detail="Reviewers can only change application status"
+                )
+        else:
             raise HTTPException(
                 status_code=403,
-                detail="You can only update your own applications"
-            )
-        # Volunteers cannot change status
-        if application_in.status is not None:
-            raise HTTPException(
-                status_code=403,
-                detail="Volunteers cannot change application status"
+                detail="You can only update your own applications or applications you're authorized to review"
             )
     elif current_user.role == UserRole.REQUESTER:
-        # Requesters can update status of applications for their own projects
-        project = crud.get_project_by_id(
-            session=session, project_id=application.project_id)
-        if not project or project.requester_id != current_user.id:
+        # Check if user has permission to review applications for this project
+        has_permission = crud.check_reviewer_permission(
+            session=session,
+            project_id=application.project_id,
+            user_id=current_user.id
+        )
+        if not has_permission:
             raise HTTPException(
                 status_code=403,
                 detail="You can only update applications for your own projects"
@@ -363,6 +400,7 @@ def approve_application(
     Approve an application.
     - ADMIN users can approve any application
     - REQUESTER users can approve applications for their own projects
+    - VOLUNTEER users with reviewer permission can approve applications
     """
     application = crud.get_application_by_id(
         session=session, application_id=application_id)
@@ -372,19 +410,22 @@ def approve_application(
     if current_user.role == UserRole.ADMIN:
         # Admins can approve any application
         pass
-    elif current_user.role == UserRole.REQUESTER:
-        # Requesters can approve applications for their own projects
-        project = crud.get_project_by_id(
-            session=session, project_id=application.project_id)
-        if not project or project.requester_id != current_user.id:
+    elif current_user.role in [UserRole.REQUESTER, UserRole.VOLUNTEER]:
+        # Check if user has permission to review applications for this project
+        has_permission = crud.check_reviewer_permission(
+            session=session,
+            project_id=application.project_id,
+            user_id=current_user.id
+        )
+        if not has_permission:
             raise HTTPException(
                 status_code=403,
-                detail="You can only approve applications for your own projects"
+                detail="You don't have permission to review applications for this project"
             )
     else:
         raise HTTPException(
             status_code=403,
-            detail="Only admins and project requesters can approve applications"
+            detail="Only admins, project owners, and authorized reviewers can approve applications"
         )
 
     application_update = ProjectApplicationUpdate(
@@ -406,6 +447,7 @@ def reject_application(
     Reject an application.
     - ADMIN users can reject any application
     - REQUESTER users can reject applications for their own projects
+    - VOLUNTEER users with reviewer permission can reject applications
     """
     application = crud.get_application_by_id(
         session=session, application_id=application_id)
@@ -415,19 +457,22 @@ def reject_application(
     if current_user.role == UserRole.ADMIN:
         # Admins can reject any application
         pass
-    elif current_user.role == UserRole.REQUESTER:
-        # Requesters can reject applications for their own projects
-        project = crud.get_project_by_id(
-            session=session, project_id=application.project_id)
-        if not project or project.requester_id != current_user.id:
+    elif current_user.role in [UserRole.REQUESTER, UserRole.VOLUNTEER]:
+        # Check if user has permission to review applications for this project
+        has_permission = crud.check_reviewer_permission(
+            session=session,
+            project_id=application.project_id,
+            user_id=current_user.id
+        )
+        if not has_permission:
             raise HTTPException(
                 status_code=403,
-                detail="You can only reject applications for your own projects"
+                detail="You don't have permission to review applications for this project"
             )
     else:
         raise HTTPException(
             status_code=403,
-            detail="Only admins and project requesters can reject applications"
+            detail="Only admins, project owners, and authorized reviewers can reject applications"
         )
 
     application_update = ProjectApplicationUpdate(
@@ -462,3 +507,129 @@ def read_applications_by_status(
     meta = calculate_pagination_meta_from_page(
         total=total, page=page, limit=limit)
     return ProjectApplicationsPublic(data=applications, meta=meta)
+
+
+# Reviewer Permission Management
+
+@router.post("/projects/{project_id}/reviewers", response_model=ApplicationReviewerPermissionPublic)
+def grant_reviewer_permission(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    project_id: uuid.UUID,
+    permission_in: ApplicationReviewerPermissionCreate
+) -> Any:
+    """
+    Grant permission to an approved volunteer to review applications.
+    Only the project owner (REQUESTER) can grant this permission.
+    The volunteer must be an approved team member of the project.
+    If permission was previously revoked, it will be reactivated.
+    """
+    # Check if project exists
+    project = crud.get_project_by_id(session=session, project_id=project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Only project owner can grant permissions
+    if project.requester_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Only the project owner can grant reviewer permissions"
+        )
+
+    # Check if the reviewer is an approved volunteer for this project
+    is_approved = crud.check_user_is_approved_volunteer(
+        session=session,
+        project_id=project_id,
+        user_id=permission_in.reviewer_id
+    )
+    if not is_approved:
+        raise HTTPException(
+            status_code=400,
+            detail="Only approved volunteers can be granted reviewer permissions"
+        )
+
+    # Grant the permission (will reactivate if previously revoked)
+    permission = crud.grant_reviewer_permission(
+        session=session,
+        project_id=project_id,
+        reviewer_id=permission_in.reviewer_id,
+        granted_by=current_user.id
+    )
+
+    return permission
+
+
+@router.get("/projects/{project_id}/reviewers", response_model=ApplicationReviewerPermissionsPublic)
+def get_project_reviewers(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    project_id: uuid.UUID,
+    include_revoked: bool = False
+) -> Any:
+    """
+    Get all reviewers who have permission to review applications for a project.
+    Only the project owner can view this list.
+    By default, only returns active permissions. Set include_revoked=true to see all.
+    """
+    # Check if project exists
+    project = crud.get_project_by_id(session=session, project_id=project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Only project owner and admins can view reviewers
+    if current_user.role != UserRole.ADMIN and project.requester_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Only the project owner can view reviewer permissions"
+        )
+
+    permissions = crud.get_reviewer_permissions_for_project(
+        session=session,
+        project_id=project_id,
+        include_revoked=include_revoked
+    )
+
+    return ApplicationReviewerPermissionsPublic(data=permissions, count=len(permissions))
+
+
+@router.delete("/projects/{project_id}/reviewers/{reviewer_id}", response_model=Message)
+def revoke_reviewer_permission(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    project_id: uuid.UUID,
+    reviewer_id: uuid.UUID
+) -> Any:
+    """
+    Revoke reviewer permission from a volunteer.
+    This sets the status to REVOKED instead of deleting the record.
+    Only the project owner can revoke permissions.
+    """
+    # Check if project exists
+    project = crud.get_project_by_id(session=session, project_id=project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Only project owner can revoke permissions
+    if project.requester_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Only the project owner can revoke reviewer permissions"
+        )
+
+    # Revoke the permission (sets status to REVOKED)
+    success = crud.revoke_reviewer_permission_by_ids(
+        session=session,
+        project_id=project_id,
+        reviewer_id=reviewer_id
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=404,
+            detail="Active reviewer permission not found for this volunteer"
+        )
+
+    return Message(message="Reviewer permission revoked successfully")
