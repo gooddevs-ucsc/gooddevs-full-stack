@@ -6,18 +6,20 @@ from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
-    ProjectApplication, 
-    ProjectApplicationCreate, 
-    ProjectApplicationPublic, 
-    ProjectApplicationsPublic, 
-    ProjectApplicationUpdate, 
+    ProjectApplication,
+    ProjectApplicationCreate,
+    ProjectApplicationPublic,
+    ProjectApplicationsPublic,
+    ProjectApplicationUpdate,
     ProjectApplicationResponse,
-    Message, 
-    UserRole, 
-    ProjectStatus, 
+    Message,
+    UserRole,
+    ProjectStatus,
     ApplicationStatus,
     Meta,
-    Project
+    Project,
+    VolunteersPublic,
+    ApprovedTeamMembersPublic
 )
 from app import crud
 from app.utils import calculate_pagination_meta_from_page, page_to_skip
@@ -47,7 +49,7 @@ def create_application(
     project = crud.get_project_by_id(session=session, project_id=project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     if project.status != ProjectStatus.APPROVED:
         raise HTTPException(
             status_code=400,
@@ -56,8 +58,8 @@ def create_application(
 
     # Check if volunteer has already applied to this project
     existing_application = crud.get_application_by_project_and_volunteer(
-        session=session, 
-        project_id=project_id, 
+        session=session,
+        project_id=project_id,
         volunteer_id=current_user.id
     )
     if existing_application:
@@ -103,14 +105,16 @@ def read_applications(
     elif current_user.role == UserRole.REQUESTER:
         # Requesters can see applications for their own projects
         # First get all projects by this requester
-        statement = select(Project.id).where(Project.requester_id == current_user.id)
+        statement = select(Project.id).where(
+            Project.requester_id == current_user.id)
         project_ids = session.exec(statement).all()
-        
+
         if not project_ids:
             # No projects, no applications
-            meta = calculate_pagination_meta_from_page(total=0, page=page, limit=limit)
+            meta = calculate_pagination_meta_from_page(
+                total=0, page=page, limit=limit)
             return ProjectApplicationsPublic(data=[], meta=meta)
-        
+
         # Get applications for these projects
         statement = (
             select(ProjectApplication)
@@ -120,7 +124,7 @@ def read_applications(
             .order_by(ProjectApplication.created_at.desc())
         )
         applications = session.exec(statement).all()
-        
+
         count_statement = select(func.count(ProjectApplication.id)).where(
             ProjectApplication.project_id.in_(project_ids)
         )
@@ -128,7 +132,8 @@ def read_applications(
     else:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
-    meta = calculate_pagination_meta_from_page(total=total, page=page, limit=limit)
+    meta = calculate_pagination_meta_from_page(
+        total=total, page=page, limit=limit)
     return ProjectApplicationsPublic(data=applications, meta=meta)
 
 
@@ -158,7 +163,7 @@ def read_project_applications(
         # Requesters can only see applications for their own projects
         if project.requester_id != current_user.id:
             raise HTTPException(
-                status_code=403, 
+                status_code=403,
                 detail="You can only view applications for your own projects"
             )
     else:
@@ -169,8 +174,35 @@ def read_project_applications(
         session=session, project_id=project_id, skip=skip, limit=limit
     )
 
-    meta = calculate_pagination_meta_from_page(total=total, page=page, limit=limit)
+    meta = calculate_pagination_meta_from_page(
+        total=total, page=page, limit=limit)
     return ProjectApplicationsPublic(data=applications, meta=meta)
+
+
+@router.get("/projects/{project_id}/approved-applicants", response_model=ApprovedTeamMembersPublic)
+def get_approved_applicants_for_project(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    project_id: uuid.UUID
+) -> Any:
+    """
+    Get all approved applicants (volunteers) for a specific project with their roles.
+    This endpoint is public - anyone can see approved team members for any project.
+    Filtering is done at database level for efficiency.
+    """
+    # Check if project exists
+    project = crud.get_project_by_id(session=session, project_id=project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Get approved team members with their volunteer roles
+    approved_team_members = crud.get_approved_applicants_for_project(
+        session=session,
+        project_id=project_id
+    )
+
+    return ApprovedTeamMembersPublic(data=approved_team_members, count=len(approved_team_members))
 
 
 @router.get("/{application_id}", response_model=ProjectApplicationResponse)
@@ -185,7 +217,8 @@ def read_application(
     - VOLUNTEER users can view their own applications
     - REQUESTER users can view applications for their own projects
     """
-    application = crud.get_application_by_id(session=session, application_id=application_id)
+    application = crud.get_application_by_id(
+        session=session, application_id=application_id)
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
 
@@ -197,15 +230,16 @@ def read_application(
         # Volunteers can only view their own applications
         if application.volunteer_id != current_user.id:
             raise HTTPException(
-                status_code=403, 
+                status_code=403,
                 detail="You can only view your own applications"
             )
     elif current_user.role == UserRole.REQUESTER:
         # Requesters can view applications for their own projects
-        project = crud.get_project_by_id(session=session, project_id=application.project_id)
+        project = crud.get_project_by_id(
+            session=session, project_id=application.project_id)
         if not project or project.requester_id != current_user.id:
             raise HTTPException(
-                status_code=403, 
+                status_code=403,
                 detail="You can only view applications for your own projects"
             )
     else:
@@ -228,7 +262,8 @@ def update_application(
     - VOLUNTEER users can update their own applications (excluding status)
     - REQUESTER users can update status of applications for their own projects
     """
-    application = crud.get_application_by_id(session=session, application_id=application_id)
+    application = crud.get_application_by_id(
+        session=session, application_id=application_id)
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
 
@@ -239,7 +274,7 @@ def update_application(
         # Volunteers can only update their own applications (excluding status)
         if application.volunteer_id != current_user.id:
             raise HTTPException(
-                status_code=403, 
+                status_code=403,
                 detail="You can only update your own applications"
             )
         # Volunteers cannot change status
@@ -250,10 +285,11 @@ def update_application(
             )
     elif current_user.role == UserRole.REQUESTER:
         # Requesters can update status of applications for their own projects
-        project = crud.get_project_by_id(session=session, project_id=application.project_id)
+        project = crud.get_project_by_id(
+            session=session, project_id=application.project_id)
         if not project or project.requester_id != current_user.id:
             raise HTTPException(
-                status_code=403, 
+                status_code=403,
                 detail="You can only update applications for your own projects"
             )
         # Requesters can only change status
@@ -290,7 +326,8 @@ def delete_application(
     - ADMIN users can delete any application
     - VOLUNTEER users can withdraw their own applications
     """
-    application = crud.get_application_by_id(session=session, application_id=application_id)
+    application = crud.get_application_by_id(
+        session=session, application_id=application_id)
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
 
@@ -301,13 +338,14 @@ def delete_application(
         # Volunteers can only withdraw their own applications
         if application.volunteer_id != current_user.id:
             raise HTTPException(
-                status_code=403, 
+                status_code=403,
                 detail="You can only withdraw your own applications"
             )
     else:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
-    success = crud.delete_application(session=session, application_id=application_id)
+    success = crud.delete_application(
+        session=session, application_id=application_id)
     if not success:
         raise HTTPException(status_code=404, detail="Application not found")
 
@@ -326,7 +364,8 @@ def approve_application(
     - ADMIN users can approve any application
     - REQUESTER users can approve applications for their own projects
     """
-    application = crud.get_application_by_id(session=session, application_id=application_id)
+    application = crud.get_application_by_id(
+        session=session, application_id=application_id)
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
 
@@ -335,10 +374,11 @@ def approve_application(
         pass
     elif current_user.role == UserRole.REQUESTER:
         # Requesters can approve applications for their own projects
-        project = crud.get_project_by_id(session=session, project_id=application.project_id)
+        project = crud.get_project_by_id(
+            session=session, project_id=application.project_id)
         if not project or project.requester_id != current_user.id:
             raise HTTPException(
-                status_code=403, 
+                status_code=403,
                 detail="You can only approve applications for your own projects"
             )
     else:
@@ -347,7 +387,8 @@ def approve_application(
             detail="Only admins and project requesters can approve applications"
         )
 
-    application_update = ProjectApplicationUpdate(status=ApplicationStatus.APPROVED)
+    application_update = ProjectApplicationUpdate(
+        status=ApplicationStatus.APPROVED)
     updated_application = crud.update_application(
         session=session, db_application=application, application_in=application_update
     )
@@ -366,7 +407,8 @@ def reject_application(
     - ADMIN users can reject any application
     - REQUESTER users can reject applications for their own projects
     """
-    application = crud.get_application_by_id(session=session, application_id=application_id)
+    application = crud.get_application_by_id(
+        session=session, application_id=application_id)
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
 
@@ -375,10 +417,11 @@ def reject_application(
         pass
     elif current_user.role == UserRole.REQUESTER:
         # Requesters can reject applications for their own projects
-        project = crud.get_project_by_id(session=session, project_id=application.project_id)
+        project = crud.get_project_by_id(
+            session=session, project_id=application.project_id)
         if not project or project.requester_id != current_user.id:
             raise HTTPException(
-                status_code=403, 
+                status_code=403,
                 detail="You can only reject applications for your own projects"
             )
     else:
@@ -387,7 +430,8 @@ def reject_application(
             detail="Only admins and project requesters can reject applications"
         )
 
-    application_update = ProjectApplicationUpdate(status=ApplicationStatus.REJECTED)
+    application_update = ProjectApplicationUpdate(
+        status=ApplicationStatus.REJECTED)
     updated_application = crud.update_application(
         session=session, db_application=application, application_in=application_update
     )
@@ -407,12 +451,14 @@ def read_applications_by_status(
     Only ADMIN users can access this endpoint.
     """
     if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Only admins can filter applications by status")
+        raise HTTPException(
+            status_code=403, detail="Only admins can filter applications by status")
 
     skip = page_to_skip(page, limit)
     applications, total = crud.get_applications_by_status(
         session=session, status=status, skip=skip, limit=limit
     )
 
-    meta = calculate_pagination_meta_from_page(total=total, page=page, limit=limit)
+    meta = calculate_pagination_meta_from_page(
+        total=total, page=page, limit=limit)
     return ProjectApplicationsPublic(data=applications, meta=meta)
