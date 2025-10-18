@@ -77,6 +77,18 @@ export type ProjectThread = {
   comments: Comment[];
 };
 
+export const VOLUNTEER_ROLES = {
+  FRONTEND: 'FRONTEND',
+  BACKEND: 'BACKEND',
+  FULLSTACK: 'FULLSTACK',
+  UIUX: 'UIUX',
+  PROJECTMANAGER: 'PROJECTMANAGER',
+  QA: 'QA',
+} as const;
+
+export type VolunteerRole =
+  (typeof VOLUNTEER_ROLES)[keyof typeof VOLUNTEER_ROLES];
+
 /**
  * Project-related enums that match the backend models
  */
