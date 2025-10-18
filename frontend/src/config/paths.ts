@@ -179,6 +179,11 @@ export const paths = {
       path: 'projects',
       getHref: () => '/developer/projects',
     },
+    reviewApplications: {
+      path: 'projects/:projectId/review-applications',
+      getHref: (projectId: string) =>
+        `/developer/projects/${projectId}/review-applications`,
+    },
     sponsorships: {
       path: 'sponsorships',
       getHref: () => '/developer/sponsorships',
