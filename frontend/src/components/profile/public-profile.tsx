@@ -7,6 +7,7 @@ import {
   Github,
   Linkedin,
   Twitter,
+  Facebook,
   ArrowLeft,
   Phone,
   ExternalLink,
@@ -17,59 +18,43 @@ import { useParams, useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import {
+  usePublicUserProfile,
+  useUserProjects,
+} from '@/lib/public-profile-api';
 import { formatDate } from '@/utils/format';
 
 export const PublicProfile = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
 
-  // Mock data for demonstration - replace with real API calls when backend is ready
-  const loading = false;
-  const error = null;
+  // Fetch real data from API
+  const {
+    data: profileData,
+    isLoading: profileLoading,
+    error: profileError,
+  } = usePublicUserProfile({
+    userId: userId || '',
+    queryConfig: {
+      enabled: !!userId,
+    },
+  });
 
-  // Mock profile data
-  const profile = {
-    id: userId || '',
-    firstname: 'John',
-    lastname: 'Doe',
-    email: 'john.doe@example.com',
-    role: 'REQUESTER',
-    created_at: '2024-01-15T00:00:00Z',
-    requester_profile: {
-      about:
-        'I am a project manager with over 5 years of experience in leading cross-functional teams to deliver impactful software solutions. I believe in the power of technology to solve real-world problems and am committed to creating opportunities for developers to contribute to meaningful projects.',
-      location: 'San Francisco, CA',
-      website_url: 'https://johndoe.dev',
-      linkedin_url: 'https://linkedin.com/in/johndoe',
-      github_url: 'https://github.com/johndoe',
-      twitter_url: 'https://twitter.com/johndoe',
-      phone_number: '+1 (555) 123-4567',
+  const {
+    data: projectsData,
+    isLoading: projectsLoading,
+    error: projectsError,
+  } = useUserProjects({
+    userId: userId || '',
+    queryConfig: {
+      enabled: !!userId,
     },
-  };
+  });
 
-  // Mock projects data
-  const projects = [
-    {
-      id: '1',
-      title: 'Community Health Tracker',
-      description:
-        'A web application to help local health clinics track patient wellness metrics and appointments.',
-      project_type: 'WEBSITE',
-      status: 'APPROVED',
-      created_at: '2024-02-15T00:00:00Z',
-      preferred_technologies: 'React, Node.js, PostgreSQL',
-    },
-    {
-      id: '2',
-      title: 'Education Resource Platform',
-      description:
-        'Mobile app connecting students with educational resources and mentorship opportunities.',
-      project_type: 'MOBILE_APP',
-      status: 'IN_PROGRESS',
-      created_at: '2024-01-30T00:00:00Z',
-      preferred_technologies: 'React Native, Firebase',
-    },
-  ];
+  const loading = profileLoading || projectsLoading;
+  const error = profileError || projectsError;
+  const profile = profileData?.data;
+  const projects = projectsData?.data || [];
 
   if (loading) {
     return (
@@ -148,8 +133,12 @@ export const PublicProfile = () => {
                     )}
                     <div className="flex items-center">
                       <Calendar className="mr-1 size-4" />
-                      Joined{' '}
-                      {formatDate(new Date(profile.created_at).getTime())}
+                      Member since{' '}
+                      {profile.created_at
+                        ? new Date(profile.created_at).getFullYear()
+                        : requesterProfile?.created_at
+                          ? new Date(requesterProfile.created_at).getFullYear()
+                          : 'Unknown'}
                     </div>
                   </div>
                 </div>
@@ -234,6 +223,18 @@ export const PublicProfile = () => {
                 >
                   <Twitter className="mr-3 size-5 text-blue-500" />
                   <span className="text-slate-700">Twitter</span>
+                  <ExternalLink className="ml-auto size-4 text-slate-400" />
+                </a>
+              )}
+              {requesterProfile?.facebook_url && (
+                <a
+                  href={requesterProfile.facebook_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center rounded-lg bg-slate-50 p-3 transition-colors hover:bg-slate-100"
+                >
+                  <Facebook className="mr-3 size-5 text-blue-600" />
+                  <span className="text-slate-700">Facebook</span>
                   <ExternalLink className="ml-auto size-4 text-slate-400" />
                 </a>
               )}

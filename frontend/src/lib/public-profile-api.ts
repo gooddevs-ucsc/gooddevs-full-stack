@@ -11,6 +11,9 @@ export interface RequesterProfile {
   website_url?: string;
   linkedin_url?: string;
   github_url?: string;
+  twitter_url?: string;
+  facebook_url?: string;
+  instagram_url?: string;
   organization_name?: string;
   phone_number?: string;
   created_at: string;
@@ -42,7 +45,7 @@ export const getPublicUserProfile = ({
 }: {
   userId: string;
 }): Promise<{ data: PublicUserProfile }> => {
-  return api.get(`/users/${userId}/public-profile`);
+  return api.get(`/public/users/${userId}/public-profile`);
 };
 
 export const getUserProjects = ({
@@ -50,7 +53,7 @@ export const getUserProjects = ({
 }: {
   userId: string;
 }): Promise<{ data: UserProject[] }> => {
-  return api.get(`/users/${userId}/projects`);
+  return api.get(`/public/users/${userId}/projects`);
 };
 
 export const getPublicUserProfileQueryOptions = (userId: string) => {
