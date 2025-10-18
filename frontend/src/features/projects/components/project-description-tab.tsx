@@ -46,13 +46,10 @@ export const ProjectDescriptionTab = ({
     });
 
   // Fetch approved team members using the public endpoint
-  const {
-    data: approvedData,
-    isLoading: isLoadingApproved,
-    error: approvedError,
-  } = useApprovedApplicants({
-    projectId: project.id,
-  });
+  const { data: approvedData, isLoading: isLoadingApproved } =
+    useApprovedApplicants({
+      projectId: project.id,
+    });
 
   const approvedTeamMembers = approvedData?.data || [];
   const approvedCount = approvedData?.count || 0;
