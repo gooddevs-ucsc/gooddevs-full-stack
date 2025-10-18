@@ -4,10 +4,9 @@ import { FC, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useNotifications } from '@/components/ui/notifications';
 import { Spinner } from '@/components/ui/spinner';
-import { useUser } from '@/lib/auth';
-import { ROLES } from '@/lib/roles';
 import type { Task } from '@/types/api';
 
+import { useCanCreateTask } from '../api/can-create-task';
 import { useCreateTask } from '../api/create-task';
 import { useDeleteTask } from '../api/delete-task';
 import { useTasks } from '../api/get-tasks';
@@ -23,7 +22,6 @@ interface TasksTabProps {
 
 export const TasksTab: FC<TasksTabProps> = ({ projectId }: TasksTabProps) => {
   const { addNotification } = useNotifications();
-  const user = useUser();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -31,6 +29,11 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }: TasksTabProps) => {
 
   // API Hooks
   const { data: tasksData, isLoading: isLoadingTasks } = useTasks({
+    projectId,
+  });
+
+  // Check if user can create tasks
+  const { data: canCreateData } = useCanCreateTask({
     projectId,
   });
 
@@ -97,7 +100,7 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }: TasksTabProps) => {
     },
   });
 
-  const canCreateTasks = user.data?.role === ROLES.VOLUNTEER;
+  const canCreateTasks = canCreateData?.can_create ?? false;
 
   const tasks = tasksData?.data || [];
 
