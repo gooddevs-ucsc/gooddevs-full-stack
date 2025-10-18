@@ -151,10 +151,10 @@ def delete_project(*, session: Session, project_id: uuid.UUID) -> bool:
 def get_user_by_id(*, session: Session, user_id: uuid.UUID) -> User | None:
     return session.get(User, user_id)
 
-
+    
 # Task CRUD operations
-def create_task(*, session: Session, task_in: TaskCreate, project_id: uuid.UUID) -> Task:
-    db_task = Task.model_validate(task_in, update={"project_id": project_id})
+def create_task(*, session: Session, task_in: TaskCreate, project_id: uuid.UUID, creator_id: uuid.UUID) -> Task:
+    db_task = Task.model_validate(task_in, update={"project_id": project_id, "creator_id": creator_id})
     session.add(db_task)
     session.commit()
     session.refresh(db_task)
