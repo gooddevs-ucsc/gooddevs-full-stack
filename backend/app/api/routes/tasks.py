@@ -91,7 +91,11 @@ async def create_task(  # Make this async
     project_id: uuid.UUID,
     task_in: TaskCreate
 ) -> Any:
-    """Create a new task for a project. Only project owner or approved applicants can create tasks."""
+    """
+    Create a new task for a project.
+
+    Only users who are either the project owner or have an approved application for the project are permitted to create tasks.
+    """
     # Check if project exists
     project = crud.get_project_by_id(session=session, project_id=project_id)
     if not project:
