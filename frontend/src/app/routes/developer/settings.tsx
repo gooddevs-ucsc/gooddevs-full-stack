@@ -34,10 +34,6 @@ const DeveloperSettingsRoute = () => {
   const { data: user } = useUser();
   const { addNotification } = useNotifications();
 
-  // Update state
-  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-
   // Notification state
   const [notifications, setNotifications] = useState({
     email: true,
@@ -55,7 +51,6 @@ const DeveloperSettingsRoute = () => {
           title: 'Email Updated',
           message: 'Your email address has been updated successfully.',
         });
-        setIsUpdatingEmail(false);
       },
       onError: (error: any) => {
         addNotification({
@@ -63,7 +58,6 @@ const DeveloperSettingsRoute = () => {
           title: 'Email Update Failed',
           message: error?.message || 'Failed to update email address.',
         });
-        setIsUpdatingEmail(false);
       },
     },
   });
@@ -76,7 +70,6 @@ const DeveloperSettingsRoute = () => {
           title: 'Password Updated',
           message: 'Your password has been updated successfully.',
         });
-        setIsUpdatingPassword(false);
       },
       onError: (error: any) => {
         addNotification({
@@ -84,7 +77,6 @@ const DeveloperSettingsRoute = () => {
           title: 'Password Update Failed',
           message: error?.message || 'Failed to update password.',
         });
-        setIsUpdatingPassword(false);
       },
     },
   });
@@ -182,7 +174,6 @@ const DeveloperSettingsRoute = () => {
                 });
                 return;
               }
-              setIsUpdatingEmail(true);
               updateEmailMutation.mutate({ data: { email: data.email } });
             }}
             schema={emailUpdateSchema}
@@ -200,10 +191,12 @@ const DeveloperSettingsRoute = () => {
                 />
                 <button
                   type="submit"
-                  disabled={isUpdatingEmail || !formState.isValid}
+                  disabled={updateEmailMutation.isPending || !formState.isValid}
                   className="w-full rounded-md bg-blue-600 px-3 py-2 text-sm text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300 disabled:text-blue-100"
                 >
-                  {isUpdatingEmail ? 'Updating Email...' : 'Update Email'}
+                  {updateEmailMutation.isPending
+                    ? 'Updating Email...'
+                    : 'Update Email'}
                 </button>
               </>
             )}
@@ -234,7 +227,6 @@ const DeveloperSettingsRoute = () => {
           </div>
           <Form
             onSubmit={(data) => {
-              setIsUpdatingPassword(true);
               updatePasswordMutation.mutate({
                 data: {
                   current_password: data.current_password,
@@ -273,10 +265,12 @@ const DeveloperSettingsRoute = () => {
                 />
                 <button
                   type="submit"
-                  disabled={isUpdatingPassword || !formState.isValid}
+                  disabled={
+                    updatePasswordMutation.isPending || !formState.isValid
+                  }
                   className="w-full rounded-md bg-blue-600 px-3 py-2 text-sm text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300 disabled:text-blue-100"
                 >
-                  {isUpdatingPassword
+                  {updatePasswordMutation.isPending
                     ? 'Updating Password...'
                     : 'Update Password'}
                 </button>
