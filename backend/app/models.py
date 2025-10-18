@@ -1,12 +1,13 @@
 import uuid
 import enum
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 
 from pydantic import EmailStr, field_validator, ValidationError
 from sqlmodel import Field, Relationship, SQLModel, Column, Enum, Identity, Integer
+from sqlalchemy import DateTime, func
 
 
 class UserRole(str, enum.Enum):
@@ -211,8 +212,19 @@ class Project(ProjectBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     requester_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(DateTime(timezone=True), server_default=func.now(), nullable=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(
+            DateTime(timezone=True),
+            server_default=func.now(),
+            onupdate=func.now(),
+            nullable=False,
+        ),
+    )
     status: ProjectStatus = Field(
         default=ProjectStatus.PENDING, sa_column=Column(Enum(ProjectStatus)))
 

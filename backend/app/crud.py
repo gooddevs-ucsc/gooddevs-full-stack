@@ -99,11 +99,28 @@ def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -
 
 # Project CRUD operations
 def create_project(*, session: Session, project_in: ProjectCreate, requester_id: uuid.UUID) -> Project:
+    from datetime import datetime as _dt
+    start = _dt.utcnow()
+    print(f"[create_project] start: {start.isoformat()} UTC")
+
+    # Validate/construct model
     db_project = Project.model_validate(
         project_in, update={"requester_id": requester_id})
+    after_validate = _dt.utcnow()
+    print(f"[create_project] after_validate: {after_validate.isoformat()} UTC (took {(after_validate-start).total_seconds()}s)")
+
     session.add(db_project)
+    before_commit = _dt.utcnow()
+    print(f"[create_project] before_commit: {before_commit.isoformat()} UTC")
+
     session.commit()
+    after_commit = _dt.utcnow()
+    print(f"[create_project] after_commit: {after_commit.isoformat()} UTC (commit {(after_commit-before_commit).total_seconds()}s)")
+
     session.refresh(db_project)
+    after_refresh = _dt.utcnow()
+    print(f"[create_project] after_refresh: {after_refresh.isoformat()} UTC (refresh {(after_refresh-after_commit).total_seconds()}s) total {(after_refresh-start).total_seconds()}s")
+
     return db_project
 
 
