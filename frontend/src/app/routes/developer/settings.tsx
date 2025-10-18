@@ -1,20 +1,41 @@
 import React, { useState } from 'react';
+import { z } from 'zod';
 
+import { Form, Input } from '@/components/ui/form';
+import { useNotifications } from '@/components/ui/notifications';
 import { useUpdateEmail } from '@/features/users/api/update-email';
 import { useUpdatePassword } from '@/features/users/api/update-password';
 import { useUser } from '@/lib/auth';
 
+// Validation schemas
+const emailUpdateSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+});
+
+const passwordUpdateSchema = z
+  .object({
+    current_password: z.string().min(1, 'Current password is required'),
+    new_password: z
+      .string()
+      .min(8, 'New password must be at least 8 characters')
+      .max(100, 'New password must not exceed 100 characters'),
+    confirm_password: z.string().min(1, 'Please confirm your new password'),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: 'New passwords do not match',
+    path: ['confirm_password'],
+  })
+  .refine((data) => data.current_password !== data.new_password, {
+    message: 'New password must be different from current password',
+    path: ['new_password'],
+  });
+
 const DeveloperSettingsRoute = () => {
   const { data: user } = useUser();
+  const { addNotification } = useNotifications();
 
-  // Email update state
-  const [email, setEmail] = useState('');
+  // Update state
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
-
-  // Password update state
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Notification state
@@ -29,12 +50,19 @@ const DeveloperSettingsRoute = () => {
   const updateEmailMutation = useUpdateEmail({
     mutationConfig: {
       onSuccess: () => {
-        alert('Email updated successfully!');
-        setEmail('');
+        addNotification({
+          type: 'success',
+          title: 'Email Updated',
+          message: 'Your email address has been updated successfully.',
+        });
         setIsUpdatingEmail(false);
       },
       onError: (error: any) => {
-        alert(error?.message || 'Failed to update email');
+        addNotification({
+          type: 'error',
+          title: 'Email Update Failed',
+          message: error?.message || 'Failed to update email address.',
+        });
         setIsUpdatingEmail(false);
       },
     },
@@ -43,31 +71,25 @@ const DeveloperSettingsRoute = () => {
   const updatePasswordMutation = useUpdatePassword({
     mutationConfig: {
       onSuccess: () => {
-        alert('Password updated successfully!');
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
+        addNotification({
+          type: 'success',
+          title: 'Password Updated',
+          message: 'Your password has been updated successfully.',
+        });
         setIsUpdatingPassword(false);
       },
       onError: (error: any) => {
-        alert(error?.message || 'Failed to update password');
+        addNotification({
+          type: 'error',
+          title: 'Password Update Failed',
+          message: error?.message || 'Failed to update password.',
+        });
         setIsUpdatingPassword(false);
       },
     },
   });
 
-  // Event handlers
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setEmail(e.target.value);
-  const handleCurrentPasswordChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => setCurrentPassword(e.target.value);
-  const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setNewPassword(e.target.value);
-  const handleConfirmPasswordChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => setConfirmPassword(e.target.value);
-
+  // Event handlers for notification settings
   const handleNotificationsChange = (type: string) => {
     setNotifications((prev) => ({
       ...prev,
@@ -77,55 +99,6 @@ const DeveloperSettingsRoute = () => {
 
   const handleNotificationsToggle = () => {
     setNotificationsEnabled((prev) => !prev);
-  };
-
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!email.trim()) {
-      alert('Please enter a valid email');
-      return;
-    }
-
-    if (email === user?.email) {
-      alert('New email must be different from current email');
-      return;
-    }
-
-    setIsUpdatingEmail(true);
-    updateEmailMutation.mutate({ data: { email } });
-  };
-
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      alert('Please fill in all password fields');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      alert('New passwords do not match');
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      alert('New password must be at least 8 characters');
-      return;
-    }
-
-    if (currentPassword === newPassword) {
-      alert('New password must be different from current password');
-      return;
-    }
-
-    setIsUpdatingPassword(true);
-    updatePasswordMutation.mutate({
-      data: {
-        current_password: currentPassword,
-        new_password: newPassword,
-      },
-    });
   };
 
   return (
@@ -199,32 +172,42 @@ const DeveloperSettingsRoute = () => {
               Change Email
             </h2>
           </div>
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="change-email"
-                className="mb-2 block text-sm font-medium text-gray-700"
-              >
-                New Email Address
-              </label>
-              <input
-                id="change-email"
-                type="email"
-                value={email}
-                onChange={handleEmailChange}
-                placeholder="Enter new email"
-                className="w-full rounded-lg border border-blue-100 px-4 py-3 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 active:border-blue-600 active:ring-blue-300"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isUpdatingEmail || !email.trim()}
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300 disabled:text-blue-100"
-            >
-              {isUpdatingEmail ? 'Updating Email...' : 'Update Email'}
-            </button>
-          </form>
+          <Form
+            onSubmit={(data) => {
+              if (data.email === user?.email) {
+                addNotification({
+                  type: 'error',
+                  title: 'Invalid Email',
+                  message: 'New email must be different from current email.',
+                });
+                return;
+              }
+              setIsUpdatingEmail(true);
+              updateEmailMutation.mutate({ data: { email: data.email } });
+            }}
+            schema={emailUpdateSchema}
+            className="space-y-4"
+          >
+            {({ register, formState }) => (
+              <>
+                <Input
+                  type="email"
+                  label="New Email Address"
+                  placeholder="Enter new email"
+                  registration={register('email')}
+                  error={formState.errors.email}
+                  className="w-full rounded-lg border border-blue-100 px-4 py-3 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 active:border-blue-600 active:ring-blue-300"
+                />
+                <button
+                  type="submit"
+                  disabled={isUpdatingEmail || !formState.isValid}
+                  className="w-full rounded-md bg-blue-600 px-3 py-2 text-sm text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300 disabled:text-blue-100"
+                >
+                  {isUpdatingEmail ? 'Updating Email...' : 'Update Email'}
+                </button>
+              </>
+            )}
+          </Form>
         </div>
 
         {/* Change Password Form */}
@@ -249,71 +232,57 @@ const DeveloperSettingsRoute = () => {
               Change Password
             </h2>
           </div>
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="current-password"
-                className="mb-2 block text-sm font-medium text-gray-700"
-              >
-                Current Password
-              </label>
-              <input
-                id="current-password"
-                type="password"
-                value={currentPassword}
-                onChange={handleCurrentPasswordChange}
-                placeholder="Enter current password"
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="new-password"
-                className="mb-2 block text-sm font-medium text-gray-700"
-              >
-                New Password
-              </label>
-              <input
-                id="new-password"
-                type="password"
-                value={newPassword}
-                onChange={handleNewPasswordChange}
-                placeholder="Enter new password (min 8 characters)"
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="confirm-password"
-                className="mb-2 block text-sm font-medium text-gray-700"
-              >
-                Confirm New Password
-              </label>
-              <input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={handleConfirmPasswordChange}
-                placeholder="Confirm new password"
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={
-                isUpdatingPassword ||
-                !currentPassword ||
-                !newPassword ||
-                !confirmPassword
-              }
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300 disabled:text-blue-100"
-            >
-              {isUpdatingPassword ? 'Updating Password...' : 'Update Password'}
-            </button>
-          </form>
+          <Form
+            onSubmit={(data) => {
+              setIsUpdatingPassword(true);
+              updatePasswordMutation.mutate({
+                data: {
+                  current_password: data.current_password,
+                  new_password: data.new_password,
+                },
+              });
+            }}
+            schema={passwordUpdateSchema}
+            className="space-y-4"
+          >
+            {({ register, formState }) => (
+              <>
+                <Input
+                  type="password"
+                  label="Current Password"
+                  placeholder="Enter current password"
+                  registration={register('current_password')}
+                  error={formState.errors.current_password}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                />
+                <Input
+                  type="password"
+                  label="New Password"
+                  placeholder="Enter new password (min 8 characters)"
+                  registration={register('new_password')}
+                  error={formState.errors.new_password}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                />
+                <Input
+                  type="password"
+                  label="Confirm New Password"
+                  placeholder="Confirm new password"
+                  registration={register('confirm_password')}
+                  error={formState.errors.confirm_password}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                />
+                <button
+                  type="submit"
+                  disabled={isUpdatingPassword || !formState.isValid}
+                  className="w-full rounded-md bg-blue-600 px-3 py-2 text-sm text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300 disabled:text-blue-100"
+                >
+                  {isUpdatingPassword
+                    ? 'Updating Password...'
+                    : 'Update Password'}
+                </button>
+              </>
+            )}
+          </Form>
         </div>
 
         {/* Notification Settings */}
