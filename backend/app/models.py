@@ -995,6 +995,78 @@ class DonationStatistics(SQLModel):
     unique_donors: int
 
 
+# Sponsorship models
+class SponsorshipBase(SQLModel):
+    message: str | None = Field(default=None, max_length=500)
+
+
+class SponsorshipCreate(SponsorshipBase):
+    recipient_id: uuid.UUID  # The user being sponsored
+    amount: float = Field(ge=0)
+    phone: str = Field(max_length=50)
+    address: str = Field(max_length=500)
+    city: str = Field(max_length=255)
+    country: str = Field(max_length=255)
+
+
+class Sponsorship(SponsorshipBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    sponsor_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    recipient_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    order_id: int = Field(
+        foreign_key="payment.order_id", nullable=False, unique=True
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationships
+    sponsor: User | None = Relationship(
+        sa_relationship_kwargs={
+            "foreign_keys": "[Sponsorship.sponsor_id]"
+        }
+    )
+    recipient: User | None = Relationship(
+        sa_relationship_kwargs={
+            "foreign_keys": "[Sponsorship.recipient_id]"
+        }
+    )
+    payment: Payment | None = Relationship()
+
+
+class SponsorshipPublic(SponsorshipBase):
+    id: uuid.UUID
+    sponsor_id: uuid.UUID
+    recipient_id: uuid.UUID
+    order_id: int
+    created_at: datetime
+    sponsor: UserPublic | None = None
+    recipient: UserPublic | None = None
+    payment: PaymentPublic | None = None
+
+
+class SponsorshipResponse(SQLModel):
+    data: SponsorshipPublic
+
+
+class SponsorshipsPublic(SQLModel):
+    data: list[SponsorshipPublic]
+    meta: Meta
+
+
+class SponsorshipStatistics(SQLModel):
+    """Statistics about sponsorships in the system"""
+    total_sponsorships: int
+    total_amount: float
+    average_sponsorship: float
+    pending_sponsorships: int
+    successful_sponsorships: int
+    unique_sponsors: int
+    unique_recipients: int
+
+
 # Application Reviewer Permission models
 
 
