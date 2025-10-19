@@ -5,8 +5,12 @@ import { ContentLayout } from '@/components/layouts';
 import {
   ProjectApplicationsList,
   getProjectApplicationsQueryOptions,
+  ManageReviewerPermissions,
 } from '@/features/projects';
-import { getProjectQueryOptions } from '@/features/projects/api/get-project';
+import {
+  getProjectQueryOptions,
+  useProject,
+} from '@/features/projects/api/get-project';
 
 export const clientLoader =
   (queryClient: QueryClient) =>
@@ -54,9 +58,21 @@ interface ProjectApplicationsPageProps {
 const ProjectApplicationsPage = ({
   projectId,
 }: ProjectApplicationsPageProps) => {
+  const { data: projectData } = useProject({ projectId });
+
+  const project = projectData?.data;
+
+  if (!project) {
+    return null;
+  }
+
   return (
     <div className="space-y-6">
       <ProjectApplicationsList projectId={projectId} />
+      <ManageReviewerPermissions
+        projectId={projectId}
+        projectOwnerId={project.requester_id}
+      />
     </div>
   );
 };

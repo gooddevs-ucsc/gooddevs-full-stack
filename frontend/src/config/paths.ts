@@ -102,6 +102,10 @@ export const paths = {
       path: 'project-approvals',
       getHref: () => '/admin/project-approvals',
     },
+    settings: {
+      path: 'settings',
+      getHref: () => '/admin/settings',
+    },
   },
 
   sponsor: {
@@ -178,6 +182,11 @@ export const paths = {
     projects: {
       path: 'projects',
       getHref: () => '/developer/projects',
+    },
+    reviewApplications: {
+      path: 'projects/:projectId/review-applications',
+      getHref: (projectId: string) =>
+        `/developer/projects/${projectId}/review-applications`,
     },
     sponsorships: {
       path: 'sponsorships',

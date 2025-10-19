@@ -6,12 +6,10 @@ import { useNotifications } from '@/components/ui/notifications';
 import { useUpdateEmail } from '@/features/users/api/update-email';
 import { useUpdatePassword } from '@/features/users/api/update-password';
 import { useUser } from '@/lib/auth';
-
 // Validation schemas
 const emailUpdateSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
 });
-
 const passwordUpdateSchema = z
   .object({
     current_password: z.string().min(1, 'Current password is required'),
@@ -29,11 +27,9 @@ const passwordUpdateSchema = z
     message: 'New password must be different from current password',
     path: ['new_password'],
   });
-
-const SponsorSettingsRoute = () => {
+const AdminSettingsRoute = () => {
   const { data: user } = useUser();
   const { addNotification } = useNotifications();
-
   // API mutations
   const updateEmailMutation = useUpdateEmail({
     mutationConfig: {
@@ -53,7 +49,6 @@ const SponsorSettingsRoute = () => {
       },
     },
   });
-
   const updatePasswordMutation = useUpdatePassword({
     mutationConfig: {
       onSuccess: () => {
@@ -72,19 +67,17 @@ const SponsorSettingsRoute = () => {
       },
     },
   });
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-slate-800">
-            ⚙️ Sponsor Settings
+            ⚙️ Admin Settings
           </h1>
           <p className="mt-2 text-slate-600">
-            Manage your account preferences and sponsorship settings
+            Manage your admin account preferences and system settings
           </p>
         </div>
-
         {/* Current User Info */}
         {user && (
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg">
@@ -121,7 +114,6 @@ const SponsorSettingsRoute = () => {
             </div>
           </div>
         )}
-
         {/* Change Email Form */}
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg">
           <div className="mb-4 flex items-center gap-3">
@@ -167,7 +159,7 @@ const SponsorSettingsRoute = () => {
                   placeholder="Enter new email"
                   registration={register('email')}
                   error={formState.errors.email}
-                  className="w-full rounded-lg border border-yellow-100 px-4 py-3 transition focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-200 active:border-yellow-600 active:ring-yellow-300"
+                  className="w-full rounded-lg border border-green-100 px-4 py-3 transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200 active:border-green-600 active:ring-green-300"
                 />
                 <button
                   type="submit"
@@ -182,7 +174,6 @@ const SponsorSettingsRoute = () => {
             )}
           </Form>
         </div>
-
         {/* Change Password Form */}
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg">
           <div className="mb-4 flex items-center gap-3">
@@ -225,7 +216,7 @@ const SponsorSettingsRoute = () => {
                   placeholder="Enter current password"
                   registration={register('current_password')}
                   error={formState.errors.current_password}
-                  className="w-full rounded-lg border border-slate-300 px-4 py-3 transition focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200"
                 />
                 <Input
                   type="password"
@@ -233,7 +224,7 @@ const SponsorSettingsRoute = () => {
                   placeholder="Enter new password (min 8 characters)"
                   registration={register('new_password')}
                   error={formState.errors.new_password}
-                  className="w-full rounded-lg border border-slate-300 px-4 py-3 transition focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200"
                 />
                 <Input
                   type="password"
@@ -241,7 +232,7 @@ const SponsorSettingsRoute = () => {
                   placeholder="Confirm new password"
                   registration={register('confirm_password')}
                   error={formState.errors.confirm_password}
-                  className="w-full rounded-lg border border-slate-300 px-4 py-3 transition focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200"
                 />
                 <button
                   type="submit"
@@ -262,5 +253,4 @@ const SponsorSettingsRoute = () => {
     </div>
   );
 };
-
-export default SponsorSettingsRoute;
+export default AdminSettingsRoute;

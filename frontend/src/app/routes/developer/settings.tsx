@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { z } from 'zod';
 
 import { Form, Input } from '@/components/ui/form';
@@ -33,14 +33,6 @@ const passwordUpdateSchema = z
 const DeveloperSettingsRoute = () => {
   const { data: user } = useUser();
   const { addNotification } = useNotifications();
-
-  // Notification state
-  const [notifications, setNotifications] = useState({
-    email: true,
-    sms: false,
-    push: true,
-  });
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // API mutations
   const updateEmailMutation = useUpdateEmail({
@@ -81,18 +73,6 @@ const DeveloperSettingsRoute = () => {
     },
   });
 
-  // Event handlers for notification settings
-  const handleNotificationsChange = (type: string) => {
-    setNotifications((prev) => ({
-      ...prev,
-      [type]: !prev[type as keyof typeof prev],
-    }));
-  };
-
-  const handleNotificationsToggle = () => {
-    setNotificationsEnabled((prev) => !prev);
-  };
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-2xl space-y-6">
@@ -109,9 +89,9 @@ const DeveloperSettingsRoute = () => {
         {user && (
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg">
             <div className="mb-4 flex items-center gap-3">
-              <div className="rounded-full bg-indigo-100 p-2">
+              <div className="rounded-full bg-blue-100 p-2">
                 <svg
-                  className="size-5 text-indigo-600"
+                  className="size-5 text-blue-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -145,9 +125,9 @@ const DeveloperSettingsRoute = () => {
         {/* Change Email Form */}
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg">
           <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-full bg-indigo-100 p-2">
+            <div className="rounded-full bg-blue-100 p-2">
               <svg
-                className="size-5 text-indigo-600"
+                className="size-5 text-blue-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -206,9 +186,9 @@ const DeveloperSettingsRoute = () => {
         {/* Change Password Form */}
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg">
           <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-full bg-emerald-100 p-2">
+            <div className="rounded-full bg-blue-100 p-2">
               <svg
-                className="size-5 text-emerald-600"
+                className="size-5 text-blue-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -277,73 +257,6 @@ const DeveloperSettingsRoute = () => {
               </>
             )}
           </Form>
-        </div>
-
-        {/* Notification Settings */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-full bg-blue-100 p-2">
-              <svg
-                className="size-5 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 17h5l-5 5v-5zM11 19H6a2 2 0 01-2-2V7a2 2 0 012-2h5m0 0V3a2 2 0 012-2h2a2 2 0 012 2v2m-6 0h6m0 0v2a2 2 0 01-2 2H9a2 2 0 01-2-2V7"
-                />
-              </svg>
-            </div>
-            <h2 className="text-xl font-semibold text-slate-800">
-              Notification Settings
-            </h2>
-          </div>
-          <div className="space-y-4">
-            <button
-              type="button"
-              onClick={handleNotificationsToggle}
-              className={`rounded-lg px-6 py-3 font-medium transition ${notificationsEnabled ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-            >
-              {notificationsEnabled
-                ? '🔔 Notifications Enabled'
-                : '🔕 Notifications Disabled'}
-            </button>
-            <div className="space-y-2">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={notifications.email && notificationsEnabled}
-                  onChange={() => handleNotificationsChange('email')}
-                  disabled={!notificationsEnabled}
-                  className="mr-2"
-                />
-                Email Notifications
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={notifications.sms && notificationsEnabled}
-                  onChange={() => handleNotificationsChange('sms')}
-                  disabled={!notificationsEnabled}
-                  className="mr-2"
-                />
-                SMS Notifications
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={notifications.push && notificationsEnabled}
-                  onChange={() => handleNotificationsChange('push')}
-                  disabled={!notificationsEnabled}
-                  className="mr-2"
-                />
-                Push Notifications
-              </label>
-            </div>
-          </div>
         </div>
       </div>
     </div>

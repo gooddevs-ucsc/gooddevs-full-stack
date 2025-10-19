@@ -39,6 +39,7 @@ class EstimatedTimeline(str, enum.Enum):
     THREE_TO_SIX_MONTHS = "THREE_TO_SIX_MONTHS"
     MORE_THAN_SIX_MONTHS = "MORE_THAN_SIX_MONTHS"
 
+
 class VolunteerRole(str, enum.Enum):
     FRONTEND = "FRONTEND"
     BACKEND = "BACKEND"
@@ -47,7 +48,14 @@ class VolunteerRole(str, enum.Enum):
     PROJECTMANAGER = "PROJECTMANAGER"
     QA = "QA"
 
+
+class ReviewerPermissionStatus(str, enum.Enum):
+    ACTIVE = "ACTIVE"
+    REVOKED = "REVOKED"
+
 # Shared properties
+
+
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     is_active: bool = True
@@ -101,6 +109,19 @@ class User(UserBase, table=True):
         back_populates="recipient")
     volunteer_roles: list["UserVolunteerRole"] = Relationship(
         back_populates="user", cascade_delete=True)
+    reviewer_permissions: list["ApplicationReviewerPermission"] = Relationship(
+        back_populates="reviewer",
+        cascade_delete=True,
+        sa_relationship_kwargs={
+            "foreign_keys": "[ApplicationReviewerPermission.reviewer_id]"}
+    )
+    granted_permissions: list["ApplicationReviewerPermission"] = Relationship(
+        back_populates="granter",
+        cascade_delete=True,
+        sa_relationship_kwargs={
+            "foreign_keys": "[ApplicationReviewerPermission.granted_by]"}
+    )
+
 
 class UserVolunteerRole(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -114,6 +135,8 @@ class UserVolunteerRole(SQLModel, table=True):
     user: User | None = Relationship(back_populates="volunteer_roles")
 
 # Properties to return via API, id is always required
+
+
 class UserPublic(UserBase):
     id: uuid.UUID
 
@@ -349,6 +372,7 @@ class Task(TaskBase, table=True):
 
 # Public Api models
 
+
 class TaskPublic(TaskBase):
     id: uuid.UUID
     project_id: uuid.UUID
@@ -537,93 +561,100 @@ class ProjectApplicationBase(SQLModel):
 
 # API models for creating application
 class ProjectApplicationCreate(ProjectApplicationBase):
-    
+
     @field_validator('cover_letter')
     @classmethod
     def validate_cover_letter(cls, v: str | None) -> str | None:
         if v is None:
             raise ValueError('Cover letter is required')
-        
+
         # Clean and validate the content
         trimmed = v.strip()
-        
+
         if len(trimmed) < 50:
             raise ValueError('Cover letter must be at least 50 characters')
-        
+
         if len(trimmed) > 2000:
             raise ValueError('Cover letter must not exceed 2000 characters')
-        
+
         # Check if it's just repeated characters or numbers
         if re.match(r'^(.)\1{49,}$', trimmed):  # 50+ of the same character
-            raise ValueError('Cover letter must contain meaningful text, not repeated characters')
-        
+            raise ValueError(
+                'Cover letter must contain meaningful text, not repeated characters')
+
         if re.match(r'^[0-9\s]*$', trimmed):  # Only numbers and spaces
-            raise ValueError('Cover letter must contain meaningful text, not just numbers')
-        
+            raise ValueError(
+                'Cover letter must contain meaningful text, not just numbers')
+
         if re.match(r'^[^a-zA-Z]*$', trimmed):  # No letters at all
-            raise ValueError('Cover letter must contain meaningful text with actual words')
-        
+            raise ValueError(
+                'Cover letter must contain meaningful text with actual words')
+
         # Check for minimum word count (at least 8 words)
         words = [word for word in trimmed.split() if len(word) > 0]
         if len(words) < 8:
-            raise ValueError('Cover letter must contain at least 8 meaningful words')
-        
+            raise ValueError(
+                'Cover letter must contain at least 8 meaningful words')
+
         return trimmed
-    
+
     @classmethod
     def _validate_url_with_tld(cls, url: str) -> bool:
         """Validate that URL has a proper domain with TLD"""
         try:
             parsed = urlparse(url)
             hostname = parsed.hostname
-            
+
             if not hostname:
                 return False
-            
+
             # Check if hostname has at least one dot and a valid TLD
             parts = hostname.split('.')
             if len(parts) < 2:
                 return False
-            
+
             # Get the TLD (last part)
             tld = parts[-1]
-            
+
             # TLD must be at least 2 characters and contain only letters
             return len(tld) >= 2 and tld.isalpha()
         except Exception:
             return False
-    
+
     @field_validator('portfolio_url')
     @classmethod
     def validate_portfolio_url(cls, v: str | None) -> str | None:
         if v is None or v == '':
             return v
-        
+
         if not cls._validate_url_with_tld(v):
-            raise ValueError('Please enter a valid portfolio URL with a proper domain (e.g., .com, .org)')
-        
+            raise ValueError(
+                'Please enter a valid portfolio URL with a proper domain (e.g., .com, .org)')
+
         return v
-    
+
     @field_validator('linkedin_url')
     @classmethod
     def validate_linkedin_url(cls, v: str | None) -> str | None:
         if v is None or v == '':
             return v
-        
+
         if not cls._validate_url_with_tld(v):
-            raise ValueError('Please enter a valid LinkedIn URL with a proper domain')
-        
+            raise ValueError(
+                'Please enter a valid LinkedIn URL with a proper domain')
+
         return v
-    
+
     @field_validator('github_url')
     @classmethod
     def validate_github_url(cls, v: str | None) -> str | None:
         if v is None or v == '':
             raise ValueError('GitHub profile is required')
-        
+
         if not cls._validate_url_with_tld(v):
-            raise ValueError('Please enter a valid GitHub URL with a proper domain')
-        
+            raise ValueError(
+                'Please enter a valid GitHub URL with a proper domain')
+
         return v
 
 
@@ -708,6 +739,7 @@ class PaymentStatus(int, enum.Enum):
     CANCELLED = -1
     FAILED = -2
     CHARGEDBACK = -3
+    NOT_FOUND = -404  # If payment not found in PayHere after initiation
     SUCCESS = 2
 
 
@@ -951,6 +983,71 @@ class DonationResponse(SQLModel):
 class DonationsPublic(SQLModel):
     data: list[DonationPublic]
     meta: Meta
+
+# Application Reviewer Permission models
+
+
+class ApplicationReviewerPermission(SQLModel, table=True):
+    """
+    Tracks which approved volunteers have permission to review applications for a specific project.
+    Only project owners (requesters) can grant this permission.
+    Uses status field (ACTIVE/REVOKED) instead of deleting records for audit trail.
+    """
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    project_id: uuid.UUID = Field(
+        foreign_key="project.id", nullable=False, ondelete="CASCADE"
+    )
+    reviewer_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    granted_by: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False
+    )
+    status: ReviewerPermissionStatus = Field(
+        default=ReviewerPermissionStatus.ACTIVE,
+        sa_column=Column(Enum(ReviewerPermissionStatus))
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    revoked_at: datetime | None = Field(default=None)
+
+    # Relationships
+    project: Project | None = Relationship()
+    reviewer: User | None = Relationship(
+        back_populates="reviewer_permissions",
+        sa_relationship_kwargs={
+            "foreign_keys": "[ApplicationReviewerPermission.reviewer_id]"}
+    )
+    granter: User | None = Relationship(
+        back_populates="granted_permissions",
+        sa_relationship_kwargs={
+            "foreign_keys": "[ApplicationReviewerPermission.granted_by]"}
+    )
+
+
+# API models for reviewer permissions
+class ApplicationReviewerPermissionCreate(SQLModel):
+    reviewer_id: uuid.UUID
+
+
+class ApplicationReviewerPermissionPublic(SQLModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    reviewer_id: uuid.UUID
+    granted_by: uuid.UUID
+    status: ReviewerPermissionStatus
+    created_at: datetime
+    revoked_at: datetime | None = None
+    reviewer: UserPublic | None = None
+
+
+class ApplicationReviewerPermissionsPublic(SQLModel):
+    data: list[ApplicationReviewerPermissionPublic]
+    count: int
+
+
+class CanReviewResponse(SQLModel):
+    can_review: bool
+
 
 # Enhanced Requester Profile models
 
