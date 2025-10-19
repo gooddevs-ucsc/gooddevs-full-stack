@@ -19,7 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown';
-import { Progress } from '@/components/ui/progress';
 import { paths } from '@/config/paths';
 
 export interface RequesterProject {
@@ -27,7 +26,6 @@ export interface RequesterProject {
   title: string;
   description: string;
   status: 'Active' | 'Completed' | 'Pending';
-  progress: number;
   createdAt: string;
   teamSize: number;
   estimatedCompletion: string | null; // Now holds timeline text (e.g., "1-3 months"), not a date
@@ -148,15 +146,6 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
         <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-slate-600">
           {project.description}
         </p>
-
-        {/* Progress Section */}
-        <div className="mb-4 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium text-slate-700">Progress</span>
-            <span className="text-slate-600">{project.progress}%</span>
-          </div>
-          <Progress value={project.progress} className="h-2" />
-        </div>
 
         {/* Project Details */}
         <div className="space-y-3 text-sm text-slate-500">
