@@ -161,24 +161,30 @@ export const MySponsorshipsView = () => {
               onClick={() => setFilterStatus('all')}
               size="sm"
             >
-              <Filter className="mr-2 size-3" />
-              All ({sponsorships.length})
+              <div className="flex items-center">
+                <Filter className="mr-2 size-3" />
+                All ({sponsorships.length})
+              </div>
             </Button>
             <Button
               variant={filterStatus === 'success' ? 'default' : 'outline'}
               onClick={() => setFilterStatus('success')}
               size="sm"
             >
-              <CheckCircle className="mr-2 size-3" />
-              Completed ({successfulSponsorships})
+              <div className="flex items-center">
+                <CheckCircle className="mr-2 size-3" />
+                Completed ({successfulSponsorships})
+              </div>
             </Button>
             <Button
               variant={filterStatus === 'pending' ? 'default' : 'outline'}
               onClick={() => setFilterStatus('pending')}
               size="sm"
             >
-              <Clock className="mr-2 size-3" />
-              Pending ({pendingSponsorships})
+              <div className="flex items-center">
+                <Clock className="mr-2 size-3" />
+                Pending ({pendingSponsorships})
+              </div>
             </Button>
           </div>
 
