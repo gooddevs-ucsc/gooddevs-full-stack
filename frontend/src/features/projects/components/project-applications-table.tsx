@@ -2,6 +2,12 @@ import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useNotifications } from '@/components/ui/notifications';
 import { Spinner } from '@/components/ui/spinner';
@@ -19,6 +25,53 @@ interface ProjectApplicationsTableProps {
   projectId: string;
 }
 
+interface ConfirmationDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmText: string;
+  confirmVariant?: 'default' | 'destructive';
+}
+
+const ConfirmationDialog = ({
+  open,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText,
+  confirmVariant = 'default',
+}: ConfirmationDialogProps) => {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">{message}</p>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              variant={confirmVariant}
+              onClick={() => {
+                onConfirm();
+                onClose();
+              }}
+            >
+              {confirmText}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export const ProjectApplicationsTable = ({
   projectId,
 }: ProjectApplicationsTableProps) => {
@@ -26,6 +79,12 @@ export const ProjectApplicationsTable = ({
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | 'ALL'>(
     'ALL',
   );
+  const [confirmationDialog, setConfirmationDialog] = useState<{
+    open: boolean;
+    applicationId: string;
+    status: ApplicationStatus;
+    userName: string;
+  } | null>(null);
 
   const { addNotification } = useNotifications();
 
@@ -116,7 +175,26 @@ export const ProjectApplicationsTable = ({
     applicationId: string,
     status: ApplicationStatus,
   ) => {
-    updateStatus.mutate({ applicationId, status });
+    const application = applicationsData?.data?.find(
+      (app) => app.id === applicationId,
+    );
+    if (!application) return;
+    
+    setConfirmationDialog({
+      open: true,
+      applicationId,
+      status,
+      userName: `${application.volunteer?.firstname} ${application.volunteer?.lastname}`,
+    });
+  };
+
+  const handleConfirm = () => {
+    if (!confirmationDialog) return;
+    updateStatus.mutate({
+      applicationId: confirmationDialog.applicationId,
+      status: confirmationDialog.status,
+    });
+    setConfirmationDialog(null);
   };
 
   const getStatusBadge = (status: ApplicationStatus) => {
@@ -125,8 +203,7 @@ export const ProjectApplicationsTable = ({
         'border-yellow-200 bg-yellow-100 text-yellow-800',
       [APPLICATION_STATUS.APPROVED]:
         'border-green-200 bg-green-100 text-green-800',
-      [APPLICATION_STATUS.REJECTED]:
-        'border-red-200 bg-red-100 text-red-800',
+      [APPLICATION_STATUS.REJECTED]: 'border-red-200 bg-red-100 text-red-800',
     };
     return (
       <Badge className={`border ${colors[status as keyof typeof colors]}`}>
@@ -333,6 +410,22 @@ export const ProjectApplicationsTable = ({
         </div>
       ) : (
         <Table data={filteredApplications as any} columns={columns as any} />
+      )}
+
+      {/* Confirmation Dialog */}
+      {confirmationDialog && (
+        <ConfirmationDialog
+          open={confirmationDialog.open}
+          title={`Confirm ${confirmationDialog.status === APPLICATION_STATUS.APPROVED ? 'Approval' : 'Rejection'}`}
+          message={`Are you sure you want to ${confirmationDialog.status === APPLICATION_STATUS.APPROVED ? 'approve' : 'reject'} ${confirmationDialog.userName}'s application?`}
+          confirmText={
+            confirmationDialog.status === APPLICATION_STATUS.APPROVED
+              ? 'Approve'
+              : 'Reject'
+          }
+          onConfirm={handleConfirm}
+          onClose={() => setConfirmationDialog(null)}
+        />
       )}
     </div>
   );
