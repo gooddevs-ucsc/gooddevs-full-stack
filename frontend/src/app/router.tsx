@@ -142,6 +142,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
             import('./routes/admin/my-donations').then(convert(queryClient)),
         },
         {
+          path: paths.admin.projectDetail.path,
+          lazy: () =>
+            import('./routes/admin/project-detail').then(convert(queryClient)),
+        },
+        {
           path: paths.admin.settings.path,
           lazy: () =>
             import('./routes/admin/settings').then(convert(queryClient)),

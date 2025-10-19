@@ -1113,6 +1113,36 @@ def get_requester_profile_stats(*, session: Session, user_id: uuid.UUID) -> dict
     }
 
 
+# Public Profile CRUD operations
+def get_user_approved_projects(
+    *, session: Session, requester_id: uuid.UUID, skip: int = 0, limit: int = 100
+) -> list[Project]:
+    """Get approved projects for a specific user (for public view)"""
+    statement = (
+        select(Project)
+        .where(
+            Project.requester_id == requester_id,
+            Project.status == ProjectStatus.APPROVED
+        )
+        .order_by(Project.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    
+    projects = session.exec(statement).all()
+    return list(projects)
+
+
+def count_user_approved_projects(*, session: Session, requester_id: uuid.UUID) -> int:
+    """Count approved projects for a specific user"""
+    statement = select(func.count(Project.id)).where(
+        Project.requester_id == requester_id,
+        Project.status == ProjectStatus.APPROVED
+    )
+    
+    count = session.exec(statement).one() or 0
+    return count
+
 # Application Reviewer Permissions
 
 def grant_reviewer_permission(
