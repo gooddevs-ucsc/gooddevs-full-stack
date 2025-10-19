@@ -56,6 +56,51 @@ def get_my_volunteer_profile(
     
     return VolunteerProfileResponse(data=profile)
 
+@router.get("/user/{user_id}", response_model=VolunteerProfileResponse)
+def get_volunteer_profile_by_user_id_public(
+    user_id: UUID, session: SessionDep
+) -> Any:
+    """
+    Get volunteer profile by user ID (public view).
+    Creates a default profile if user is a volunteer but has no profile.
+    """
+    # First check if user exists and is a volunteer
+    user = crud.get_user_by_id(session=session, user_id=user_id)
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+    
+    if user.role != UserRole.VOLUNTEER:
+        raise HTTPException(
+            status_code=404,
+            detail="User is not a volunteer"
+        )
+    
+    # Try to get existing profile
+    profile = crud.get_volunteer_profile_by_user_id(
+        session=session, user_id=user_id
+    )
+    
+    if not profile:
+        # Create default profile for existing volunteer users
+        profile_create = VolunteerProfileCreate(
+            bio=f"Hi! I'm {user.firstname} {user.lastname}. I'm passionate about contributing to meaningful projects.",
+            tagline="Volunteer Developer",
+            skills=[],
+            experience=[]
+        )
+        profile_db = crud.create_volunteer_profile(
+            session=session,
+            profile_in=profile_create,
+            user_id=user_id
+        )
+        
+        # Convert to public model
+        profile = VolunteerProfilePublic.model_validate(profile_db, update={"user": user})
+    
+    return VolunteerProfileResponse(data=profile)
 
 @router.post("/", response_model=VolunteerProfileResponse)
 def create_volunteer_profile(

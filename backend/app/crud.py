@@ -1,6 +1,6 @@
 from sqlalchemy.orm import selectinload
 from app.models import (
-    Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread,
+    Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, UserRole,
     ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate, TaskStatus,
     PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, UserVolunteerRole, VolunteerRole, VolunteerProfile, VolunteerProfileCreate, VolunteerProfilePublic, VolunteerProfileUpdate
 )
@@ -25,6 +25,19 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
+    
+    if db_obj.role == UserRole.VOLUNTEER:
+        default_profile = VolunteerProfileCreate(
+            bio=f"Hi! I'm {db_obj.firstname} {db_obj.lastname}. I'm passionate about contributing to meaningful projects.",
+            tagline="Volunteer Developer",
+            skills=[],
+            experience=[]
+        )
+        create_volunteer_profile(
+            session=session,
+            profile_in=default_profile,
+            user_id=db_obj.id
+        )
     return db_obj
 
 def create_volunteer_roles(
