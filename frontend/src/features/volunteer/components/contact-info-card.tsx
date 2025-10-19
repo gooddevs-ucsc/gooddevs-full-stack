@@ -100,6 +100,42 @@ export const ContactInfoCard = ({
           </div>
         </div>
 
+        {/* Website */}
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 rounded-lg bg-blue-100 p-2">
+            <Globe className="size-4 text-blue-600" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-slate-900">Website</p>
+            {editingSection === 'contact' ? (
+              <Input
+                value={editData.website}
+                onChange={(e) =>
+                  onEditDataChange({ ...editData, website: e.target.value })
+                }
+                placeholder="https://yourwebsite.com"
+                className="mt-1"
+              />
+            ) : (
+              <p className="text-sm text-slate-600">
+                {profile.website ? (
+                  <a
+                    href={profile.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 break-all text-primary hover:text-primary/80"
+                  >
+                    {profile.website}
+                    <ExternalLink className="size-3 shrink-0" />
+                  </a>
+                ) : (
+                  'Not provided'
+                )}
+              </p>
+            )}
+          </div>
+        </div>
+
         {/* Phone */}
         <div className="flex items-start gap-3">
           <div className="mt-0.5 rounded-lg bg-purple-100 p-2">
@@ -116,7 +152,7 @@ export const ContactInfoCard = ({
                     contact_phone: e.target.value,
                   })
                 }
-                placeholder="Add phone number"
+                placeholder="+1 (555) 123-4567"
                 className="mt-1"
               />
             ) : (
@@ -140,21 +176,25 @@ export const ContactInfoCard = ({
                 onChange={(e) =>
                   onEditDataChange({ ...editData, github_url: e.target.value })
                 }
-                placeholder="GitHub profile URL"
+                placeholder="https://github.com/username"
                 className="mt-1"
               />
-            ) : profile.github_url ? (
-              <a
-                href={profile.github_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
-              >
-                View Profile
-                <ExternalLink className="size-3" />
-              </a>
             ) : (
-              <p className="text-sm text-slate-600">Not provided</p>
+              <p className="text-sm text-slate-600">
+                {profile.github_url ? (
+                  <a
+                    href={profile.github_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 break-all text-primary hover:text-primary/80"
+                  >
+                    {profile.github_url}
+                    <ExternalLink className="size-3 shrink-0" />
+                  </a>
+                ) : (
+                  'Not provided'
+                )}
+              </p>
             )}
           </div>
         </div>
@@ -175,29 +215,33 @@ export const ContactInfoCard = ({
                     linkedin_url: e.target.value,
                   })
                 }
-                placeholder="LinkedIn profile URL"
+                placeholder="https://linkedin.com/in/username"
                 className="mt-1"
               />
-            ) : profile.linkedin_url ? (
-              <a
-                href={profile.linkedin_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
-              >
-                View Profile
-                <ExternalLink className="size-3" />
-              </a>
             ) : (
-              <p className="text-sm text-slate-600">Not provided</p>
+              <p className="text-sm text-slate-600">
+                {profile.linkedin_url ? (
+                  <a
+                    href={profile.linkedin_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 break-all text-primary hover:text-primary/80"
+                  >
+                    {profile.linkedin_url}
+                    <ExternalLink className="size-3 shrink-0" />
+                  </a>
+                ) : (
+                  'Not provided'
+                )}
+              </p>
             )}
           </div>
         </div>
 
         {/* Portfolio */}
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 rounded-lg bg-orange-100 p-2">
-            <Globe className="size-4 text-orange-600" />
+          <div className="mt-0.5 rounded-lg bg-indigo-100 p-2">
+            <Globe className="size-4 text-indigo-600" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-slate-900">Portfolio</p>
@@ -210,53 +254,25 @@ export const ContactInfoCard = ({
                     portfolio_url: e.target.value,
                   })
                 }
-                placeholder="Portfolio website URL"
+                placeholder="https://yourportfolio.com"
                 className="mt-1"
               />
-            ) : profile.portfolio_url ? (
-              <a
-                href={profile.portfolio_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
-              >
-                View Portfolio
-                <ExternalLink className="size-3" />
-              </a>
             ) : (
-              <p className="text-sm text-slate-600">Not provided</p>
-            )}
-          </div>
-        </div>
-
-        {/* Website */}
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 rounded-lg bg-indigo-100 p-2">
-            <Globe className="size-4 text-indigo-600" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-slate-900">Website</p>
-            {editingSection === 'contact' ? (
-              <Input
-                value={editData.website}
-                onChange={(e) =>
-                  onEditDataChange({ ...editData, website: e.target.value })
-                }
-                placeholder="Personal website URL"
-                className="mt-1"
-              />
-            ) : profile.website ? (
-              <a
-                href={profile.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
-              >
-                Visit Website
-                <ExternalLink className="size-3" />
-              </a>
-            ) : (
-              <p className="text-sm text-slate-600">Not provided</p>
+              <p className="text-sm text-slate-600">
+                {profile.portfolio_url ? (
+                  <a
+                    href={profile.portfolio_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 break-all text-primary hover:text-primary/80"
+                  >
+                    {profile.portfolio_url}
+                    <ExternalLink className="size-3 shrink-0" />
+                  </a>
+                ) : (
+                  'Not provided'
+                )}
+              </p>
             )}
           </div>
         </div>
