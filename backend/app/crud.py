@@ -2,7 +2,7 @@ from sqlalchemy.orm import selectinload
 from app.models import (
     Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread,
     ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate,
-    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, UserVolunteerRole, VolunteerRole,
+    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, DonationStatistics, UserVolunteerRole, VolunteerRole,
     ApplicationReviewerPermission, ApplicationReviewerPermissionCreate, ApplicationReviewerPermissionPublic, ReviewerPermissionStatus
 )
 
@@ -28,13 +28,14 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
     session.refresh(db_obj)
     return db_obj
 
+
 def create_volunteer_roles(
     *, session: Session, user_id: uuid.UUID, roles: list[str]
 ) -> None:
     """Create volunteer roles for a user"""
     if not roles:
         return
-    
+
     volunteer_roles = []
     for role in roles:
         try:
@@ -47,10 +48,11 @@ def create_volunteer_roles(
         except ValueError:
             # Skip invalid roles
             continue
-    
+
     if volunteer_roles:
         session.add_all(volunteer_roles)
         session.commit()
+
 
 def get_volunteer_roles_by_user_id(
     *, session: Session, user_id: uuid.UUID
@@ -60,6 +62,7 @@ def get_volunteer_roles_by_user_id(
         UserVolunteerRole.user_id == user_id
     )
     return session.exec(statement).all()
+
 
 def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     user_data = user_in.model_dump(exclude_unset=True)
@@ -152,10 +155,11 @@ def delete_project(*, session: Session, project_id: uuid.UUID) -> bool:
 def get_user_by_id(*, session: Session, user_id: uuid.UUID) -> User | None:
     return session.get(User, user_id)
 
-    
+
 # Task CRUD operations
 def create_task(*, session: Session, task_in: TaskCreate, project_id: uuid.UUID, creator_id: uuid.UUID) -> Task:
-    db_task = Task.model_validate(task_in, update={"project_id": project_id, "creator_id": creator_id})
+    db_task = Task.model_validate(
+        task_in, update={"project_id": project_id, "creator_id": creator_id})
     session.add(db_task)
     session.commit()
     session.refresh(db_task)
@@ -614,7 +618,7 @@ def get_approved_applicants_for_project(
         .order_by(User.firstname, User.lastname)
     )
     results = session.exec(statement).all()
-    
+
     # Convert to list of dicts with combined data
     team_members = []
     for user, volunteer_role in results:
@@ -625,7 +629,7 @@ def get_approved_applicants_for_project(
             "email": user.email,
             "volunteer_role": volunteer_role
         })
-    
+
     return team_members
 
 
@@ -902,6 +906,106 @@ def count_donations_by_donor_id(
     return len(list(session.exec(statement).all()))
 
 
+def get_all_donations(
+    *,
+    session: Session,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Donation]:
+    """
+    Get all donations with SUCCESS or PENDING payment status,
+    ordered by order_id (descending) - for admin use.
+    """
+    statement = (
+        select(Donation)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+        .order_by(Donation.order_id.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_all_donations(
+    *,
+    session: Session
+) -> int:
+    """
+    Count total donations with SUCCESS or PENDING payment status - for admin use.
+    """
+    statement = (
+        select(func.count())
+        .select_from(Donation)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+    )
+    return session.exec(statement).one()
+
+
+def get_donation_statistics(
+    *,
+    session: Session
+) -> DonationStatistics:
+    """
+    Get donation statistics for admin dashboard.
+    Returns total donations, total amount, average donation, etc.
+    """
+    # Get all successful donations
+    statement = (
+        select(Donation, Payment)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.SUCCESS)
+    )
+    results = list(session.exec(statement).all())
+
+    if not results:
+        return DonationStatistics(
+            total_donations=0,
+            total_amount=0.0,
+            average_donation=0.0,
+            pending_donations=0,
+            successful_donations=0,
+            unique_donors=0
+        )
+
+    # Calculate statistics
+    total_amount = sum(payment.amount for _, payment in results)
+    successful_count = len(results)
+    average_donation = total_amount / successful_count if successful_count > 0 else 0.0
+
+    # Count pending donations
+    pending_statement = (
+        select(func.count())
+        .select_from(Donation)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.PENDING)
+    )
+    pending_count = session.exec(pending_statement).one()
+
+    # Count unique donors
+    unique_donors_statement = (
+        select(func.count(func.distinct(Donation.donor_id)))
+        .select_from(Donation)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.SUCCESS)
+    )
+    unique_donors = session.exec(unique_donors_statement).one()
+
+    return DonationStatistics(
+        total_donations=successful_count + pending_count,
+        total_amount=float(total_amount),
+        average_donation=float(average_donation),
+        pending_donations=pending_count,
+        successful_donations=successful_count,
+        unique_donors=unique_donors
+    )
+
+
 # Requester Profile CRUD operations
 
 
@@ -1113,7 +1217,38 @@ def get_requester_profile_stats(*, session: Session, user_id: uuid.UUID) -> dict
     }
 
 
+# Public Profile CRUD operations
+def get_user_approved_projects(
+    *, session: Session, requester_id: uuid.UUID, skip: int = 0, limit: int = 100
+) -> list[Project]:
+    """Get approved projects for a specific user (for public view)"""
+    statement = (
+        select(Project)
+        .where(
+            Project.requester_id == requester_id,
+            Project.status == ProjectStatus.APPROVED
+        )
+        .order_by(Project.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+
+    projects = session.exec(statement).all()
+    return list(projects)
+
+
+def count_user_approved_projects(*, session: Session, requester_id: uuid.UUID) -> int:
+    """Count approved projects for a specific user"""
+    statement = select(func.count(Project.id)).where(
+        Project.requester_id == requester_id,
+        Project.status == ProjectStatus.APPROVED
+    )
+
+    count = session.exec(statement).one() or 0
+    return count
+
 # Application Reviewer Permissions
+
 
 def grant_reviewer_permission(
     *,
@@ -1133,7 +1268,7 @@ def grant_reviewer_permission(
         ApplicationReviewerPermission.reviewer_id == reviewer_id
     )
     existing_permission = session.exec(statement).first()
-    
+
     if existing_permission:
         # Reactivate if revoked
         if existing_permission.status == ReviewerPermissionStatus.REVOKED:
@@ -1147,7 +1282,7 @@ def grant_reviewer_permission(
         else:
             # Already active
             return existing_permission
-    
+
     # Create new permission record
     db_permission = ApplicationReviewerPermission(
         project_id=project_id,
@@ -1213,7 +1348,7 @@ def check_reviewer_permission(
     project = session.get(Project, project_id)
     if project and project.requester_id == user_id:
         return True
-    
+
     # Check if user has an active reviewer permission
     statement = select(ApplicationReviewerPermission).where(
         ApplicationReviewerPermission.project_id == project_id,
@@ -1240,12 +1375,12 @@ def get_reviewer_permissions_for_project(
         .options(selectinload(ApplicationReviewerPermission.reviewer))
         .order_by(ApplicationReviewerPermission.created_at.desc())
     )
-    
+
     if not include_revoked:
         statement = statement.where(
             ApplicationReviewerPermission.status == ReviewerPermissionStatus.ACTIVE
         )
-    
+
     return list(session.exec(statement).all())
 
 
@@ -1263,11 +1398,11 @@ def get_projects_user_can_review(
         Project.requester_id == user_id
     )
     owned_projects = list(session.exec(owned_projects_statement).all())
-    
+
     # Get projects where user has active reviewer permission
     permission_statement = (
         select(Project)
-        .join(ApplicationReviewerPermission, 
+        .join(ApplicationReviewerPermission,
               ApplicationReviewerPermission.project_id == Project.id)
         .where(
             ApplicationReviewerPermission.reviewer_id == user_id,
@@ -1275,7 +1410,7 @@ def get_projects_user_can_review(
         )
     )
     permitted_projects = list(session.exec(permission_statement).all())
-    
+
     # Combine and deduplicate
     all_projects = {p.id: p for p in owned_projects + permitted_projects}
     return list(all_projects.values())

@@ -6,17 +6,21 @@ import {
   XCircle,
   Gift,
   Filter,
+  Plus,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
+import { paths } from '@/config/paths';
 import { useMyDonations } from '@/features/donations/api';
 import { PAYMENT_STATUS } from '@/types/api';
 
 export const MyDonationsView = () => {
+  const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState<
     'all' | 'success' | 'pending' | 'failed'
   >('all');
@@ -104,7 +108,19 @@ export const MyDonationsView = () => {
             Track your donation history and impact
           </p>
         </div>
-        <Gift className="size-12 text-green-600" />
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={() => navigate(paths.payments.donation.getHref())}
+            className="bg-green-600 hover:bg-green-700"
+            size="lg"
+          >
+            <div className="flex items-center">
+              <Plus className="mr-2 size-5" />
+              Make a Donation
+            </div>
+          </Button>
+          <Gift className="size-12 text-green-600" />
+        </div>
       </div>
 
       {/* Statistics Cards */}
@@ -251,15 +267,30 @@ export const MyDonationsView = () => {
                 ? 'Start making a difference today by supporting the community!'
                 : 'Try selecting a different filter to view other donations.'}
             </p>
-            {filterStatus !== 'all' && donations.length > 0 && (
-              <Button
-                onClick={() => setFilterStatus('all')}
-                variant="outline"
-                className="mt-4"
-              >
-                View All Donations
-              </Button>
-            )}
+            <div className="mt-6 flex justify-center gap-3">
+              {donations.length === 0 ? (
+                <Button
+                  onClick={() => navigate(paths.payments.donation.getHref())}
+                  className="bg-green-600 hover:bg-green-700"
+                  size="lg"
+                >
+                  <div className="flex items-center">
+                    <Plus className="mr-2 size-5" />
+                    Make Your First Donation
+                  </div>
+                </Button>
+              ) : (
+                filterStatus !== 'all' && (
+                  <Button
+                    onClick={() => setFilterStatus('all')}
+                    variant="outline"
+                    className="mt-4"
+                  >
+                    View All Donations
+                  </Button>
+                )
+              )}
+            </div>
           </CardContent>
         </Card>
       ) : (
