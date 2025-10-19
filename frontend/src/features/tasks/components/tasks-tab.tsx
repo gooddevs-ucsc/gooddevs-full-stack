@@ -1,9 +1,12 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, Plus } from 'lucide-react';
 import { FC, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useNotifications } from '@/components/ui/notifications';
 import { Spinner } from '@/components/ui/spinner';
+import { useUser } from '@/lib/auth';
+import { ROLES } from '@/lib/roles';
 import type { Task } from '@/types/api';
 
 import { useCanCreateTask } from '../api/can-create-task';
@@ -13,6 +16,7 @@ import { useTasks } from '../api/get-tasks';
 import { useUpdateTask } from '../api/update-task';
 
 import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
+import { TaskDetailsModal } from './task-details-modal';
 import { TaskList } from './task-list';
 import { TaskModal, type TaskFormData } from './task-modal';
 
@@ -26,6 +30,11 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }: TasksTabProps) => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const user = useUser();
+  const canManageTasks = user.data?.role === ROLES.VOLUNTEER;
+
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
+  const queryClient = useQueryClient();
 
   // API Hooks
   const { data: tasksData, isLoading: isLoadingTasks } = useTasks({
@@ -60,7 +69,7 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }: TasksTabProps) => {
 
   const updateTaskMutation = useUpdateTask({
     mutationConfig: {
-      onSuccess: () => {
+      onSuccess: (updatedTask) => {
         addNotification({
           type: 'success',
           title: 'Task Updated',
@@ -68,6 +77,8 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }: TasksTabProps) => {
         });
         setIsModalOpen(false);
         setEditingTask(null);
+        setViewingTask(updatedTask.data);
+        queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
       },
       onError: () => {
         addNotification({
@@ -89,6 +100,7 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }: TasksTabProps) => {
         });
         setIsDeleteDialogOpen(false);
         setTaskToDelete(null);
+        setViewingTask(null);
       },
       onError: () => {
         addNotification({
@@ -117,6 +129,18 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }: TasksTabProps) => {
   const handleDeleteTask = (taskId: string) => {
     setTaskToDelete(taskId);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleViewDetails = (task: Task) => {
+    setViewingTask(task);
+  };
+
+  const handleUpdateTask = (taskId: string, data: any) => {
+    updateTaskMutation.mutate({
+      projectId,
+      taskId,
+      data,
+    });
   };
 
   const handleSubmitTask = (data: TaskFormData) => {
@@ -224,6 +248,8 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }: TasksTabProps) => {
         tasks={tasks}
         onEdit={handleEditTask}
         onDelete={handleDeleteTask}
+        onViewDetails={handleViewDetails}
+        onUpdateTask={handleUpdateTask} // Added
       />
 
       {/* Task Modal */}
@@ -249,6 +275,16 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }: TasksTabProps) => {
         onConfirm={handleConfirmDelete}
         isLoading={deleteTaskMutation.isPending}
         taskTitle={taskToDeleteData?.title}
+      />
+
+      {/* Task Details Modal */}
+      <TaskDetailsModal
+        isOpen={!!viewingTask}
+        onClose={() => setViewingTask(null)}
+        task={viewingTask}
+        onDelete={handleDeleteTask}
+        onUpdate={handleUpdateTask}
+        canManageTasks={canManageTasks}
       />
     </div>
   );

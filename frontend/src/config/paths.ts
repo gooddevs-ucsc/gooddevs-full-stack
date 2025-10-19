@@ -106,6 +106,10 @@ export const paths = {
       path: 'my-donations',
       getHref: () => '/admin/my-donations',
     },
+    allDonations: {
+      path: 'all-donations',
+      getHref: () => '/admin/all-donations',
+    },
     projectDetail: {
       path: 'project-approvals/:id',
       getHref: (id: string) => `/admin/project-approvals/${id}`,

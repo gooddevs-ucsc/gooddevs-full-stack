@@ -5,6 +5,7 @@ import {
   Home,
   Settings,
   Ribbon,
+  BarChart3,
 } from 'lucide-react';
 import { Outlet } from 'react-router';
 
@@ -35,6 +36,11 @@ const AdminRoot = () => {
       name: 'Donations & Sponsorships',
       to: paths.admin.donationsSponshorships.getHref(),
       icon: DollarSign,
+    },
+    {
+      name: 'All Donations & Reports',
+      to: paths.admin.allDonations.getHref(),
+      icon: BarChart3,
     },
     {
       name: 'My Donations',
