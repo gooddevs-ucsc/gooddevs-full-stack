@@ -228,6 +228,7 @@ const AdminDashboardRoute = () => {
                     variant="outline"
                     size="sm"
                     className="h-10 w-full justify-start"
+                    onClick={() => navigate(paths.projects.getHref())}
                   >
                     <div className="flex items-center gap-6">
                       <Eye className="size-4" />
