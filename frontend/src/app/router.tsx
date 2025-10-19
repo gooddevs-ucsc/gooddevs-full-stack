@@ -180,6 +180,13 @@ export const createAppRouter = (queryClient: QueryClient) =>
             import('./routes/sponsor/my-donations').then(convert(queryClient)),
         },
         {
+          path: paths.sponsor.mySponsorships.path,
+          lazy: () =>
+            import('./routes/sponsor/my-sponsorships').then(
+              convert(queryClient),
+            ),
+        },
+        {
           path: paths.sponsor.profile.path,
           lazy: () =>
             import('./routes/sponsor/profile').then(convert(queryClient)),

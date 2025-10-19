@@ -137,6 +137,10 @@ export const paths = {
       path: 'my-donations',
       getHref: () => '/sponsor/my-donations',
     },
+    mySponsorships: {
+      path: 'my-sponsorships',
+      getHref: () => '/sponsor/my-sponsorships',
+    },
     profile: {
       path: 'profile',
       getHref: () => '/sponsor/profile',
