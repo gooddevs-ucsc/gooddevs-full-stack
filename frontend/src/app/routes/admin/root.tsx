@@ -4,6 +4,7 @@ import {
   DollarSign,
   Home,
   Settings,
+  Ribbon,
 } from 'lucide-react';
 import { Outlet } from 'react-router';
 
@@ -34,6 +35,11 @@ const AdminRoot = () => {
       name: 'Donations & Sponsorships',
       to: paths.admin.donationsSponshorships.getHref(),
       icon: DollarSign,
+    },
+    {
+      name: 'My Donations',
+      to: paths.admin.myDonations.getHref(),
+      icon: Ribbon,
     },
     {
       name: 'Settings',

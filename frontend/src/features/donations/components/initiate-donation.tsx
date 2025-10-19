@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Form, Input, Select, Textarea } from '@/components/ui/form';
-import { ProtectedRoute } from '@/lib/auth';
+import { env } from '@/config/env';
+import { paths } from '@/config/paths';
+import { ProtectedRoute, useUser } from '@/lib/auth';
 import { getCountryOptions } from '@/utils/countries';
 
 import {
@@ -9,6 +11,34 @@ import {
 } from '../api/initiate-donation';
 
 export const InitiateDonation = () => {
+  const user = useUser();
+
+  // Determine the my-donations path based on user role
+  const getMyDonationsPath = () => {
+    // Try to get base URL from environment variable, fallback to window.location.origin
+    const baseUrl = env.APP_URL || window.location.origin;
+    let path = '';
+
+    switch (user.data?.role) {
+      case 'ADMIN':
+        path = paths.admin.myDonations.getHref();
+        break;
+      case 'SPONSOR':
+        path = paths.sponsor.myDonations.getHref();
+        break;
+      case 'REQUESTER':
+        path = paths.requester.myDonations.getHref();
+        break;
+      case 'VOLUNTEER':
+        path = paths.developer.myDonations.getHref();
+        break;
+      default:
+        path = '/';
+    }
+
+    return `${baseUrl}${path}`;
+  };
+
   const initiateDonationMutation = useInitiateDonation({
     mutationConfig: {
       onSuccess: ({ data: paymentData }) => {
@@ -16,11 +46,16 @@ export const InitiateDonation = () => {
         formElement.method = 'post';
         formElement.action = 'https://sandbox.payhere.lk/pay/checkout';
 
-        // Add hidden fields
+        // Get the role-specific my-donations URL if env variable exists
+        // Otherwise use the return_url and cancel_url from backend payment data
+        const envUrl = import.meta.env.VITE_APP_APP_URL;
+        const myDonationsUrl = envUrl ? getMyDonationsPath() : null;
+
+        // Add hidden fields - use custom URLs if env is set, otherwise use backend URLs
         const fields = {
           merchant_id: paymentData.merchant_id,
-          return_url: paymentData.return_url,
-          cancel_url: paymentData.cancel_url,
+          return_url: myDonationsUrl || paymentData.return_url,
+          cancel_url: myDonationsUrl || paymentData.cancel_url,
           notify_url: paymentData.notify_url,
           order_id: paymentData.order_id,
           items: paymentData.items,

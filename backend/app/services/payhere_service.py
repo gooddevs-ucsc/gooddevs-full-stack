@@ -240,8 +240,10 @@ class PayHereService:
         if not payment:
             return None
 
-        # Step 2: If status is PENDING, verify with PayHere API
-        if payment.status == crud.PaymentStatus.PENDING:
+        # Step 2:
+        # If status is PENDING, verify with PayHere API
+        # If status is NOT_FOUND, also verify with PayHere API because it might have been completed later
+        if payment.status == crud.PaymentStatus.PENDING or payment.status == crud.PaymentStatus.NOT_FOUND:
             try:
                 payhere_response = await self._retrieve_payment_details(str(order_id))
                 if payhere_response.data and len(payhere_response.data) > 0:

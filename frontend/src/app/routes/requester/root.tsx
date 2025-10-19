@@ -5,6 +5,7 @@ import {
   Home,
   Settings,
   User,
+  Ribbon,
 } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router';
 
@@ -32,6 +33,11 @@ const RequesterRoot = () => {
       name: 'Sponsorships',
       to: paths.requester.sponsorships.getHref(),
       icon: DollarSign,
+    },
+    {
+      name: 'My Donations',
+      to: paths.requester.myDonations.getHref(),
+      icon: Ribbon,
     },
     { name: 'Profile', to: paths.requester.profile.getHref(), icon: User },
     {

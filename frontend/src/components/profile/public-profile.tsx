@@ -7,6 +7,7 @@ import {
   Github,
   Linkedin,
   Twitter,
+  Facebook,
   ArrowLeft,
   Phone,
   ExternalLink,
@@ -17,59 +18,43 @@ import { useParams, useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import {
+  usePublicUserProfile,
+  useUserProjects,
+} from '@/lib/public-profile-api';
 import { formatDate } from '@/utils/format';
 
 export const PublicProfile = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
 
-  // Mock data for demonstration - replace with real API calls when backend is ready
-  const loading = false;
-  const error = null;
+  // Fetch real data from API
+  const {
+    data: profileData,
+    isLoading: profileLoading,
+    error: profileError,
+  } = usePublicUserProfile({
+    userId: userId || '',
+    queryConfig: {
+      enabled: !!userId,
+    },
+  });
 
-  // Mock profile data
-  const profile = {
-    id: userId || '',
-    firstname: 'John',
-    lastname: 'Doe',
-    email: 'john.doe@example.com',
-    role: 'REQUESTER',
-    created_at: '2024-01-15T00:00:00Z',
-    requester_profile: {
-      about:
-        'I am a project manager with over 5 years of experience in leading cross-functional teams to deliver impactful software solutions. I believe in the power of technology to solve real-world problems and am committed to creating opportunities for developers to contribute to meaningful projects.',
-      location: 'San Francisco, CA',
-      website_url: 'https://johndoe.dev',
-      linkedin_url: 'https://linkedin.com/in/johndoe',
-      github_url: 'https://github.com/johndoe',
-      twitter_url: 'https://twitter.com/johndoe',
-      phone_number: '+1 (555) 123-4567',
+  const {
+    data: projectsData,
+    isLoading: projectsLoading,
+    error: projectsError,
+  } = useUserProjects({
+    userId: userId || '',
+    queryConfig: {
+      enabled: !!userId,
     },
-  };
+  });
 
-  // Mock projects data
-  const projects = [
-    {
-      id: '1',
-      title: 'Community Health Tracker',
-      description:
-        'A web application to help local health clinics track patient wellness metrics and appointments.',
-      project_type: 'WEBSITE',
-      status: 'APPROVED',
-      created_at: '2024-02-15T00:00:00Z',
-      preferred_technologies: 'React, Node.js, PostgreSQL',
-    },
-    {
-      id: '2',
-      title: 'Education Resource Platform',
-      description:
-        'Mobile app connecting students with educational resources and mentorship opportunities.',
-      project_type: 'MOBILE_APP',
-      status: 'IN_PROGRESS',
-      created_at: '2024-01-30T00:00:00Z',
-      preferred_technologies: 'React Native, Firebase',
-    },
-  ];
+  const loading = profileLoading || projectsLoading;
+  const error = profileError || projectsError;
+  const profile = profileData?.data;
+  const projects = projectsData?.data || [];
 
   if (loading) {
     return (
@@ -129,11 +114,34 @@ export const PublicProfile = () => {
         <div className="space-y-6">
           {/* Profile Header */}
           <div className="overflow-hidden rounded-lg bg-white shadow-md">
-            <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600"></div>
+            {/* Cover Image */}
+            <div className="relative h-32">
+              {requesterProfile?.cover_image_url ? (
+                <img
+                  src={requesterProfile.cover_image_url}
+                  alt="Cover"
+                  className="size-full object-cover"
+                />
+              ) : (
+                <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600"></div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            </div>
             <div className="relative px-6 pb-6">
               <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-6">
-                <div className="-mt-12 mb-4 flex size-24 items-center justify-center rounded-full border-4 border-white bg-blue-600 text-white sm:mb-0">
-                  <User className="size-12" />
+                {/* Profile Logo */}
+                <div className="-mt-12 mb-4 sm:mb-0">
+                  {requesterProfile?.logo_url ? (
+                    <img
+                      src={requesterProfile.logo_url}
+                      alt={`${profile.firstname} ${profile.lastname}`}
+                      className="size-24 rounded-full border-4 border-white object-cover shadow-lg"
+                    />
+                  ) : (
+                    <div className="flex size-24 items-center justify-center rounded-full border-4 border-white bg-blue-600 text-white">
+                      <User className="size-12" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1">
                   <h1 className="text-3xl font-bold text-slate-900">
@@ -148,8 +156,12 @@ export const PublicProfile = () => {
                     )}
                     <div className="flex items-center">
                       <Calendar className="mr-1 size-4" />
-                      Joined{' '}
-                      {formatDate(new Date(profile.created_at).getTime())}
+                      Member since{' '}
+                      {profile.created_at
+                        ? new Date(profile.created_at).getFullYear()
+                        : requesterProfile?.created_at
+                          ? new Date(requesterProfile.created_at).getFullYear()
+                          : 'Unknown'}
                     </div>
                   </div>
                 </div>
@@ -234,6 +246,18 @@ export const PublicProfile = () => {
                 >
                   <Twitter className="mr-3 size-5 text-blue-500" />
                   <span className="text-slate-700">Twitter</span>
+                  <ExternalLink className="ml-auto size-4 text-slate-400" />
+                </a>
+              )}
+              {requesterProfile?.facebook_url && (
+                <a
+                  href={requesterProfile.facebook_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center rounded-lg bg-slate-50 p-3 transition-colors hover:bg-slate-100"
+                >
+                  <Facebook className="mr-3 size-5 text-blue-600" />
+                  <span className="text-slate-700">Facebook</span>
                   <ExternalLink className="ml-auto size-4 text-slate-400" />
                 </a>
               )}
