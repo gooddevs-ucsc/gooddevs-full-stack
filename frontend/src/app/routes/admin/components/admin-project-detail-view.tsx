@@ -1,8 +1,19 @@
-import { Calendar, Clock, Tag, User, Briefcase } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  Tag,
+  User,
+  Briefcase,
+  ExternalLink,
+} from 'lucide-react';
+import { useNavigate } from 'react-router';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { PROJECT_TYPE_STYLES } from '@/lib/constants/ui';
+import { usePublicUserProfile } from '@/lib/public-profile-api';
 import { Project, ProjectType } from '@/types/api';
 import { formatDate, formatEstimatedTimeline } from '@/utils/format';
 
@@ -17,6 +28,24 @@ interface AdminProjectDetailViewProps {
 export const AdminProjectDetailView = ({
   project,
 }: AdminProjectDetailViewProps) => {
+  const navigate = useNavigate();
+
+  // Fetch requester's public profile data
+  const {
+    data: requesterProfile,
+    isLoading: requesterLoading,
+    error: requesterError,
+  } = usePublicUserProfile({
+    userId: project.requester_id,
+    queryConfig: {
+      enabled: !!project.requester_id,
+    },
+  });
+
+  const handleViewProfile = () => {
+    navigate(`/profile/${project.requester_id}`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Project Header Card */}
@@ -116,18 +145,62 @@ export const AdminProjectDetailView = ({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {requesterLoading ? (
+              <div className="flex items-center gap-2">
+                <Spinner size="sm" />
+                <span className="text-sm text-slate-500">
+                  Loading requester information...
+                </span>
+              </div>
+            ) : requesterError ? (
+              <div className="text-sm text-red-600">
+                Failed to load requester information
+              </div>
+            ) : requesterProfile?.data ? (
+              <div className="space-y-3">
+                <div>
+                  <h4 className="mb-2 font-medium text-slate-900">
+                    Requester Name
+                  </h4>
+                  <Button
+                    variant="link"
+                    className="h-auto p-0 text-left font-normal"
+                    onClick={handleViewProfile}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-900">
+                        {`${requesterProfile.data.firstname} ${requesterProfile.data.lastname}`}
+                      </span>
+                      <ExternalLink className="size-3" />
+                    </div>
+                  </Button>
+                </div>
+                <div>
+                  <h4 className="mb-2 font-medium text-slate-900">Email</h4>
+                  <span className="text-slate-600">
+                    {requesterProfile.data.email}
+                  </span>
+                </div>
+              </div>
+            ) : null}
+
             <div className="border-t pt-4">
               <h4 className="mb-2 font-medium text-slate-900">Requester ID</h4>
               <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">
                 {project.requester_id}
               </code>
             </div>
-            <div className="text-sm text-slate-500">
-              <p>
-                Detailed requester information can be viewed by searching the
-                user ID in the admin panel.
-              </p>
-            </div>
+
+            {!requesterProfile?.data &&
+              !requesterLoading &&
+              !requesterError && (
+                <div className="text-sm text-slate-500">
+                  <p>
+                    Detailed requester information can be viewed by searching
+                    the user ID in the admin panel.
+                  </p>
+                </div>
+              )}
           </CardContent>
         </Card>
       </div>
