@@ -30,7 +30,7 @@ export interface RequesterProject {
   progress: number;
   createdAt: string;
   teamSize: number;
-  estimatedCompletion: string | null;
+  estimatedCompletion: string | null; // Now holds timeline text (e.g., "1-3 months"), not a date
   projectType: string;
   technologies: string[];
 }
@@ -185,11 +185,9 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
             <div className="mr-3 flex size-6 items-center justify-center rounded-full bg-amber-100">
               <Clock className="size-3 text-amber-600" />
             </div>
-            <span className="font-medium">Est. Completion:</span>
+            <span className="font-medium">Timeline:</span>
             <span className="ml-2 text-slate-700">
-              {project.estimatedCompletion
-                ? formatDate(project.estimatedCompletion)
-                : 'Not set'}
+              {project.estimatedCompletion || 'Not specified'}
             </span>
           </div>
         </div>
