@@ -1,4 +1,18 @@
-import { Eye } from 'lucide-react';
+import {
+  Eye,
+  Mail,
+  Briefcase,
+  Calendar,
+  ExternalLink,
+  FileText,
+  Lightbulb,
+  User,
+  Clock,
+  Check,
+  RotateCcw,
+  Info,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +51,57 @@ const getStatusBadge = (status: ApplicationStatus) => {
   );
 };
 
+// Reusable card wrapper with consistent styling
+const InfoCard = ({
+  children,
+  gradient,
+  icon: Icon,
+  title,
+}: {
+  children: React.ReactNode;
+  gradient: string;
+  icon: React.ComponentType<any>;
+  title: string;
+}) => (
+  <div className={`rounded-xl ${gradient} p-6 shadow-sm`}>
+    <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-900">
+      <div className="mr-3 rounded-lg bg-white/50 p-2">
+        <Icon className="size-5" />
+      </div>
+      {title}
+    </h3>
+    {children}
+  </div>
+);
+
+// Professional link component
+const ProfessionalLink = ({
+  url,
+  label,
+  icon: Icon,
+  iconColor,
+}: {
+  url: string;
+  label: string;
+  icon: React.ComponentType<any>;
+  iconColor: string;
+}) => (
+  <a
+    href={url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="flex items-center gap-3 rounded-lg bg-white p-3 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
+  >
+    <div className={`rounded-full ${iconColor} p-2`}>
+      <Icon className="size-4" />
+    </div>
+    <div>
+      <p className="text-sm font-medium text-gray-900">{label}</p>
+      <p className="max-w-[200px] truncate text-xs text-gray-500">{url}</p>
+    </div>
+  </a>
+);
+
 interface ConfirmationDialogProps {
   open: boolean;
   title: string;
@@ -53,31 +118,29 @@ const ConfirmationDialog = ({
   confirmText,
   onConfirm,
   onClose,
-}: ConfirmationDialogProps) => {
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <div className="py-4">
-          <p className="text-sm text-gray-600">{message}</p>
-        </div>
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={onConfirm}
-            variant={confirmText === 'Reject' ? 'destructive' : 'default'}
-          >
-            {confirmText}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
+}: ConfirmationDialogProps) => (
+  <Dialog open={open} onOpenChange={onClose}>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>{title}</DialogTitle>
+      </DialogHeader>
+      <div className="py-4">
+        <p className="text-sm text-gray-600">{message}</p>
+      </div>
+      <div className="flex justify-end gap-3">
+        <Button variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          onClick={onConfirm}
+          variant={confirmText === 'Reject' ? 'destructive' : 'default'}
+        >
+          {confirmText}
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
+);
 
 interface ApplicationDetailsDialogProps {
   open: boolean;
@@ -89,210 +152,227 @@ const ApplicationDetailsDialog = ({
   open,
   application,
   onClose,
-}: ApplicationDetailsDialogProps) => {
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl">Application Details</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-6 py-4">
-          {/* Applicant Information */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Applicant Information
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h4 className="text-sm font-medium text-gray-500">Full Name</h4>
-                <p className="text-sm text-gray-900">
-                  {application.volunteer?.firstname}{' '}
-                  {application.volunteer?.lastname}
-                </p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-500">Email</h4>
-                <p className="text-sm text-gray-900">
-                  {application.volunteer?.email}
-                </p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-500">
-                  Applied Role
-                </h4>
-                <p className="text-sm text-gray-900">
-                  {application.volunteer_role}
-                </p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-500">
-                  Experience
-                </h4>
-                <p className="text-sm text-gray-900">
-                  {application.experience_years || 0} years
-                </p>
-              </div>
+}: ApplicationDetailsDialogProps) => (
+  <Dialog open={open} onOpenChange={onClose}>
+    <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+      {/* Header */}
+      <DialogHeader className="border-b pb-4">
+        <div className="flex items-center gap-4">
+          <div className="flex size-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+            <span className="text-lg font-bold">
+              {application.volunteer?.firstname?.[0]}
+              {application.volunteer?.lastname?.[0]}
+            </span>
+          </div>
+          <div>
+            <DialogTitle className="text-2xl font-bold text-gray-900">
+              {application.volunteer?.firstname}{' '}
+              {application.volunteer?.lastname}
+            </DialogTitle>
+            <p className="text-lg text-gray-600">
+              {application.volunteer_role}
+            </p>
+            <div className="mt-2">
+              {getStatusBadge(application.status as ApplicationStatus)}
             </div>
           </div>
+        </div>
+      </DialogHeader>
 
-          {/* Cover Letter */}
-          {application.cover_letter && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Cover Letter
-              </h3>
-              <div className="rounded-lg border bg-gray-50 p-4">
-                <p className="whitespace-pre-wrap text-sm text-gray-700">
-                  {application.cover_letter}
-                </p>
+      <div className="grid grid-cols-1 gap-6 py-6 lg:grid-cols-3">
+        {/* Left Column - Contact & Links */}
+        <div className="space-y-6">
+          {/* Contact Information */}
+          <InfoCard
+            gradient="bg-gradient-to-br from-blue-50 to-indigo-50"
+            icon={User}
+            title="Contact Information"
+          >
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Mail className="size-4 text-gray-400" />
+                <span className="text-sm font-medium text-gray-900">
+                  {application.volunteer?.email}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Briefcase className="size-4 text-gray-400" />
+                <span className="text-sm font-medium text-gray-900">
+                  {application.experience_years || 0} years experience
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Calendar className="size-4 text-gray-400" />
+                <span className="text-sm text-gray-600">
+                  Applied on{' '}
+                  {formatDate(new Date(application.created_at).getTime())}
+                </span>
               </div>
             </div>
-          )}
-
-          {/* Skills */}
-          {application.skills && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Skills & Expertise
-              </h3>
-              <div className="rounded-lg border bg-blue-50 p-4">
-                <p className="whitespace-pre-wrap text-sm text-gray-700">
-                  {application.skills}
-                </p>
-              </div>
-            </div>
-          )}
+          </InfoCard>
 
           {/* Professional Links */}
           {(application.portfolio_url ||
             application.linkedin_url ||
             application.github_url) && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Professional Links
-              </h3>
-              <div className="space-y-2">
+            <InfoCard
+              gradient="bg-gradient-to-br from-green-50 to-emerald-50"
+              icon={ExternalLink}
+              title="Professional Links"
+            >
+              <div className="space-y-3">
                 {application.portfolio_url && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">
-                      Portfolio
-                    </h4>
-                    <p className="text-sm">
-                      <a
-                        href={application.portfolio_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline hover:text-blue-800"
-                      >
-                        {application.portfolio_url}
-                      </a>
-                    </p>
-                  </div>
+                  <ProfessionalLink
+                    url={application.portfolio_url}
+                    label="Portfolio"
+                    icon={ExternalLink}
+                    iconColor="bg-purple-100 text-purple-600"
+                  />
                 )}
                 {application.linkedin_url && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">
-                      LinkedIn
-                    </h4>
-                    <p className="text-sm">
-                      <a
-                        href={application.linkedin_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline hover:text-blue-800"
-                      >
-                        {application.linkedin_url}
-                      </a>
-                    </p>
-                  </div>
+                  <ProfessionalLink
+                    url={application.linkedin_url}
+                    label="LinkedIn"
+                    icon={ExternalLink}
+                    iconColor="bg-blue-100 text-blue-600"
+                  />
                 )}
                 {application.github_url && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">
-                      GitHub
-                    </h4>
-                    <p className="text-sm">
-                      <a
-                        href={application.github_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline hover:text-blue-800"
-                      >
-                        {application.github_url}
-                      </a>
-                    </p>
-                  </div>
+                  <ProfessionalLink
+                    url={application.github_url}
+                    label="GitHub"
+                    icon={ExternalLink}
+                    iconColor="bg-gray-100 text-gray-600"
+                  />
                 )}
               </div>
-            </div>
+            </InfoCard>
           )}
+        </div>
 
-          {/* Application Status */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Application Status
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h4 className="text-sm font-medium text-gray-500">
-                  Current Status
-                </h4>
-                <div className="mt-1">
-                  {getStatusBadge(application.status as ApplicationStatus)}
-                </div>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-500">
-                  Applied Date
-                </h4>
-                <p className="text-sm text-gray-900">
-                  {formatDate(new Date(application.created_at).getTime())}
+        {/* Right Column - Content */}
+        <div className="space-y-6 lg:col-span-2">
+          {/* Cover Letter */}
+          {application.cover_letter && (
+            <InfoCard
+              gradient="bg-gradient-to-br from-amber-50 to-orange-50"
+              icon={FileText}
+              title="Cover Letter"
+            >
+              <div className="rounded-lg bg-white p-4 shadow-sm">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+                  {application.cover_letter}
                 </p>
               </div>
-            </div>
-          </div>
+            </InfoCard>
+          )}
 
-          {/* Bio/Description */}
+          {/* Skills */}
+          {application.skills && (
+            <InfoCard
+              gradient="bg-gradient-to-br from-purple-50 to-pink-50"
+              icon={Lightbulb}
+              title="Skills & Expertise"
+            >
+              <div className="rounded-lg bg-white p-4 shadow-sm">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+                  {application.skills}
+                </p>
+              </div>
+            </InfoCard>
+          )}
+
+          {/* Bio */}
           {application.volunteer?.bio && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-900">
-                About the Applicant
-              </h3>
-              <div className="rounded-lg bg-gray-50 p-4">
-                <div className="mt-1 text-sm text-gray-600">
-                  {application.volunteer?.bio || 'No bio provided'}
-                </div>
+            <InfoCard
+              gradient="bg-gradient-to-br from-gray-50 to-slate-50"
+              icon={User}
+              title="About the Applicant"
+            >
+              <div className="rounded-lg bg-white p-4 shadow-sm">
+                <p className="text-sm leading-relaxed text-gray-700">
+                  {application.volunteer.bio}
+                </p>
               </div>
-            </div>
+            </InfoCard>
           )}
 
-          {/* Additional Details */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Additional Information
-            </h3>
-            <div className="rounded-lg bg-blue-50 p-4">
-              <p className="text-sm text-blue-700">
-                Application ID: {application.id}
-              </p>
-              {application.volunteer?.role && (
-                <p className="mt-1 text-sm text-blue-700">
-                  User Role: {application.volunteer.role}
-                </p>
+          {/* Timeline */}
+          <InfoCard
+            gradient="bg-gradient-to-br from-indigo-50 to-blue-50"
+            icon={Clock}
+            title="Application Timeline"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between rounded-lg bg-white p-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-full bg-green-100 p-1">
+                    <Check className="size-3 text-green-600" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    Application Submitted
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500">
+                  {formatDate(new Date(application.created_at).getTime())}
+                </span>
+              </div>
+              {application.updated_at !== application.created_at && (
+                <div className="flex items-center justify-between rounded-lg bg-white p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-full bg-blue-100 p-1">
+                      <RotateCcw className="size-3 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-900">
+                      Last Updated
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {formatDate(new Date(application.updated_at).getTime())}
+                  </span>
+                </div>
               )}
             </div>
+          </InfoCard>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t bg-gray-50 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Info className="size-4" />
+            Application ID: {application.id}
+          </div>
+          <div className="flex gap-3">
+            {application.status === APPLICATION_STATUS.PENDING && (
+              <>
+                <Button
+                  className="bg-green-600 text-white hover:bg-green-700"
+                  onClick={onClose}
+                >
+                  <Check className="mr-2 size-4" />
+                  Approve Application
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-50"
+                  onClick={onClose}
+                >
+                  <X className="mr-2 size-4" />
+                  Reject Application
+                </Button>
+              </>
+            )}
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
           </div>
         </div>
-
-        <div className="flex justify-end">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
+      </div>
+    </DialogContent>
+  </Dialog>
+);
 
 interface ProjectApplicationsTableProps {
   projectId: string;
@@ -318,10 +398,8 @@ export const ProjectApplicationsTable = ({
 
   const { addNotification } = useNotifications();
 
-  // Fetch project details
+  // Fetch data
   const { data: projectData } = useProject({ projectId });
-
-  // Fetch applications
   const {
     data: applicationsData,
     isLoading,
@@ -332,7 +410,7 @@ export const ProjectApplicationsTable = ({
     limit: 100,
   });
 
-  // Update application status mutation
+  // Update mutation
   const updateStatus = useUpdateApplicationStatus({
     mutationConfig: {
       onSuccess: () => {
@@ -354,7 +432,7 @@ export const ProjectApplicationsTable = ({
 
   const applications = applicationsData?.data || [];
 
-  // Filter applications
+  // Filter logic
   const filteredApplications = applications.filter((app) => {
     const matchesStatus = statusFilter === 'ALL' || app.status === statusFilter;
     const matchesSearch =
@@ -367,11 +445,10 @@ export const ProjectApplicationsTable = ({
         .includes(searchTerm.toLowerCase()) ||
       app.volunteer?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.volunteer_role.toLowerCase().includes(searchTerm.toLowerCase());
-
     return matchesStatus && matchesSearch;
   });
 
-  // Status tabs with counts
+  // Status tabs
   const statusTabs = [
     {
       key: 'ALL' as const,
@@ -405,9 +482,7 @@ export const ProjectApplicationsTable = ({
     applicationId: string,
     status: ApplicationStatus,
   ) => {
-    const application = applicationsData?.data?.find(
-      (app) => app.id === applicationId,
-    );
+    const application = applications.find((app) => app.id === applicationId);
     if (!application) return;
 
     setConfirmationDialog({
@@ -427,14 +502,7 @@ export const ProjectApplicationsTable = ({
     setConfirmationDialog(null);
   };
 
-  const handleViewDetails = (application: ProjectApplication) => {
-    setDetailsDialog({
-      open: true,
-      application,
-    });
-  };
-
-  // Table columns configuration
+  // Table configuration
   const columns: TableColumn<ProjectApplication>[] = [
     {
       title: 'User Name',
@@ -487,18 +555,16 @@ export const ProjectApplicationsTable = ({
       field: 'id',
       Cell: ({ entry }) => (
         <div className="flex items-center gap-2">
-          {/* View Details button - always visible */}
           <Button
             size="sm"
             variant="outline"
-            onClick={() => handleViewDetails(entry)}
+            onClick={() => setDetailsDialog({ open: true, application: entry })}
             className="border-blue-300 text-blue-600 hover:bg-blue-50"
           >
             <Eye className="mr-1 size-4" />
             Details
           </Button>
 
-          {/* Status-specific action buttons */}
           {entry.status === APPLICATION_STATUS.PENDING && (
             <>
               <Button
@@ -646,20 +712,12 @@ export const ProjectApplicationsTable = ({
         <Table data={filteredApplications as any} columns={columns as any} />
       )}
 
-      {/* Confirmation Dialog */}
+      {/* Dialogs */}
       {confirmationDialog && (
         <ConfirmationDialog
           open={confirmationDialog.open}
-          title={`Confirm ${
-            confirmationDialog.status === APPLICATION_STATUS.APPROVED
-              ? 'Approval'
-              : 'Rejection'
-          }`}
-          message={`Are you sure you want to ${
-            confirmationDialog.status === APPLICATION_STATUS.APPROVED
-              ? 'approve'
-              : 'reject'
-          } ${confirmationDialog.userName}'s application?`}
+          title={`Confirm ${confirmationDialog.status === APPLICATION_STATUS.APPROVED ? 'Approval' : 'Rejection'}`}
+          message={`Are you sure you want to ${confirmationDialog.status === APPLICATION_STATUS.APPROVED ? 'approve' : 'reject'} ${confirmationDialog.userName}'s application?`}
           confirmText={
             confirmationDialog.status === APPLICATION_STATUS.APPROVED
               ? 'Approve'
@@ -670,7 +728,6 @@ export const ProjectApplicationsTable = ({
         />
       )}
 
-      {/* Application Details Dialog */}
       {detailsDialog && (
         <ApplicationDetailsDialog
           open={detailsDialog.open}
