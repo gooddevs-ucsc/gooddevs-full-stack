@@ -30,7 +30,14 @@ export const loginInputSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginInputSchema>;
 const loginWithEmailAndPassword = (data: LoginInput): Promise<AuthResponse> => {
-  return api.post('/auth/login', data, {
+  // OAuth2PasswordRequestForm expects application/x-www-form-urlencoded with
+  // fields named `username` and `password`. Build URLSearchParams so axios
+  // sends the proper form body.
+  const params = new URLSearchParams();
+  params.append('username', data.username);
+  params.append('password', data.password);
+
+  return api.post('/auth/login', params, {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
