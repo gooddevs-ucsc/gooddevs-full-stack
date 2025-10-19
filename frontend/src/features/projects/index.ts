@@ -21,5 +21,6 @@ export * from './components/edit-thread-form';
 export * from './components/manage-reviewer-permissions';
 export * from './components/reviewer-action-button';
 export * from './api/get-user-projects';
+export * from './hooks/use-project-team-sizes';
 export * from './components/generate-project-details-modal';
 export * from './api/generate-project-details';
