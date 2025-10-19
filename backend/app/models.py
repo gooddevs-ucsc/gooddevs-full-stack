@@ -984,6 +984,17 @@ class DonationsPublic(SQLModel):
     data: list[DonationPublic]
     meta: Meta
 
+
+class DonationStatistics(SQLModel):
+    """Statistics about donations in the system"""
+    total_donations: int
+    total_amount: float
+    average_donation: float
+    pending_donations: int
+    successful_donations: int
+    unique_donors: int
+
+
 # Application Reviewer Permission models
 
 

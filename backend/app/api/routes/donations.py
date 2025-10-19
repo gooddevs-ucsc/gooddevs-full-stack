@@ -27,7 +27,9 @@ from app.models import (
     DonationPublic,
     UserPublic,
     PaymentPublic,
-    Meta
+    Meta,
+    UserRole,
+    DonationStatistics
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -228,4 +230,187 @@ async def get_my_donations(
         raise HTTPException(
             status_code=500,
             detail="Failed to retrieve donations"
+        )
+
+
+@router.get("/all", response_model=DonationsPublic, status_code=200)
+async def get_all_donations_admin(
+    *,
+    session: SessionDep,
+    payhere_service: PayHereServiceDep,
+    current_user: CurrentUser,
+    skip: int = 0,
+    limit: int = 100
+) -> DonationsPublic:
+    """
+    Get all donations in the system (Admin only).
+
+    This endpoint:
+    1. Verifies the user is an admin
+    2. Fetches all donations ordered by order_id descending
+    3. For each donation, retrieves payment details from PayHere service
+    4. Returns donation data with updated payment status from PayHere
+
+    Only accessible to users with ADMIN role.
+
+    Args:
+        skip: Number of records to skip (for pagination)
+        limit: Maximum number of records to return
+
+    Returns:
+        DonationsPublic: List of all donations with payment details and pagination metadata
+
+    Raises:
+        HTTPException 401: User not authenticated
+        HTTPException 403: User is not an admin
+        HTTPException 500: Server error while fetching donations
+    """
+    # Check if user is admin
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=403,
+            detail="Only administrators can view all donations"
+        )
+
+    try:
+        # Get all donations from database ordered by order_id
+        donations = crud.get_all_donations(
+            session=session,
+            skip=skip,
+            limit=limit
+        )
+
+        # Get total count for pagination
+        total = crud.count_all_donations(session=session)
+
+        # Fetch payment details for each donation using PayHere service
+        donations_with_payments = []
+        for donation in donations:
+            # Use PayHere service to get payment details
+            payment = await payhere_service.get_payment_by_order_id(donation.order_id)
+
+            if payment and donation.donor:
+                # Create DonationPublic with payment and donor info
+                donation_public = DonationPublic(
+                    id=donation.id,
+                    donor_id=donation.donor_id,
+                    order_id=donation.order_id,
+                    created_at=donation.created_at,
+                    message=donation.message,
+                    donor=UserPublic(
+                        id=donation.donor.id,
+                        email=donation.donor.email,
+                        is_active=donation.donor.is_active,
+                        is_superuser=donation.donor.is_superuser,
+                        firstname=donation.donor.firstname,
+                        lastname=donation.donor.lastname,
+                        role=donation.donor.role
+                    ),
+                    payment=PaymentPublic(
+                        id=payment.id,
+                        merchant_id=payment.merchant_id,
+                        first_name=payment.first_name,
+                        last_name=payment.last_name,
+                        email=payment.email,
+                        phone=payment.phone,
+                        address=payment.address,
+                        city=payment.city,
+                        country=payment.country,
+                        order_id=payment.order_id,
+                        items=payment.items,
+                        currency=payment.currency,
+                        amount=payment.amount,
+                        status=payment.status,
+                        created_at=payment.created_at,
+                        updated_at=payment.updated_at
+                    )
+                )
+                donations_with_payments.append(donation_public)
+            else:
+                # If payment or donor not found, log warning and skip
+                logger.warning(
+                    f"Payment or donor not found for donation {donation.id} with order_id {donation.order_id}"
+                )
+
+        # Calculate pagination metadata
+        total_pages = (total + limit - 1) // limit if limit > 0 else 1
+        current_page = (skip // limit) + 1 if limit > 0 else 1
+
+        meta = Meta(
+            page=current_page,
+            total=total,
+            totalPages=total_pages
+        )
+
+        logger.info(
+            f"Admin {current_user.id} retrieved {len(donations_with_payments)} donations"
+        )
+
+        return DonationsPublic(
+            data=donations_with_payments,
+            meta=meta
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"Error fetching all donations for admin {current_user.id}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve donations"
+        )
+
+
+@router.get("/statistics", response_model=DonationStatistics, status_code=200)
+def get_donation_statistics(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser
+) -> DonationStatistics:
+    """
+    Get donation statistics and reports (Admin only).
+
+    This endpoint:
+    1. Verifies the user is an admin
+    2. Calculates various donation statistics:
+       - Total number of donations
+       - Total donation amount
+       - Average donation amount
+       - Number of pending donations
+       - Number of successful donations
+       - Number of unique donors
+
+    Only accessible to users with ADMIN role.
+
+    Returns:
+        DonationStatistics: Model containing donation statistics
+
+    Raises:
+        HTTPException 401: User not authenticated
+        HTTPException 403: User is not an admin
+        HTTPException 500: Server error while calculating statistics
+    """
+    # Check if user is admin
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=403,
+            detail="Only administrators can view donation statistics"
+        )
+
+    try:
+        statistics = crud.get_donation_statistics(session=session)
+
+        logger.info(
+            f"Admin {current_user.id} retrieved donation statistics"
+        )
+
+        return statistics
+
+    except Exception as e:
+        logger.error(
+            f"Error fetching donation statistics for admin {current_user.id}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve donation statistics"
         )
