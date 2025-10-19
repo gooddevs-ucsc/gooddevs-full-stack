@@ -25,6 +25,11 @@ from app.models import (
     PaymentInitiationResponse,
     PaymentCreate,
     UserRole,
+    SponsorshipsPublic,
+    SponsorshipPublic,
+    UserPublic,
+    PaymentPublic,
+    Meta,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -130,3 +135,137 @@ def initiate_sponsorship(
         logger.error(f"Unexpected error initiating sponsorship: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to initiate sponsorship")
+
+
+@router.get("/my-sponsorships", response_model=SponsorshipsPublic, status_code=200)
+async def get_my_sponsorships(
+    *,
+    session: SessionDep,
+    payhere_service: PayHereServiceDep,
+    current_user: CurrentUser,
+    skip: int = 0,
+    limit: int = 100
+) -> SponsorshipsPublic:
+    """
+    Get all sponsorships made by the current user, ordered by ID (most recent first).
+
+    This endpoint:
+    1. Fetches all sponsorships made by the current user, ordered by order_id descending
+    2. For each sponsorship, retrieves payment details from PayHere service
+    3. Returns sponsorship data with updated payment status from PayHere
+
+    The payment status is fetched in real-time from PayHere API to ensure accuracy.
+
+    Requires authentication.
+
+    Args:
+        skip: Number of records to skip (for pagination)
+        limit: Maximum number of records to return
+
+    Returns:
+        SponsorshipsPublic: List of sponsorships with payment details and pagination metadata
+
+    Raises:
+        HTTPException 401: User not authenticated
+        HTTPException 500: Server error while fetching sponsorships
+    """
+    try:
+        # Get sponsorships from database ordered by order_id
+        sponsorships = crud.get_sponsorships_by_sponsor_id(
+            session=session,
+            sponsor_id=current_user.id,
+            skip=skip,
+            limit=limit
+        )
+
+        # Get total count for pagination
+        total = crud.count_sponsorships_by_sponsor_id(
+            session=session,
+            sponsor_id=current_user.id
+        )
+
+        # Fetch payment details for each sponsorship using PayHere service
+        sponsorships_with_payments = []
+        for sponsorship in sponsorships:
+            # Use PayHere service to get payment details
+            payment = await payhere_service.get_payment_by_order_id(sponsorship.order_id)
+
+            if payment and sponsorship.sponsor and sponsorship.recipient:
+                # Create SponsorshipPublic with payment and user info
+                sponsorship_public = SponsorshipPublic(
+                    id=sponsorship.id,
+                    sponsor_id=sponsorship.sponsor_id,
+                    recipient_id=sponsorship.recipient_id,
+                    order_id=sponsorship.order_id,
+                    created_at=sponsorship.created_at,
+                    message=sponsorship.message,
+                    sponsor=UserPublic(
+                        id=sponsorship.sponsor.id,
+                        email=sponsorship.sponsor.email,
+                        is_active=sponsorship.sponsor.is_active,
+                        is_superuser=sponsorship.sponsor.is_superuser,
+                        firstname=sponsorship.sponsor.firstname,
+                        lastname=sponsorship.sponsor.lastname,
+                        role=sponsorship.sponsor.role
+                    ),
+                    recipient=UserPublic(
+                        id=sponsorship.recipient.id,
+                        email=sponsorship.recipient.email,
+                        is_active=sponsorship.recipient.is_active,
+                        is_superuser=sponsorship.recipient.is_superuser,
+                        firstname=sponsorship.recipient.firstname,
+                        lastname=sponsorship.recipient.lastname,
+                        role=sponsorship.recipient.role
+                    ),
+                    payment=PaymentPublic(
+                        id=payment.id,
+                        merchant_id=payment.merchant_id,
+                        first_name=payment.first_name,
+                        last_name=payment.last_name,
+                        email=payment.email,
+                        phone=payment.phone,
+                        address=payment.address,
+                        city=payment.city,
+                        country=payment.country,
+                        order_id=payment.order_id,
+                        items=payment.items,
+                        currency=payment.currency,
+                        amount=payment.amount,
+                        status=payment.status,
+                        created_at=payment.created_at,
+                        updated_at=payment.updated_at
+                    )
+                )
+                sponsorships_with_payments.append(sponsorship_public)
+            else:
+                # If payment or users not found, log warning and skip
+                logger.warning(
+                    f"Payment or users not found for sponsorship {sponsorship.id} with order_id {sponsorship.order_id}"
+                )
+
+        # Calculate pagination metadata
+        total_pages = (total + limit - 1) // limit if limit > 0 else 1
+        current_page = (skip // limit) + 1 if limit > 0 else 1
+
+        meta = Meta(
+            page=current_page,
+            total=total,
+            totalPages=total_pages
+        )
+
+        logger.info(
+            f"Retrieved {len(sponsorships_with_payments)} successful/pending sponsorships for user {current_user.id}"
+        )
+
+        return SponsorshipsPublic(
+            data=sponsorships_with_payments,
+            meta=meta
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Error fetching sponsorships for user {current_user.id}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve sponsorships"
+        )
