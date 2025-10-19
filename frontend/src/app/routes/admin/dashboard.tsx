@@ -17,7 +17,9 @@ import { ContentLayout } from '@/components/layouts';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { paths } from '@/config/paths';
+import { useApprovedProjects } from '@/features/projects/api/get-approved-projects';
 import { usePendingProjects } from '@/features/projects/api/get-pending-projects';
+import { useUsers } from '@/features/users';
 import { useUser } from '@/lib/auth';
 import { formatDate } from '@/utils/format';
 
@@ -25,37 +27,56 @@ const AdminDashboardRoute = () => {
   const user = useUser();
   const navigate = useNavigate();
 
-  // Fetch pending projects
+  // Fetch data for summary cards
+  const { data: usersData, isLoading: usersLoading } = useUsers({
+    skip: 0,
+    limit: 1,
+  });
+
+  const { data: approvedProjectsData, isLoading: approvedProjectsLoading } =
+    useApprovedProjects({
+      page: 1,
+      limit: 1,
+    });
+
   const { data: pendingProjectsData, isLoading: pendingProjectsLoading } =
     usePendingProjects({
       page: 1,
-      limit: 3, // Only get the latest 3 projects for dashboard
+      limit: 3,
     });
 
-  // Get the actual pending projects or fallback to empty array
+  // Get counts from API responses
+  const totalUsers = usersData?.count || 0;
+  const totalApprovedProjects = approvedProjectsData?.meta?.total || 0;
+  const totalPendingProjects = pendingProjectsData?.meta?.total || 0;
+
   const latestPendingProjects = pendingProjectsData?.data || [];
+
+  // Loading state for stats
+  const statsLoading =
+    usersLoading || approvedProjectsLoading || pendingProjectsLoading;
 
   const stats = [
     {
       title: 'Total Users',
-      value: '2,847',
-      change: '+127 this month',
+      value: statsLoading ? '-' : totalUsers.toLocaleString(),
+      change: 'All registered users',
       icon: Users,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
     },
     {
       title: 'Active Projects',
-      value: '64',
-      change: '18 pending approval',
+      value: statsLoading ? '-' : totalApprovedProjects.toLocaleString(),
+      change: 'Approved and running',
       icon: FolderPlus,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
     },
     {
       title: 'Pending Approvals',
-      value: '23',
-      change: '5 urgent',
+      value: statsLoading ? '-' : totalPendingProjects.toLocaleString(),
+      change: 'Awaiting review',
       icon: Clock,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
@@ -155,7 +176,11 @@ const AdminDashboardRoute = () => {
                 </div>
                 <div className="mt-4">
                   <h3 className="text-2xl font-bold text-slate-900">
-                    {stat.value}
+                    {statsLoading ? (
+                      <Spinner size="sm" className="inline" />
+                    ) : (
+                      stat.value
+                    )}
                   </h3>
                   <p className="text-sm text-slate-600">{stat.title}</p>
                   <p className="mt-1 text-xs text-slate-500">{stat.change}</p>
