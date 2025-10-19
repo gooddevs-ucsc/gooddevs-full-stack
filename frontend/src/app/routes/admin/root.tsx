@@ -6,6 +6,7 @@ import {
   Settings,
   Ribbon,
   BarChart3,
+  Heart,
 } from 'lucide-react';
 import { Outlet } from 'react-router';
 
@@ -46,6 +47,11 @@ const AdminRoot = () => {
       name: 'My Donations',
       to: paths.admin.myDonations.getHref(),
       icon: Ribbon,
+    },
+    {
+      name: 'My Sponsorships',
+      to: paths.admin.mySponsorships.getHref(),
+      icon: Heart,
     },
     {
       name: 'Settings',

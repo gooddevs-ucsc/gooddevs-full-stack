@@ -1,4 +1,12 @@
-import { DollarSign, Folder, Home, Settings, User, Ribbon } from 'lucide-react';
+import {
+  DollarSign,
+  Folder,
+  Home,
+  Settings,
+  User,
+  Ribbon,
+  Heart,
+} from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
@@ -25,6 +33,11 @@ const DeveloperRoot = () => {
       name: 'My Donations',
       to: paths.developer.myDonations.getHref(),
       icon: Ribbon,
+    },
+    {
+      name: 'My Sponsorships',
+      to: paths.developer.mySponsorships.getHref(),
+      icon: Heart,
     },
     {
       name: 'Profile',

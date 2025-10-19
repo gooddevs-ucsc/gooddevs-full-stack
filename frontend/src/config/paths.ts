@@ -110,6 +110,10 @@ export const paths = {
       path: 'all-donations',
       getHref: () => '/admin/all-donations',
     },
+    mySponsorships: {
+      path: 'my-sponsorships',
+      getHref: () => '/admin/my-sponsorships',
+    },
     projectDetail: {
       path: 'project-approvals/:id',
       getHref: (id: string) => `/admin/project-approvals/${id}`,
@@ -182,6 +186,10 @@ export const paths = {
       path: 'my-donations',
       getHref: () => '/requester/my-donations',
     },
+    mySponsorships: {
+      path: 'my-sponsorships',
+      getHref: () => '/requester/my-sponsorships',
+    },
     profile: {
       path: 'profile',
       getHref: () => '/requester/profile',
@@ -216,6 +224,10 @@ export const paths = {
     myDonations: {
       path: 'my-donations',
       getHref: () => '/developer/my-donations',
+    },
+    mySponsorships: {
+      path: 'my-sponsorships',
+      getHref: () => '/developer/my-sponsorships',
     },
     profile: {
       path: 'profile',
