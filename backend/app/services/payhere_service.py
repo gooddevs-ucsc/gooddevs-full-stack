@@ -195,11 +195,9 @@ class PayHereService:
                 status = data.get("status")
 
                 if status == -1:
-                    # No payments found
-                    raise HTTPException(
-                        status_code=404,
-                        detail=f"No payments found for order ID: {order_id}"
-                    )
+                    # No payments found for order ID
+                    payhere_response = PayHereRetrievalResponse(**data)
+                    return payhere_response
                 elif status == -2:
                     # Authentication error
                     logger.error("Authentication error with PayHere API")
@@ -267,8 +265,13 @@ class PayHereService:
                                 f"updated payment: {payment}")
 
                 else:
-                    logger.warning(
-                        f"No payment data returned from PayHere for order {order_id}")
+                    logger.info(
+                        f"Payment with order_id {order_id} not found in PayHere, updating status to NOT_FOUND")
+                    updated_payment = crud.update_payment_status(
+                        session=self.session,
+                        order_id=order_id,
+                        status=crud.PaymentStatus.NOT_FOUND
+                    )
 
             except HTTPException as e:
                 # If payment not found in PayHere (404), keep current status
@@ -304,6 +307,7 @@ class PayHereService:
         - CANCELLED = -1
         - FAILED = -2
         - CHARGEDBACK = -3
+        - NOT_FOUND = -404
         - SUCCESS = 2
 
         Args:
