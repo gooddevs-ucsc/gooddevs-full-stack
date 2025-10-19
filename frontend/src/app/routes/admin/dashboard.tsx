@@ -11,13 +11,16 @@ import {
   UserCheck,
   Activity,
 } from 'lucide-react';
+import { useNavigate } from 'react-router';
 
 import { ContentLayout } from '@/components/layouts';
 import { Button } from '@/components/ui/button';
+import { paths } from '@/config/paths';
 import { useUser } from '@/lib/auth';
 
 const AdminDashboardRoute = () => {
   const user = useUser();
+  const navigate = useNavigate();
 
   const stats = [
     {
@@ -212,6 +215,9 @@ const AdminDashboardRoute = () => {
                     variant="outline"
                     size="sm"
                     className="h-10 w-full justify-start"
+                    onClick={() =>
+                      navigate(paths.admin.projectApprovals.getHref())
+                    }
                   >
                     <div className="flex items-center gap-6">
                       <FolderPlus className="size-4" />
@@ -305,6 +311,9 @@ const AdminDashboardRoute = () => {
                       size="sm"
                       variant="outline"
                       className="px-2 py-1 text-xs"
+                      onClick={() =>
+                        navigate(paths.admin.projectApprovals.getHref())
+                      }
                     >
                       Review
                     </Button>
@@ -314,7 +323,11 @@ const AdminDashboardRoute = () => {
             ))}
           </div>
           <div className="mt-4 text-center">
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(paths.admin.projectApprovals.getHref())}
+            >
               View All Pending Items
             </Button>
           </div>
