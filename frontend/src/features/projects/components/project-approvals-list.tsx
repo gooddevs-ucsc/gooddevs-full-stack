@@ -1,8 +1,9 @@
 import { AlertCircle } from 'lucide-react';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 
 import { Spinner } from '@/components/ui/spinner';
 import { Table, type TableColumn } from '@/components/ui/table';
+import { paths } from '@/config/paths';
 import { PROJECT_TYPE_STYLES } from '@/lib/constants/ui';
 import { Project, ProjectType } from '@/types/api';
 import { formatDate, formatEstimatedTimeline } from '@/utils/format';
@@ -17,6 +18,7 @@ const getProjectTypeColor = (type: ProjectType) => {
 
 export const ProjectApprovalsList = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const page = Number(searchParams.get('page') || 1);
   const limit = Number(searchParams.get('limit') || 10);
 
@@ -24,6 +26,10 @@ export const ProjectApprovalsList = () => {
     page,
     limit,
   });
+
+  const handleProjectClick = (projectId: string) => {
+    navigate(paths.admin.projectDetail.getHref(projectId));
+  };
 
   if (isLoading) {
     return (
@@ -71,11 +77,18 @@ export const ProjectApprovalsList = () => {
       field: 'title',
       Cell: ({ entry: project }: { entry: Project }) => (
         <div className="min-w-0">
-          <div className="truncate font-medium text-slate-900">
-            {project.title}
-          </div>
+          <button
+            onClick={() => handleProjectClick(project.id)}
+            className="w-full cursor-pointer truncate text-left font-medium text-slate-900 hover:text-blue-600 hover:underline"
+          >
+            {project.title && project.title.length > 40
+              ? `${project.title.substring(0, 40)}...`
+              : project.title}
+          </button>
           <div className="truncate text-sm text-slate-500">
-            {project.description}
+            {project.description && project.description.length > 60
+              ? `${project.description.substring(0, 60)}...`
+              : project.description}
           </div>
         </div>
       ),
@@ -96,7 +109,10 @@ export const ProjectApprovalsList = () => {
       field: 'preferred_technologies',
       Cell: ({ entry: project }: { entry: Project }) => (
         <div className="max-w-xs truncate text-sm text-slate-600">
-          {project.preferred_technologies || '-'}
+          {project.preferred_technologies &&
+          project.preferred_technologies.length > 15
+            ? `${project.preferred_technologies.substring(0, 15)}...`
+            : project.preferred_technologies || '-'}
         </div>
       ),
     },
