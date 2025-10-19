@@ -1,4 +1,6 @@
 import os
+import sys
+from pathlib import Path
 from logging.config import fileConfig
 
 from alembic import context
@@ -11,6 +13,12 @@ import alembic_postgresql_enum
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# Ensure backend package path is on sys.path so `import app` works when alembic
+# is invoked from other locations or virtualenvs.
+project_root = Path(__file__).resolve().parents[2]
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
