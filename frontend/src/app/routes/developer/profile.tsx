@@ -1,7 +1,8 @@
-import { Edit2, Plus, Save, X } from 'lucide-react';
+import { Calendar, Edit2, Save, Users, X } from 'lucide-react';
 import { useState } from 'react';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNotifications } from '@/components/ui/notifications';
 import { Spinner } from '@/components/ui/spinner';
@@ -12,7 +13,6 @@ import {
   ExperienceItem,
   ImageUploadModal,
   ProfileHeader,
-  ProjectCard,
   SkillsCard,
   StatsCard,
   UpdateVolunteerProfileInput,
@@ -26,10 +26,46 @@ import {
 } from '@/features/volunteer';
 import { useUser } from '@/lib/auth';
 
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'APPROVED':
+    case 'Active':
+      return 'border-green-200 bg-green-50 text-green-700';
+    case 'IN_PROGRESS':
+      return 'border-blue-200 bg-blue-50 text-blue-700';
+    case 'COMPLETED':
+      return 'border-gray-200 bg-gray-50 text-gray-700';
+    default:
+      return 'border-slate-200 bg-slate-50 text-slate-700';
+  }
+};
+
+const getStatusInfo = (status: string) => {
+  switch (status) {
+    case 'APPROVED':
+      return { label: 'Active' };
+    case 'IN_PROGRESS':
+      return { label: 'In Progress' };
+    case 'COMPLETED':
+      return { label: 'Completed' };
+    default:
+      return { label: status };
+  }
+};
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
 const VolunteerProfile = () => {
   const { userId } = useParams();
   const { data: currentUser } = useUser();
   const { addNotification } = useNotifications();
+  const navigate = useNavigate();
 
   // Determine if viewing own profile or someone else's
   const isOwnProfile = !userId || userId === currentUser?.id;
@@ -476,61 +512,177 @@ const VolunteerProfile = () => {
             isOwner={isOwnProfile}
           />
 
-          {/* Projects Section */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Projects</h2>
-              {isOwnProfile && (
+          {/* Projects Section - Enhanced like Requester Profile */}
+          <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-slate-900">
+                Contributed Projects ({projects.length})
+              </h2>
+              <div className="flex gap-2">
                 <Button
+                  variant="outline"
                   size="sm"
-                  onClick={() => handleEditSection('projects')}
-                  className="bg-blue-600 text-white"
+                  onClick={() => navigate('/projects')}
                 >
-                  <Plus className="mr-2" />
-                  New Project
+                  Browse Projects
                 </Button>
-              )}
+              </div>
+            </div>
+
+            {/* Project Stats */}
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {
+                    projects.filter(
+                      (p) => p.status === 'APPROVED' || p.status === 'ACTIVE',
+                    ).length
+                  }
+                </div>
+                <div className="text-sm text-green-700">Active Projects</div>
+              </div>
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {projects.filter((p) => p.status === 'IN_PROGRESS').length}
+                </div>
+                <div className="text-sm text-blue-700">In Progress</div>
+              </div>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-center">
+                <div className="text-2xl font-bold text-gray-600">
+                  {projects.filter((p) => p.status === 'COMPLETED').length}
+                </div>
+                <div className="text-sm text-gray-700">Completed</div>
+              </div>
             </div>
 
             {projects.length === 0 ? (
-              <p className="text-gray-500">
-                No projects found. Apply to projects to showcase your
-                contributions.
-              </p>
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="rounded-full bg-slate-100 p-4">
+                  <Users className="size-8 text-slate-400" />
+                </div>
+                <h3 className="mt-4 text-lg font-medium text-slate-900">
+                  No Projects Yet
+                </h3>
+                <p className="mt-2 max-w-sm text-center text-slate-600">
+                  {isOwnProfile
+                    ? "You haven't contributed to any projects yet. Browse and apply to projects to get started!"
+                    : "This developer hasn't contributed to any projects yet."}
+                </p>
+                {isOwnProfile && (
+                  <Button
+                    className="mt-4"
+                    onClick={() => navigate('/projects')}
+                  >
+                    <Users className="mr-2 size-4" />
+                    Browse Projects
+                  </Button>
+                )}
+              </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {transformedProjects.map((project) => (
-                  <ProjectCard key={project.id} project={project} />
-                ))}
-              </div>
-            )}
+              <>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {transformedProjects.map((project) => (
+                    <div
+                      key={project.id}
+                      className="cursor-pointer rounded-lg border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/50 p-4 transition-all hover:shadow-md"
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          navigate(`/projects/${project.id}`);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`View project: ${project.title}`}
+                    >
+                      <div className="mb-3 flex items-start justify-between">
+                        <h3 className="line-clamp-1 font-semibold text-slate-900 hover:text-blue-600">
+                          {project.title}
+                        </h3>
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getStatusColor(project.status)}`}
+                        >
+                          {getStatusInfo(project.status).label}
+                        </span>
+                      </div>
+                      <p className="mb-3 line-clamp-2 text-sm text-slate-600">
+                        {project.description}
+                      </p>
 
-            {/* Pagination Controls */}
-            {totalProjectPages > 1 && (
-              <div className="flex justify-between">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentProjectPage((prev) => Math.max(prev - 1, 1))
-                  }
-                  disabled={currentProjectPage === 1}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentProjectPage((prev) =>
-                      Math.min(prev + 1, totalProjectPages),
-                    )
-                  }
-                  disabled={currentProjectPage === totalProjectPages}
-                >
-                  Next
-                </Button>
-              </div>
+                      {/* Technologies - Fixed Badge usage */}
+                      {project.preferred_technologies && (
+                        <div className="mb-3">
+                          <div className="flex flex-wrap gap-1">
+                            {project.preferred_technologies
+                              .split(',')
+                              .slice(0, 3)
+                              .map((tech, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {tech.trim()}
+                                </Badge>
+                              ))}
+                            {project.preferred_technologies.split(',').length >
+                              3 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +
+                                {project.preferred_technologies.split(',')
+                                  .length - 3}{' '}
+                                more
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between text-xs text-slate-500">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="size-3" />
+                          <span>Joined {formatDate(project.created_at)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span>Updated {formatDate(project.updated_at)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalProjectPages > 1 && (
+                  <div className="mt-6 flex items-center justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentProjectPage((prev) => Math.max(prev - 1, 1))
+                      }
+                      disabled={currentProjectPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-slate-600">
+                      Page {currentProjectPage} of {totalProjectPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentProjectPage((prev) =>
+                          Math.min(prev + 1, totalProjectPages),
+                        )
+                      }
+                      disabled={currentProjectPage === totalProjectPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
