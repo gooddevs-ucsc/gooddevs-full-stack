@@ -72,7 +72,9 @@ export const ProjectApprovalsList = () => {
       Cell: ({ entry: project }: { entry: Project }) => (
         <div className="min-w-0">
           <div className="truncate font-medium text-slate-900">
-            {project.title}
+            {project.title && project.title.length > 40
+              ? `${project.title.substring(0, 40)}...`
+              : project.title}
           </div>
           <div className="truncate text-sm text-slate-500">
             {project.description && project.description.length > 60
@@ -98,7 +100,10 @@ export const ProjectApprovalsList = () => {
       field: 'preferred_technologies',
       Cell: ({ entry: project }: { entry: Project }) => (
         <div className="max-w-xs truncate text-sm text-slate-600">
-          {project.preferred_technologies || '-'}
+          {project.preferred_technologies &&
+          project.preferred_technologies.length > 15
+            ? `${project.preferred_technologies.substring(0, 15)}...`
+            : project.preferred_technologies || '-'}
         </div>
       ),
     },
