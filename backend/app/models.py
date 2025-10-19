@@ -1001,7 +1001,7 @@ class SponsorshipBase(SQLModel):
 
 
 class SponsorshipCreate(SponsorshipBase):
-    recipient_id: uuid.UUID  # The user being sponsored
+    # recipient_id is now passed as path parameter, not in body
     amount: float = Field(ge=0)
     phone: str = Field(max_length=50)
     address: str = Field(max_length=500)
