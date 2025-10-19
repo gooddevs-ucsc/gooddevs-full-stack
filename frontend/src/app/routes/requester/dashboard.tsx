@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { paths } from '@/config/paths';
 import { useUserProjects } from '@/features/projects/api/get-user-projects';
+import { useProjectTeamSizes } from '@/features/projects/hooks/use-project-team-sizes';
 import { useUser } from '@/lib/auth';
 import { Project } from '@/types/api';
 
@@ -31,6 +32,11 @@ const RequestorDashboardRoute = () => {
   });
 
   const projects = projectsData?.data || [];
+  const projectIds = projects.map((project) => project.id);
+
+  // Fetch team sizes for all projects
+  const { teamSizes, isLoading: isLoadingTeamSizes } =
+    useProjectTeamSizes(projectIds);
 
   // Calculate project counts by status
   const getProjectCountsByStatus = () => {
@@ -60,7 +66,7 @@ const RequestorDashboardRoute = () => {
 
   const projectCounts = getProjectCountsByStatus();
 
-  // Transform projects for display
+  // Transform projects for display with real team data
   const transformedProjects = projects.map((project: Project) => {
     const getStatusInfo = (status: string) => {
       switch (status) {
@@ -95,7 +101,7 @@ const RequestorDashboardRoute = () => {
       description: project.description,
       status: statusInfo.status,
       statusColor: statusInfo.statusColor,
-      developers: 0, // You might want to add this field to your Project model
+      developers: teamSizes[project.id] || 0, // Use real team size from API
       lastUpdate: new Date(
         project.updated_at || project.created_at,
       ).toLocaleDateString(),
@@ -365,7 +371,7 @@ const RequestorDashboardRoute = () => {
             </Button>
           </div>
 
-          {projectsLoading ? (
+          {projectsLoading || isLoadingTeamSizes ? (
             <div className="flex h-32 items-center justify-center">
               <Spinner size="md" />
             </div>
