@@ -103,6 +103,7 @@ const AdminProjectDetailRoute = () => {
             <ProjectActionButtons
               projectId={project.id}
               projectTitle={project.title}
+              onActionComplete={handleBackToApprovals}
             />
           </div>
         </div>
