@@ -14,6 +14,7 @@ export { ProjectThread as ProjectThreadComponent } from './components/project-th
 export * from './components/projects-list';
 export * from './components/project-approvals-list';
 export * from './components/project-applications-list';
+export * from './components/project-applications-table';
 export * from './components/project-action-buttons';
 export * from './components/project-detail';
 export * from './components/project-description-tab';
@@ -22,5 +23,6 @@ export * from './components/edit-thread-form';
 export * from './components/manage-reviewer-permissions';
 export * from './components/reviewer-action-button';
 export * from './api/get-user-projects';
+export * from './hooks/use-project-team-sizes';
 export * from './components/generate-project-details-modal';
 export * from './api/generate-project-details';
