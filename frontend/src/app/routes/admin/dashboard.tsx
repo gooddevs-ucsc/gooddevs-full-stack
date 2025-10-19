@@ -15,12 +15,25 @@ import { useNavigate } from 'react-router';
 
 import { ContentLayout } from '@/components/layouts';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { paths } from '@/config/paths';
+import { usePendingProjects } from '@/features/projects/api/get-pending-projects';
 import { useUser } from '@/lib/auth';
+import { formatDate } from '@/utils/format';
 
 const AdminDashboardRoute = () => {
   const user = useUser();
   const navigate = useNavigate();
+
+  // Fetch pending projects
+  const { data: pendingProjectsData, isLoading: pendingProjectsLoading } =
+    usePendingProjects({
+      page: 1,
+      limit: 3, // Only get the latest 3 projects for dashboard
+    });
+
+  // Get the actual pending projects or fallback to empty array
+  const latestPendingProjects = pendingProjectsData?.data || [];
 
   const stats = [
     {
@@ -70,33 +83,6 @@ const AdminDashboardRoute = () => {
       time: '3 hours ago',
       type: 'project',
       status: 'info',
-    },
-  ];
-
-  const pendingApprovals = [
-    {
-      title: 'Community Garden Management',
-      type: 'Project',
-      submittedBy: 'Green Valley Organization',
-      urgency: 'High',
-      urgencyColor: 'border-red-200 bg-red-50 text-red-600',
-      submittedAt: '2 hours ago',
-    },
-    {
-      title: 'Sarah Johnson',
-      type: 'Developer Account',
-      submittedBy: 'Self Registration',
-      urgency: 'Medium',
-      urgencyColor: 'border-yellow-200 bg-yellow-50 text-yellow-600',
-      submittedAt: '5 hours ago',
-    },
-    {
-      title: 'Nonprofit Partnership Request',
-      type: 'Organization',
-      submittedBy: 'Local Food Bank',
-      urgency: 'Low',
-      urgencyColor: 'border-green-200 bg-green-50 text-green-600',
-      submittedAt: '1 day ago',
     },
   ];
 
@@ -283,46 +269,69 @@ const AdminDashboardRoute = () => {
             <AlertTriangle className="size-5 text-primary" />
             Pending Approvals
           </h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {pendingApprovals.map((item, index) => (
-              <div
-                key={index}
-                className="rounded-lg border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/50 p-4 transition-all hover:shadow-md"
-              >
-                <div className="mb-3 flex items-start justify-between">
-                  <h3 className="line-clamp-1 font-semibold text-slate-900">
-                    {item.title}
-                  </h3>
-                  <span
-                    className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${item.urgencyColor}`}
-                  >
-                    {item.urgency}
-                  </span>
-                </div>
-                <p className="mb-2 text-sm text-slate-600">
-                  Type: <span className="font-medium">{item.type}</span>
-                </p>
-                <p className="mb-3 text-sm text-slate-600">
-                  By: {item.submittedBy}
-                </p>
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span>Submitted {item.submittedAt}</span>
-                  <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="px-2 py-1 text-xs"
-                      onClick={() =>
-                        navigate(paths.admin.projectApprovals.getHref())
-                      }
-                    >
-                      Review
-                    </Button>
+
+          {pendingProjectsLoading ? (
+            <div className="flex h-32 items-center justify-center">
+              <Spinner size="md" />
+            </div>
+          ) : latestPendingProjects.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {latestPendingProjects.map((project) => (
+                <div
+                  key={project.id}
+                  className="rounded-lg border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/50 p-4 transition-all hover:shadow-md"
+                >
+                  <div className="mb-3 flex items-start justify-between">
+                    <h3 className="line-clamp-1 font-semibold text-slate-900">
+                      {project.title}
+                    </h3>
+                    <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-medium text-orange-600">
+                      Pending
+                    </span>
+                  </div>
+                  <p className="mb-2 text-sm text-slate-600">
+                    Type:{' '}
+                    <span className="font-medium">
+                      {project.project_type?.replace('_', ' ') || 'Project'}
+                    </span>
+                  </p>
+                  <p className="mb-3 line-clamp-2 text-sm text-slate-600">
+                    {project.description}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>Submitted {formatDate(project.created_at)}</span>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="px-2 py-1 text-xs"
+                        onClick={() =>
+                          navigate(
+                            paths.admin.projectDetail.getHref(project.id),
+                          )
+                        }
+                      >
+                        Review
+                      </Button>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex h-32 items-center justify-center">
+              <div className="text-center">
+                <AlertTriangle className="mx-auto mb-2 size-12 text-slate-400" />
+                <h3 className="mb-1 text-lg font-medium text-slate-900">
+                  No pending projects
+                </h3>
+                <p className="text-slate-600">
+                  All projects have been reviewed.
+                </p>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
           <div className="mt-4 text-center">
             <Button
               variant="outline"
