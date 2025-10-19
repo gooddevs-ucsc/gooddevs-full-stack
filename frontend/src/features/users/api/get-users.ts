@@ -4,24 +4,44 @@ import { api } from '@/lib/api-client';
 import { QueryConfig } from '@/lib/react-query';
 import { User } from '@/types/api';
 
-export const getUsers = (): Promise<{ data: User[] }> => {
-  return api.get(`/users`);
+export const getUsers = (
+  skip = 0,
+  limit = 100,
+): Promise<{
+  data: User[];
+  count: number;
+}> => {
+  return api.get('/users/', {
+    params: {
+      skip,
+      limit,
+    },
+  });
 };
 
-export const getUsersQueryOptions = () => {
+export const getUsersQueryOptions = ({
+  skip = 0,
+  limit = 100,
+}: { skip?: number; limit?: number } = {}) => {
   return queryOptions({
-    queryKey: ['users'],
-    queryFn: getUsers,
+    queryKey: ['users', { skip, limit }],
+    queryFn: () => getUsers(skip, limit),
   });
 };
 
 type UseUsersOptions = {
+  skip?: number;
+  limit?: number;
   queryConfig?: QueryConfig<typeof getUsersQueryOptions>;
 };
 
-export const useUsers = ({ queryConfig }: UseUsersOptions = {}) => {
+export const useUsers = ({
+  skip = 0,
+  limit = 100,
+  queryConfig,
+}: UseUsersOptions = {}) => {
   return useQuery({
-    ...getUsersQueryOptions(),
+    ...getUsersQueryOptions({ skip, limit }),
     ...queryConfig,
   });
 };

@@ -8,3 +8,4 @@ export * from './components/task-card';
 export * from './components/task-list';
 export * from './components/task-modal';
 export * from './components/tasks-tab';
+export * from './components/task-details-modal';

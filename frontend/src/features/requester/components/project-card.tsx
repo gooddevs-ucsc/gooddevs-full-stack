@@ -19,7 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown';
-import { Progress } from '@/components/ui/progress';
 import { paths } from '@/config/paths';
 
 export interface RequesterProject {
@@ -27,10 +26,9 @@ export interface RequesterProject {
   title: string;
   description: string;
   status: 'Active' | 'Completed' | 'Pending';
-  progress: number;
   createdAt: string;
   teamSize: number;
-  estimatedCompletion: string | null;
+  estimatedCompletion: string | null; // Now holds timeline text (e.g., "1-3 months"), not a date
   projectType: string;
   technologies: string[];
 }
@@ -149,15 +147,6 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
           {project.description}
         </p>
 
-        {/* Progress Section */}
-        <div className="mb-4 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium text-slate-700">Progress</span>
-            <span className="text-slate-600">{project.progress}%</span>
-          </div>
-          <Progress value={project.progress} className="h-2" />
-        </div>
-
         {/* Project Details */}
         <div className="space-y-3 text-sm text-slate-500">
           <div className="flex items-center">
@@ -185,11 +174,9 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
             <div className="mr-3 flex size-6 items-center justify-center rounded-full bg-amber-100">
               <Clock className="size-3 text-amber-600" />
             </div>
-            <span className="font-medium">Est. Completion:</span>
+            <span className="font-medium">Timeline:</span>
             <span className="ml-2 text-slate-700">
-              {project.estimatedCompletion
-                ? formatDate(project.estimatedCompletion)
-                : 'Not set'}
+              {project.estimatedCompletion || 'Not specified'}
             </span>
           </div>
         </div>
