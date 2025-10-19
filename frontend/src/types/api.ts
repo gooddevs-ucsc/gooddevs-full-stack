@@ -297,6 +297,24 @@ export type DonationsResponse = {
   meta: Meta;
 };
 
+// Sponsorship types
+export type Sponsorship = {
+  id: string;
+  sponsor_id: string;
+  recipient_id: string;
+  order_id: number;
+  message?: string;
+  created_at: string;
+  sponsor?: User;
+  recipient?: User;
+  payment?: PaymentPublic;
+};
+
+export type SponsorshipsResponse = {
+  data: Sponsorship[];
+  meta: Meta;
+};
+
 // Project Application types
 export const APPLICATION_STATUS = {
   PENDING: 'PENDING',
