@@ -75,7 +75,9 @@ export const ProjectApprovalsList = () => {
             {project.title}
           </div>
           <div className="truncate text-sm text-slate-500">
-            {project.description}
+            {project.description && project.description.length > 60
+              ? `${project.description.substring(0, 60)}...`
+              : project.description}
           </div>
         </div>
       ),
