@@ -316,6 +316,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
           lazy: () =>
             import('./routes/payments/donation').then(convert(queryClient)),
         },
+        {
+          path: paths.payments.sponsorship.path,
+          lazy: () =>
+            import('./routes/payments/sponsorship').then(convert(queryClient)),
+        },
       ],
     },
 

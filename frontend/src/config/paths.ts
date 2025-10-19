@@ -235,5 +235,9 @@ export const paths = {
       path: 'donation',
       getHref: () => '/payments/donation',
     },
+    sponsorship: {
+      path: 'sponsorship/:recipientId',
+      getHref: (recipientId: string) => `/payments/sponsorship/${recipientId}`,
+    },
   },
 } as const;
