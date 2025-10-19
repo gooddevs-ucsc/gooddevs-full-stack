@@ -169,6 +169,7 @@ export const paths = {
       getHref: (projectId: string) =>
         `/requester/projects/${projectId}/applications`,
     },
+
     sponsorships: {
       path: 'sponsorships',
       getHref: () => '/requester/sponsorships',

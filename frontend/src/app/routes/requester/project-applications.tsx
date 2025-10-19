@@ -3,7 +3,7 @@ import { LoaderFunctionArgs, useParams } from 'react-router';
 
 import { ContentLayout } from '@/components/layouts';
 import {
-  ProjectApplicationsList,
+  ProjectApplicationsTable,
   getProjectApplicationsQueryOptions,
   ManageReviewerPermissions,
 } from '@/features/projects';
@@ -68,7 +68,7 @@ const ProjectApplicationsPage = ({
 
   return (
     <div className="space-y-6">
-      <ProjectApplicationsList projectId={projectId} />
+      <ProjectApplicationsTable projectId={projectId} />
       <ManageReviewerPermissions
         projectId={projectId}
         projectOwnerId={project.requester_id}

@@ -5,7 +5,7 @@ import { ContentLayout } from '@/components/layouts';
 import { Spinner } from '@/components/ui/spinner';
 import { paths } from '@/config/paths';
 import {
-  ProjectApplicationsList,
+  ProjectApplicationsTable,
   getProjectApplicationsQueryOptions,
   useCanReviewProject,
 } from '@/features/projects';
@@ -83,7 +83,7 @@ const ReviewApplicationsPage = ({ projectId }: ReviewApplicationsPageProps) => {
           project. You can approve or reject volunteer applications below.
         </p>
       </div>
-      <ProjectApplicationsList projectId={projectId} />
+      <ProjectApplicationsTable projectId={projectId} />
     </div>
   );
 };
