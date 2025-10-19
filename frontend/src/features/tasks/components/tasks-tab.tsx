@@ -249,6 +249,7 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId }: TasksTabProps) => {
         onEdit={handleEditTask}
         onDelete={handleDeleteTask}
         onViewDetails={handleViewDetails}
+        onUpdateTask={handleUpdateTask} // Added
       />
 
       {/* Task Modal */}

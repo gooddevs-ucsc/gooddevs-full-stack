@@ -6,6 +6,8 @@ import { Task, TaskPriority } from '@/types/api';
 interface TaskCardProps {
   task: Task;
   onViewDetails: (task: Task) => void;
+  listeners?: any; // Drag listeners from @dnd-kit
+  attributes?: any; // Drag attributes from @dnd-kit
 }
 
 const getPriorityColor = (priority: TaskPriority) => {
@@ -23,15 +25,22 @@ const getPriorityColor = (priority: TaskPriority) => {
   }
 };
 
-export const TaskCard: FC<TaskCardProps> = ({ task, onViewDetails }) => {
+export const TaskCard: FC<TaskCardProps> = ({
+  task,
+  onViewDetails,
+  listeners,
+  attributes,
+}) => {
   return (
     <button
       type="button"
       className="group w-full rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md"
       onClick={() => onViewDetails(task)}
+      {...listeners}
+      {...attributes}
     >
       {/* Title */}
-      <h4 className="mb-2 break-all text-sm font-semibold text-slate-900 group-hover:text-primary">
+      <h4 className="mb-1 truncate text-sm font-semibold text-slate-900 group-hover:text-primary">
         {task.title}
       </h4>
 
@@ -45,7 +54,9 @@ export const TaskCard: FC<TaskCardProps> = ({ task, onViewDetails }) => {
 
       {/* Priority Badge */}
       <span
-        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getPriorityColor(task.priority)}`}
+        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getPriorityColor(
+          task.priority,
+        )}`}
       >
         {task.priority}
       </span>
