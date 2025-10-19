@@ -137,6 +137,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
             ),
         },
         {
+          path: paths.admin.myDonations.path,
+          lazy: () =>
+            import('./routes/admin/my-donations').then(convert(queryClient)),
+        },
+        {
           path: paths.admin.projectDetail.path,
           lazy: () =>
             import('./routes/admin/project-detail').then(convert(queryClient)),
@@ -222,6 +227,13 @@ export const createAppRouter = (queryClient: QueryClient) =>
             ),
         },
         {
+          path: paths.requester.myDonations.path,
+          lazy: () =>
+            import('./routes/requester/my-donations').then(
+              convert(queryClient),
+            ),
+        },
+        {
           path: paths.requester.profile.path,
           lazy: () =>
             import('./routes/requester/profile').then(convert(queryClient)),
@@ -263,6 +275,13 @@ export const createAppRouter = (queryClient: QueryClient) =>
           path: paths.developer.sponsorships.path,
           lazy: () =>
             import('./routes/developer/sponsorships').then(
+              convert(queryClient),
+            ),
+        },
+        {
+          path: paths.developer.myDonations.path,
+          lazy: () =>
+            import('./routes/developer/my-donations').then(
               convert(queryClient),
             ),
         },
