@@ -41,12 +41,6 @@ const transformProject = (
     | 'Pending'
     | 'Active'
     | 'Completed',
-  progress:
-    mapProjectStatus(project.status) === 'Completed'
-      ? 100
-      : mapProjectStatus(project.status) === 'Active'
-        ? 0
-        : 0,
   createdAt: new Date(project.created_at as string).toISOString().split('T')[0],
   teamSize: teamSize,
   estimatedCompletion: project.estimated_timeline
