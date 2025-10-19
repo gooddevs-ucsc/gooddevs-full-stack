@@ -739,6 +739,7 @@ class PaymentStatus(int, enum.Enum):
     CANCELLED = -1
     FAILED = -2
     CHARGEDBACK = -3
+    NOT_FOUND = -404
     SUCCESS = 2
 
 
