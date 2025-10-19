@@ -114,11 +114,34 @@ export const PublicProfile = () => {
         <div className="space-y-6">
           {/* Profile Header */}
           <div className="overflow-hidden rounded-lg bg-white shadow-md">
-            <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600"></div>
+            {/* Cover Image */}
+            <div className="relative h-32">
+              {requesterProfile?.cover_image_url ? (
+                <img
+                  src={requesterProfile.cover_image_url}
+                  alt="Cover"
+                  className="size-full object-cover"
+                />
+              ) : (
+                <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600"></div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            </div>
             <div className="relative px-6 pb-6">
               <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-6">
-                <div className="-mt-12 mb-4 flex size-24 items-center justify-center rounded-full border-4 border-white bg-blue-600 text-white sm:mb-0">
-                  <User className="size-12" />
+                {/* Profile Logo */}
+                <div className="-mt-12 mb-4 sm:mb-0">
+                  {requesterProfile?.logo_url ? (
+                    <img
+                      src={requesterProfile.logo_url}
+                      alt={`${profile.firstname} ${profile.lastname}`}
+                      className="size-24 rounded-full border-4 border-white object-cover shadow-lg"
+                    />
+                  ) : (
+                    <div className="flex size-24 items-center justify-center rounded-full border-4 border-white bg-blue-600 text-white">
+                      <User className="size-12" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1">
                   <h1 className="text-3xl font-bold text-slate-900">

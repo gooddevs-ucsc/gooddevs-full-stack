@@ -38,6 +38,8 @@ class PublicRequesterProfile(SQLModel):
     instagram_url: str | None = None
     phone_number: str | None = None  # Maps from 'contact_phone' field
     organization_name: str | None = None
+    logo_url: str | None = None  # Profile logo from Cloudinary
+    cover_image_url: str | None = None  # Cover image from Cloudinary
     created_at: str
     updated_at: str
 
@@ -97,6 +99,8 @@ def get_user_public_profile(
                 instagram_url=requester_profile.instagram_url,
                 phone_number=requester_profile.contact_phone,  # Map 'contact_phone' to 'phone_number'
                 organization_name=f"{user.firstname} {user.lastname}" if user.firstname and user.lastname else "Organization",
+                logo_url=requester_profile.logo_url,  # Profile logo from Cloudinary
+                cover_image_url=requester_profile.cover_image_url,  # Cover image from Cloudinary
                 created_at=requester_profile.created_at.isoformat() if requester_profile.created_at else "",
                 updated_at=requester_profile.updated_at.isoformat() if requester_profile.updated_at else ""
             )

@@ -1112,6 +1112,7 @@ def get_requester_profile_stats(*, session: Session, user_id: uuid.UUID) -> dict
         "active_volunteers": 0,
     }
 
+
 # Public Profile CRUD operations
 def get_user_approved_projects(
     *, session: Session, requester_id: uuid.UUID, skip: int = 0, limit: int = 100
