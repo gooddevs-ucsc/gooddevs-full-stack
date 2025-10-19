@@ -1,3 +1,4 @@
+import { Eye } from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,21 @@ import { useProject } from '../api/get-project';
 import { useProjectApplications } from '../api/get-project-applications';
 
 type ApplicationStatus = keyof typeof APPLICATION_STATUS;
+
+const getStatusBadge = (status: ApplicationStatus) => {
+  const colors = {
+    [APPLICATION_STATUS.PENDING]:
+      'border-yellow-200 bg-yellow-100 text-yellow-800',
+    [APPLICATION_STATUS.APPROVED]:
+      'border-green-200 bg-green-100 text-green-800',
+    [APPLICATION_STATUS.REJECTED]: 'border-red-200 bg-red-100 text-red-800',
+  };
+  return (
+    <Badge className={`border ${colors[status as keyof typeof colors]}`}>
+      {status}
+    </Badge>
+  );
+};
 
 interface ConfirmationDialogProps {
   open: boolean;
@@ -63,6 +79,221 @@ const ConfirmationDialog = ({
   );
 };
 
+interface ApplicationDetailsDialogProps {
+  open: boolean;
+  application: ProjectApplication;
+  onClose: () => void;
+}
+
+const ApplicationDetailsDialog = ({
+  open,
+  application,
+  onClose,
+}: ApplicationDetailsDialogProps) => {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl">Application Details</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-6 py-4">
+          {/* Applicant Information */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Applicant Information
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-sm font-medium text-gray-500">Full Name</h4>
+                <p className="text-sm text-gray-900">
+                  {application.volunteer?.firstname}{' '}
+                  {application.volunteer?.lastname}
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-500">Email</h4>
+                <p className="text-sm text-gray-900">
+                  {application.volunteer?.email}
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-500">
+                  Applied Role
+                </h4>
+                <p className="text-sm text-gray-900">
+                  {application.volunteer_role}
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-500">
+                  Experience
+                </h4>
+                <p className="text-sm text-gray-900">
+                  {application.experience_years || 0} years
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Cover Letter */}
+          {application.cover_letter && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Cover Letter
+              </h3>
+              <div className="rounded-lg border bg-gray-50 p-4">
+                <p className="whitespace-pre-wrap text-sm text-gray-700">
+                  {application.cover_letter}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Skills */}
+          {application.skills && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Skills & Expertise
+              </h3>
+              <div className="rounded-lg border bg-blue-50 p-4">
+                <p className="whitespace-pre-wrap text-sm text-gray-700">
+                  {application.skills}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Professional Links */}
+          {(application.portfolio_url ||
+            application.linkedin_url ||
+            application.github_url) && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Professional Links
+              </h3>
+              <div className="space-y-2">
+                {application.portfolio_url && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">
+                      Portfolio
+                    </h4>
+                    <p className="text-sm">
+                      <a
+                        href={application.portfolio_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline hover:text-blue-800"
+                      >
+                        {application.portfolio_url}
+                      </a>
+                    </p>
+                  </div>
+                )}
+                {application.linkedin_url && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">
+                      LinkedIn
+                    </h4>
+                    <p className="text-sm">
+                      <a
+                        href={application.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline hover:text-blue-800"
+                      >
+                        {application.linkedin_url}
+                      </a>
+                    </p>
+                  </div>
+                )}
+                {application.github_url && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">
+                      GitHub
+                    </h4>
+                    <p className="text-sm">
+                      <a
+                        href={application.github_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline hover:text-blue-800"
+                      >
+                        {application.github_url}
+                      </a>
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Application Status */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Application Status
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-sm font-medium text-gray-500">
+                  Current Status
+                </h4>
+                <div className="mt-1">
+                  {getStatusBadge(application.status as ApplicationStatus)}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-500">
+                  Applied Date
+                </h4>
+                <p className="text-sm text-gray-900">
+                  {formatDate(new Date(application.created_at).getTime())}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Bio/Description */}
+          {application.volunteer?.bio && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900">
+                About the Applicant
+              </h3>
+              <div className="rounded-lg bg-gray-50 p-4">
+                <div className="mt-1 text-sm text-gray-600">
+                  {application.volunteer?.bio || 'No bio provided'}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Additional Details */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Additional Information
+            </h3>
+            <div className="rounded-lg bg-blue-50 p-4">
+              <p className="text-sm text-blue-700">
+                Application ID: {application.id}
+              </p>
+              {application.volunteer?.role && (
+                <p className="mt-1 text-sm text-blue-700">
+                  User Role: {application.volunteer.role}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 interface ProjectApplicationsTableProps {
   projectId: string;
 }
@@ -79,6 +310,10 @@ export const ProjectApplicationsTable = ({
     applicationId: string;
     status: ApplicationStatus;
     userName: string;
+  } | null>(null);
+  const [detailsDialog, setDetailsDialog] = useState<{
+    open: boolean;
+    application: ProjectApplication;
   } | null>(null);
 
   const { addNotification } = useNotifications();
@@ -192,19 +427,11 @@ export const ProjectApplicationsTable = ({
     setConfirmationDialog(null);
   };
 
-  const getStatusBadge = (status: ApplicationStatus) => {
-    const colors = {
-      [APPLICATION_STATUS.PENDING]:
-        'border-yellow-200 bg-yellow-100 text-yellow-800',
-      [APPLICATION_STATUS.APPROVED]:
-        'border-green-200 bg-green-100 text-green-800',
-      [APPLICATION_STATUS.REJECTED]: 'border-red-200 bg-red-100 text-red-800',
-    };
-    return (
-      <Badge className={`border ${colors[status as keyof typeof colors]}`}>
-        {status}
-      </Badge>
-    );
+  const handleViewDetails = (application: ProjectApplication) => {
+    setDetailsDialog({
+      open: true,
+      application,
+    });
   };
 
   // Table columns configuration
@@ -260,6 +487,18 @@ export const ProjectApplicationsTable = ({
       field: 'id',
       Cell: ({ entry }) => (
         <div className="flex items-center gap-2">
+          {/* View Details button - always visible */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleViewDetails(entry)}
+            className="border-blue-300 text-blue-600 hover:bg-blue-50"
+          >
+            <Eye className="mr-1 size-4" />
+            Details
+          </Button>
+
+          {/* Status-specific action buttons */}
           {entry.status === APPLICATION_STATUS.PENDING && (
             <>
               <Button
@@ -428,6 +667,15 @@ export const ProjectApplicationsTable = ({
           }
           onConfirm={handleConfirm}
           onClose={() => setConfirmationDialog(null)}
+        />
+      )}
+
+      {/* Application Details Dialog */}
+      {detailsDialog && (
+        <ApplicationDetailsDialog
+          open={detailsDialog.open}
+          application={detailsDialog.application}
+          onClose={() => setDetailsDialog(null)}
         />
       )}
     </div>
