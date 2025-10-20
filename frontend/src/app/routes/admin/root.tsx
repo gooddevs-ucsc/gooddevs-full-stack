@@ -1,7 +1,7 @@
 import {
   ClipboardCheck,
   // Users, Folder,
-  DollarSign,
+  // DollarSign,
   Home,
   Settings,
   Ribbon,
@@ -33,11 +33,12 @@ const AdminRoot = () => {
       to: paths.admin.projectApprovals.getHref(),
       icon: ClipboardCheck,
     },
-    {
-      name: 'Donations & Sponsorships',
-      to: paths.admin.donationsSponshorships.getHref(),
-      icon: DollarSign,
-    },
+    // TODO: Remove this path and related code
+    // {
+    //   name: 'Donations & Sponsorships',
+    //   to: paths.admin.donationsSponshorships.getHref(),
+    //   icon: DollarSign,
+    // },
     {
       name: 'All Donations & Reports',
       to: paths.admin.allDonations.getHref(),

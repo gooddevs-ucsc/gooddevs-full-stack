@@ -1,4 +1,11 @@
-import { DollarSign, Home, Settings, User, Ribbon, Heart } from 'lucide-react';
+import {
+  //  DollarSign,
+  Home,
+  Settings,
+  User,
+  Ribbon,
+  Heart,
+} from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
@@ -15,11 +22,12 @@ export const ErrorBoundary = () => {
 const SponsorRoot = () => {
   const navigation = [
     { name: 'Dashboard', to: paths.sponsor.dashboard.getHref(), icon: Home },
-    {
-      name: 'My Donations & Sponsorships',
-      to: paths.sponsor.donationsSponshorships.getHref(),
-      icon: DollarSign,
-    },
+    // TODO: Remove this path and related code
+    // {
+    //   name: 'My Donations & Sponsorships',
+    //   to: paths.sponsor.donationsSponshorships.getHref(),
+    //   icon: DollarSign,
+    // },
     {
       name: 'My Donations',
       to: paths.sponsor.myDonations.getHref(),

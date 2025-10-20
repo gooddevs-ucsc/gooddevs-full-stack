@@ -1,5 +1,5 @@
 import {
-  DollarSign,
+  // DollarSign,
   Folder,
   Home,
   Settings,
@@ -25,11 +25,12 @@ const DeveloperRoot = () => {
   const navigation = [
     { name: 'Dashboard', to: paths.developer.dashboard.getHref(), icon: Home },
     { name: 'Projects', to: paths.developer.projects.getHref(), icon: Folder },
-    {
-      name: 'Sponsorships',
-      to: paths.developer.sponsorships.getHref(),
-      icon: DollarSign,
-    },
+    // TODO: Remove this path and related code
+    // {
+    //   name: 'Sponsorships',
+    //   to: paths.developer.sponsorships.getHref(),
+    //   icon: DollarSign,
+    // },
     {
       name: 'My Donations',
       to: paths.developer.myDonations.getHref(),

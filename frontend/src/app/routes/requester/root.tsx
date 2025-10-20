@@ -1,6 +1,6 @@
 import {
   ArrowLeft,
-  DollarSign,
+  // DollarSign,
   Folder,
   Home,
   Settings,
@@ -30,11 +30,12 @@ const RequesterRoot = () => {
   const defaultNavigation = [
     { name: 'Dashboard', to: paths.requester.dashboard.getHref(), icon: Home },
     { name: 'Projects', to: paths.requester.projects.getHref(), icon: Folder },
-    {
-      name: 'Sponsorships',
-      to: paths.requester.sponsorships.getHref(),
-      icon: DollarSign,
-    },
+    // TODO: Remove this path and related code
+    // {
+    //   name: 'Sponsorships',
+    //   to: paths.requester.sponsorships.getHref(),
+    //   icon: DollarSign,
+    // },
     {
       name: 'My Donations',
       to: paths.requester.myDonations.getHref(),
