@@ -31,16 +31,16 @@ export const InitiateSponsorship = ({
 
     switch (user.data?.role) {
       case 'ADMIN':
-        path = paths.admin.donationsSponshorships.getHref();
+        path = paths.admin.mySponsorships.getHref();
         break;
       case 'SPONSOR':
-        path = paths.sponsor.donationsSponshorships.getHref();
+        path = paths.sponsor.mySponsorships.getHref();
         break;
       case 'REQUESTER':
         path = paths.requester.sponsorships.getHref();
         break;
       case 'VOLUNTEER':
-        path = paths.developer.sponsorships.getHref();
+        path = paths.developer.mySponsorships.getHref();
         break;
       default:
         path = '/';
