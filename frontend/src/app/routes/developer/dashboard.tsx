@@ -1,32 +1,77 @@
 import { Code, GitBranch, TrendingUp, Activity, Calendar } from 'lucide-react';
 
 import { ContentLayout } from '@/components/layouts';
+import { Spinner } from '@/components/ui/spinner';
+import { useApplications } from '@/features/projects/api/get-applications';
 import { useUser } from '@/lib/auth';
+import { ProjectApplication } from '@/types/api';
 
 const DashboardRoute = () => {
   const user = useUser();
 
+  // Fetch volunteer's applications
+  const { data: applicationsData, isLoading } = useApplications({
+    page: 1,
+    limit: 100,
+  });
+
+  const applications = applicationsData?.data || [];
+
+  // Calculate counts based on application status
+  const appliedProjectsCount = applications.filter(
+    (app: ProjectApplication) => app.status === 'PENDING',
+  ).length;
+
+  const acceptedProjectsCount = applications.filter(
+    (app: ProjectApplication) => app.status === 'APPROVED',
+  ).length;
+
+  // Get accepted projects for display
+  const acceptedProjects = applications
+    .filter((app: ProjectApplication) => app.status === 'APPROVED')
+    .map((app: ProjectApplication) => ({
+      id: app.id,
+      title: app.project?.title || 'Unknown Project',
+      description: app.project?.description || 'No description available',
+      created_at: app.created_at,
+    }));
+
+  // Get active projects (approved applications)
+  const activeProjects = applications
+    .filter((app: ProjectApplication) => app.status === 'APPROVED')
+    .map((app: ProjectApplication) => ({
+      id: app.id,
+      title: app.project?.title || 'Unknown Project',
+      progress: Math.floor(Math.random() * 100), // You can implement actual progress calculation
+    }));
+
   const stats = [
     {
       title: 'Applied Projects',
-      value: '3',
-      change: '+5%',
+      value: appliedProjectsCount.toString(),
+      change:
+        applications.length > 0
+          ? `${appliedProjectsCount} applied`
+          : 'No applications',
       icon: Activity,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
     },
     {
       title: 'Accepted Projects',
-      value: '2',
-      change: '+10%',
+      value: acceptedProjectsCount.toString(),
+      change:
+        acceptedProjectsCount > 0
+          ? `${acceptedProjectsCount} active`
+          : 'No accepted projects',
       icon: Activity,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
     },
     {
       title: 'Active Projects',
-      value: '3',
-      change: '+5%',
+      value: acceptedProjectsCount.toString(),
+      change: acceptedProjectsCount > 0 ? 'In progress' : 'No active projects',
       icon: TrendingUp,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
@@ -68,16 +113,15 @@ const DashboardRoute = () => {
     },
   ];
 
-  const acceptedProjects = [
-    {
-      title: 'Remote Work Platform',
-      description: 'Facilitate remote team collaboration.',
-    },
-    {
-      title: 'Food Delivery App',
-      description: 'Streamline food ordering and delivery.',
-    },
-  ];
+  if (isLoading) {
+    return (
+      <ContentLayout title="Dashboard">
+        <div className="flex h-48 w-full items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      </ContentLayout>
+    );
+  }
 
   return (
     <ContentLayout title="Dashboard">
@@ -211,42 +255,64 @@ const DashboardRoute = () => {
               Active Project Progress
             </h2>
             <div className="space-y-4">
-              <div className="rounded-lg bg-gradient-to-r from-green-50 to-green-100/50 p-4">
-                <h3 className="font-semibold text-slate-900">
-                  Project Management Tool
-                </h3>
-                <p className="mt-2 text-sm text-slate-600">
-                  Progress:{' '}
-                  <span className="font-semibold text-green-600">75%</span>
-                </p>
-                <div className="mt-2 h-2 w-full rounded-full bg-green-200">
-                  <div className="h-full w-3/4 rounded-full bg-green-600"></div>
+              {activeProjects.slice(0, 3).map((project) => {
+                const progressColors = [
+                  {
+                    bg: 'from-green-50 to-green-100/50',
+                    text: 'text-green-600',
+                    bar: 'bg-green-200',
+                    fill: 'bg-green-600',
+                  },
+                  {
+                    bg: 'from-blue-50 to-blue-100/50',
+                    text: 'text-blue-600',
+                    bar: 'bg-blue-200',
+                    fill: 'bg-blue-600',
+                  },
+                  {
+                    bg: 'from-purple-50 to-purple-100/50',
+                    text: 'text-purple-600',
+                    bar: 'bg-purple-200',
+                    fill: 'bg-purple-600',
+                  },
+                ];
+                const colorIndex =
+                  activeProjects.indexOf(project) % progressColors.length;
+                const colors = progressColors[colorIndex];
+
+                return (
+                  <div
+                    key={project.id}
+                    className={`rounded-lg bg-gradient-to-r ${colors.bg} p-4`}
+                  >
+                    <h3 className="font-semibold text-slate-900">
+                      {project.title}
+                    </h3>
+                    <p className="mt-2 text-sm text-slate-600">
+                      Progress:{' '}
+                      <span className={`font-semibold ${colors.text}`}>
+                        {project.progress}%
+                      </span>
+                    </p>
+                    <div
+                      className={`mt-2 h-2 w-full rounded-full ${colors.bar}`}
+                    >
+                      <div
+                        className={`h-full rounded-full ${colors.fill}`}
+                        style={{ width: `${project.progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                );
+              })}
+              {activeProjects.length === 0 && (
+                <div className="py-8 text-center">
+                  <p className="text-slate-500">No active projects</p>
+                  <p className="text-sm text-slate-400">
+                    Apply to projects and get accepted to see progress here
+                  </p>
                 </div>
-              </div>
-              <div className="rounded-lg bg-gradient-to-r from-blue-50 to-blue-100/50 p-4">
-                <h3 className="font-semibold text-slate-900">
-                  Fitness Tracker App
-                </h3>
-                <p className="mt-2 text-sm text-slate-600">
-                  Progress:{' '}
-                  <span className="font-semibold text-blue-600">50%</span>
-                </p>
-                <div className="mt-2 h-2 w-full rounded-full bg-blue-200">
-                  <div className="h-full w-1/2 rounded-full bg-blue-600"></div>
-                </div>
-              </div>
-              <div className="rounded-lg bg-gradient-to-r from-yellow-50 to-yellow-100/50 p-4">
-                <h3 className="font-semibold text-slate-900">
-                  Inventory Management System
-                </h3>
-                <p className="mt-2 text-sm text-slate-600">
-                  Progress:{' '}
-                  <span className="font-semibold text-yellow-600">30%</span>
-                </p>
-                <div className="mt-2 h-2 w-full rounded-full bg-yellow-200">
-                  <div className="h-full w-1/4 rounded-full bg-yellow-600"></div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -257,9 +323,9 @@ const DashboardRoute = () => {
               Accepted Projects
             </h2>
             <div className="space-y-4">
-              {acceptedProjects.map((project, index) => (
+              {acceptedProjects.map((project) => (
                 <div
-                  key={index}
+                  key={project.id}
                   className="flex items-start gap-4 rounded-lg p-3 transition-colors hover:bg-gray-100"
                 >
                   <div className="flex-1">
@@ -269,9 +335,21 @@ const DashboardRoute = () => {
                     <p className="text-sm text-slate-600">
                       {project.description}
                     </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Accepted:{' '}
+                      {new Date(project.created_at).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
               ))}
+              {acceptedProjects.length === 0 && (
+                <div className="py-8 text-center">
+                  <p className="text-slate-500">No accepted projects yet</p>
+                  <p className="text-sm text-slate-400">
+                    Apply to projects to get started
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
