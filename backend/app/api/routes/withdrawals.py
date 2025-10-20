@@ -38,13 +38,13 @@ def get_withdrawal_balance(
 ) -> WithdrawalBalance:
     """
     Get withdrawal balance information for the current user.
-    
+
     Returns:
     - total_received: Total successfully received sponsorships
     - total_withdrawn: Total amount already withdrawn (completed)
     - pending_withdrawals: Total amount in pending withdrawals
     - available_balance: Available balance for withdrawal
-    
+
     Requires authentication.
     """
     try:
@@ -52,11 +52,12 @@ def get_withdrawal_balance(
             session=session,
             recipient_id=current_user.id
         )
-        
+
         return WithdrawalBalance(**balance_data)
-        
+
     except Exception as e:
-        logger.error(f"Error fetching withdrawal balance for user {current_user.id}: {str(e)}")
+        logger.error(
+            f"Error fetching withdrawal balance for user {current_user.id}: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail="Failed to retrieve withdrawal balance"
@@ -72,16 +73,16 @@ def request_withdrawal(
 ) -> WithdrawalPublic:
     """
     Request a withdrawal of sponsorship funds.
-    
+
     A 6% fee will be deducted from the requested amount.
     The withdrawal must not exceed the available balance.
-    
+
     Args:
         withdrawal_request: Withdrawal details including amount and bank information
-    
+
     Returns:
         WithdrawalPublic: Created withdrawal with fee calculation
-    
+
     Raises:
         HTTPException 400: Invalid withdrawal request (e.g., insufficient balance, invalid amount)
         HTTPException 500: Server error
@@ -93,21 +94,21 @@ def request_withdrawal(
                 status_code=400,
                 detail="Withdrawal amount must be greater than 0"
             )
-        
+
         # Check available balance
         balance_data = crud.get_withdrawal_balance(
             session=session,
             recipient_id=current_user.id
         )
-        
+
         available_balance = balance_data["available_balance"]
-        
+
         if withdrawal_request.amount > available_balance:
             raise HTTPException(
                 status_code=400,
                 detail=f"Insufficient balance. Available: {available_balance:.2f}, Requested: {withdrawal_request.amount:.2f}"
             )
-        
+
         # Create withdrawal
         withdrawal = crud.create_withdrawal(
             session=session,
@@ -118,13 +119,13 @@ def request_withdrawal(
             account_holder_name=withdrawal_request.account_holder_name,
             fee_percentage=6.0
         )
-        
+
         logger.info(
             f"Withdrawal requested: id={withdrawal.id}, user={current_user.id}, "
             f"amount={withdrawal_request.amount}, fee={withdrawal.fee_amount}, "
             f"transfer={withdrawal.amount_to_transfer}"
         )
-        
+
         # Convert to public model with user info
         return WithdrawalPublic(
             id=withdrawal.id,
@@ -149,11 +150,12 @@ def request_withdrawal(
                 role=current_user.role
             )
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating withdrawal for user {current_user.id}: {str(e)}")
+        logger.error(
+            f"Error creating withdrawal for user {current_user.id}: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail="Failed to create withdrawal request"
@@ -170,16 +172,16 @@ def get_my_withdrawals(
 ) -> WithdrawalsPublic:
     """
     Get all withdrawal requests by the current user.
-    
+
     Returns withdrawals ordered by requested_at (most recent first).
-    
+
     Args:
         skip: Number of records to skip (for pagination)
         limit: Maximum number of records to return
-    
+
     Returns:
         WithdrawalsPublic: List of withdrawals with pagination metadata
-    
+
     Requires authentication.
     """
     try:
@@ -190,13 +192,13 @@ def get_my_withdrawals(
             skip=skip,
             limit=limit
         )
-        
+
         # Get total count for pagination
         total = crud.count_withdrawals_by_recipient(
             session=session,
             recipient_id=current_user.id
         )
-        
+
         # Convert to public models
         withdrawals_public = []
         for withdrawal in withdrawals:
@@ -224,26 +226,28 @@ def get_my_withdrawals(
                 )
             )
             withdrawals_public.append(withdrawal_public)
-        
+
         # Calculate pagination metadata
         total_pages = (total + limit - 1) // limit if limit > 0 else 1
         current_page = (skip // limit) + 1 if limit > 0 else 1
-        
+
         meta = Meta(
             page=current_page,
             total=total,
             totalPages=total_pages
         )
-        
-        logger.info(f"Retrieved {len(withdrawals_public)} withdrawals for user {current_user.id}")
-        
+
+        logger.info(
+            f"Retrieved {len(withdrawals_public)} withdrawals for user {current_user.id}")
+
         return WithdrawalsPublic(
             data=withdrawals_public,
             meta=meta
         )
-        
+
     except Exception as e:
-        logger.error(f"Error fetching withdrawals for user {current_user.id}: {str(e)}")
+        logger.error(
+            f"Error fetching withdrawals for user {current_user.id}: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail="Failed to retrieve withdrawals"
@@ -259,16 +263,16 @@ def complete_withdrawal(
 ) -> WithdrawalPublic:
     """
     Mark a withdrawal as completed (ADMIN only or for testing).
-    
+
     In production, this would be called automatically after processing the bank transfer.
     For now, it's a mock endpoint to simulate completion.
-    
+
     Args:
         withdrawal_id: UUID of the withdrawal to complete
-    
+
     Returns:
         WithdrawalPublic: Updated withdrawal
-    
+
     Raises:
         HTTPException 403: User is not admin
         HTTPException 404: Withdrawal not found
@@ -281,30 +285,32 @@ def complete_withdrawal(
                 status_code=403,
                 detail="Only administrators can complete withdrawals"
             )
-        
+
         # Get withdrawal
         withdrawal = crud.get_withdrawal_by_id(
             session=session,
             withdrawal_id=withdrawal_id
         )
-        
+
         if not withdrawal:
             raise HTTPException(
                 status_code=404,
                 detail=f"Withdrawal with id {withdrawal_id} not found"
             )
-        
+
         # Complete the withdrawal
         completed_withdrawal = crud.complete_withdrawal(
             session=session,
             withdrawal_id=withdrawal_id
         )
-        
-        logger.info(f"Withdrawal {withdrawal_id} marked as completed by admin {current_user.id}")
-        
+
+        logger.info(
+            f"Withdrawal {withdrawal_id} marked as completed by admin {current_user.id}")
+
         # Get recipient user info
-        recipient = crud.get_user_by_id(session=session, user_id=completed_withdrawal.recipient_id)
-        
+        recipient = crud.get_user_by_id(
+            session=session, user_id=completed_withdrawal.recipient_id)
+
         return WithdrawalPublic(
             id=completed_withdrawal.id,
             recipient_id=completed_withdrawal.recipient_id,
@@ -328,7 +334,7 @@ def complete_withdrawal(
                 role=recipient.role
             ) if recipient else None
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
