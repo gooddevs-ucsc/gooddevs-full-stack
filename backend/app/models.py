@@ -997,6 +997,12 @@ class DonationStatistics(SQLModel):
 
 
 # Sponsorship models
+class WithdrawalStatus(str, enum.Enum):
+    NOT_WITHDRAWN = "NOT_WITHDRAWN"
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+
+
 class SponsorshipBase(SQLModel):
     message: str | None = Field(default=None, max_length=500)
 
@@ -1008,6 +1014,14 @@ class SponsorshipCreate(SponsorshipBase):
     address: str = Field(max_length=500)
     city: str = Field(max_length=255)
     country: str = Field(max_length=255)
+
+
+class WithdrawalRequest(SQLModel):
+    """Request model for withdrawing sponsorship funds"""
+    amount: float = Field(ge=0, description="Amount to withdraw (before fees)")
+    bank_account_number: str = Field(max_length=50, description="Bank account number for withdrawal")
+    bank_name: str = Field(max_length=255, description="Name of the bank")
+    account_holder_name: str = Field(max_length=255, description="Account holder name")
 
 
 class Sponsorship(SponsorshipBase, table=True):
@@ -1066,6 +1080,65 @@ class SponsorshipStatistics(SQLModel):
     successful_sponsorships: int
     unique_sponsors: int
     unique_recipients: int
+
+
+# Withdrawal models
+class Withdrawal(SQLModel, table=True):
+    """
+    Tracks withdrawal requests from volunteers.
+    Since we don't have access to real payment APIs, this is a mock system.
+    """
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    recipient_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    amount_requested: float = Field(ge=0, description="Amount requested by user")
+    fee_percentage: float = Field(default=6.0, description="Fee percentage (default 6%)")
+    fee_amount: float = Field(ge=0, description="Calculated fee amount")
+    amount_to_transfer: float = Field(ge=0, description="Amount after deducting fee")
+    bank_account_number: str = Field(max_length=50)
+    bank_name: str = Field(max_length=255)
+    account_holder_name: str = Field(max_length=255)
+    status: WithdrawalStatus = Field(
+        default=WithdrawalStatus.PENDING,
+        sa_column=Column(Enum(WithdrawalStatus))
+    )
+    requested_at: datetime = Field(default_factory=datetime.utcnow)
+    completed_at: datetime | None = Field(default=None)
+    
+    # Relationship
+    recipient: User | None = Relationship()
+
+
+class WithdrawalPublic(SQLModel):
+    """Public model for withdrawal data"""
+    id: uuid.UUID
+    recipient_id: uuid.UUID
+    amount_requested: float
+    fee_percentage: float
+    fee_amount: float
+    amount_to_transfer: float
+    bank_account_number: str
+    bank_name: str
+    account_holder_name: str
+    status: WithdrawalStatus
+    requested_at: datetime
+    completed_at: datetime | None = None
+    recipient: UserPublic | None = None
+
+
+class WithdrawalsPublic(SQLModel):
+    """List of withdrawals with pagination"""
+    data: list[WithdrawalPublic]
+    meta: Meta
+
+
+class WithdrawalBalance(SQLModel):
+    """Balance information for withdrawals"""
+    total_received: float = Field(description="Total successfully received sponsorships")
+    total_withdrawn: float = Field(description="Total amount already withdrawn (completed)")
+    pending_withdrawals: float = Field(description="Total amount in pending withdrawals")
+    available_balance: float = Field(description="Available balance for withdrawal")
 
 
 # Application Reviewer Permission models
