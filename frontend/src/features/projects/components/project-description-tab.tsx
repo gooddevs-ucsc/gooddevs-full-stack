@@ -14,6 +14,7 @@ import {
   Trash2,
   User,
   Users,
+  X,
   Zap,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -218,10 +219,35 @@ export const ProjectDescriptionTab = ({
             <h2 className="text-2xl font-semibold text-slate-900">
               Project Overview
             </h2>
-            <div className="flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
-              <CheckCircle className="size-4" />
-              Approved
-            </div>
+            {project.status && (
+              <div
+                className={`flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ${
+                  project.status === 'APPROVED'
+                    ? 'bg-green-100 text-green-800'
+                    : project.status === 'PENDING'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : project.status === 'REJECTED'
+                        ? 'bg-red-100 text-red-800'
+                        : project.status === 'IN_PROGRESS'
+                          ? 'bg-blue-100 text-blue-800'
+                          : project.status === 'COMPLETED'
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-gray-100 text-gray-800'
+                }`}
+              >
+                {project.status === 'APPROVED' && (
+                  <CheckCircle className="size-4" />
+                )}
+                {project.status === 'PENDING' && <Clock className="size-4" />}
+                {project.status === 'REJECTED' && <X className="size-4" />}
+                {project.status === 'IN_PROGRESS' && <Zap className="size-4" />}
+                {project.status === 'COMPLETED' && (
+                  <CheckCircle className="size-4" />
+                )}
+                {project.status?.charAt(0).toUpperCase() +
+                  project.status?.slice(1).toLowerCase().replace(/_/g, ' ')}
+              </div>
+            )}
           </div>
           <div className="prose prose-slate max-w-none">
             <p className="text-lg leading-relaxed text-slate-700">

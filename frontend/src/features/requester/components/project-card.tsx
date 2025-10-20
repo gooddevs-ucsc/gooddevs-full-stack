@@ -25,7 +25,7 @@ export interface RequesterProject {
   id: string;
   title: string;
   description: string;
-  status: 'Active' | 'Completed' | 'Pending';
+  status: 'Active' | 'Completed' | 'Pending' | 'Rejected';
   createdAt: string;
   teamSize: number;
   estimatedCompletion: string | null; // Now holds timeline text (e.g., "1-3 months"), not a date
@@ -45,6 +45,8 @@ const getStatusColor = (status: string) => {
       return 'border-blue-200 bg-blue-50 text-blue-700';
     case 'Pending':
       return 'border-orange-200 bg-orange-50 text-orange-700';
+    case 'Rejected':
+      return 'border-red-200 bg-red-50 text-red-700';
     default:
       return 'border-slate-200 bg-slate-50 text-slate-700';
   }
@@ -143,7 +145,7 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
         </div>
 
         {/* Description */}
-        <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-slate-600">
+        <p className="mb-4 line-clamp-1 text-sm leading-relaxed text-slate-600">
           {project.description}
         </p>
 
@@ -189,8 +191,10 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
             onClick={handleViewApplications}
             className="border-blue-300/50 bg-white text-blue-600 shadow-sm transition-all duration-200 hover:border-blue-400 hover:bg-blue-50"
           >
-            <UserCheck className="mr-2 size-4" />
-            Applications
+            <div className="flex items-center gap-4">
+              <UserCheck className="mr-2 size-4" />
+              Applications
+            </div>
           </Button>
           <Button
             variant="outline"

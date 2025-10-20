@@ -73,8 +73,10 @@ const AdminProjectDetailRoute = () => {
               className="mt-4"
               variant="outline"
             >
-              <ArrowLeft className="mr-2 size-4" />
-              Back to Approvals
+              <div className="flex items-center gap-4">
+                <ArrowLeft className="mr-2 size-4" />
+                Back to Approvals
+              </div>
             </Button>
           </div>
         </div>
@@ -94,8 +96,10 @@ const AdminProjectDetailRoute = () => {
             variant="outline"
             className="gap-2"
           >
-            <ArrowLeft className="size-4" />
-            Back to Approvals
+            <div className="flex items-center gap-4">
+              <ArrowLeft className="size-4" />
+              Back to Approvals
+            </div>
           </Button>
 
           {/* Action Buttons */}

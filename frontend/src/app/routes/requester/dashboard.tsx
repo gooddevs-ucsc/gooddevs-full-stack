@@ -1,13 +1,9 @@
 import {
-  BarChart3,
   Users,
   FolderPlus,
   Clock,
   CheckCircle,
   Calendar,
-  User,
-  MessageSquare,
-  Eye,
   Plus,
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
@@ -45,6 +41,7 @@ const RequestorDashboardRoute = () => {
       active: 0,
       pending: 0,
       completed: 0,
+      rejected: 0,
     };
 
     projects.forEach((project: Project) => {
@@ -57,6 +54,9 @@ const RequestorDashboardRoute = () => {
           break;
         case 'COMPLETED':
           counts.completed++;
+          break;
+        case 'REJECTED':
+          counts.rejected++;
           break;
       }
     });
@@ -87,8 +87,8 @@ const RequestorDashboardRoute = () => {
           };
         default:
           return {
-            status: 'Unknown',
-            statusColor: 'border-gray-200 bg-gray-50 text-gray-600',
+            status: 'Rejected',
+            statusColor: 'border-red-200 bg-red-100 text-red-800',
           };
       }
     };
@@ -144,62 +144,6 @@ const RequestorDashboardRoute = () => {
     },
   ];
 
-  const recentActivities = [
-    {
-      title: 'New team formed',
-      description:
-        'A development team has been assigned to Environmental Tracker',
-      time: '2 hours ago',
-      project: 'Environmental Tracker',
-      type: 'team',
-    },
-    {
-      title: 'Developer application',
-      description: 'Sarah Johnson applied to join Community Food Bank App',
-      time: '4 hours ago',
-      project: 'Community Food Bank App',
-      type: 'application',
-    },
-    {
-      title: 'New comment added',
-      description: 'Mike Chen commented on Local Library System discussion',
-      time: '6 hours ago',
-      project: 'Local Library System',
-      type: 'comment',
-    },
-    {
-      title: 'Status updated',
-      description: 'Youth Education Platform status changed to "In Progress"',
-      time: '1 day ago',
-      project: 'Youth Education Platform',
-      type: 'status',
-    },
-    {
-      title: 'Project approved',
-      description: 'Senior Care Connect has been approved and is now live',
-      time: '2 days ago',
-      project: 'Senior Care Connect',
-      type: 'approval',
-    },
-  ];
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'team':
-        return <Users className="size-3 text-blue-600" />;
-      case 'application':
-        return <User className="size-3 text-purple-600" />;
-      case 'comment':
-        return <MessageSquare className="size-3 text-green-600" />;
-      case 'status':
-        return <BarChart3 className="size-3 text-orange-600" />;
-      case 'approval':
-        return <CheckCircle className="size-3 text-emerald-600" />;
-      default:
-        return <Calendar className="size-3 text-slate-600" />;
-    }
-  };
-
   return (
     <ContentLayout title="Dashboard">
       <div className="space-y-8">
@@ -244,115 +188,6 @@ const RequestorDashboardRoute = () => {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Content Grid */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {/* Platform Capabilities/Quick Actions */}
-          <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
-              <BarChart3 className="size-5 text-primary" />
-              Quick Actions
-            </h2>
-            <div className="space-y-4">
-              <div className="rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 p-4">
-                <h3 className="font-semibold text-slate-900">
-                  Project Management
-                </h3>
-                <div className="mt-3 space-y-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-10 w-full justify-start border-primary/20 text-primary"
-                    onClick={() =>
-                      navigate(paths.requester.createProject.getHref())
-                    }
-                  >
-                    <div className="flex items-center gap-6">
-                      <Plus className="size-4" />
-                      Submit New Project Request
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-10 w-full justify-start"
-                    onClick={() => navigate(paths.requester.projects.getHref())}
-                  >
-                    <div className="flex items-center gap-6">
-                      <Eye className="size-4" />
-                      View All My Projects
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-10 w-full justify-start"
-                  >
-                    <div className="flex items-center gap-6">
-                      <Users className="size-4" />
-                      Browse Recommended Developers
-                    </div>
-                  </Button>
-                </div>
-              </div>
-
-              <div className="rounded-lg bg-gradient-to-r from-green-50 to-green-100/50 p-4">
-                <h3 className="font-semibold text-slate-900">Your Benefits</h3>
-                <ul className="mt-2 space-y-1 text-sm text-slate-600">
-                  <li className="flex items-center gap-2">
-                    <div className="size-1.5 rounded-full bg-green-500"></div>
-                    Access to skilled volunteer developers
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="size-1.5 rounded-full bg-green-500"></div>
-                    Free project development services
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="size-1.5 rounded-full bg-green-500"></div>
-                    Project progress tracking and updates
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="size-1.5 rounded-full bg-green-500"></div>
-                    Direct communication with dev teams
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Activity Feed */}
-          <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
-              <Calendar className="size-5 text-primary" />
-              Recent Activity
-            </h2>
-            <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-4 rounded-lg p-3 transition-colors hover:bg-slate-50"
-                >
-                  <div className="mt-1 flex size-6 items-center justify-center rounded-full bg-slate-100">
-                    {getActivityIcon(activity.type)}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-slate-900">
-                      {activity.title}
-                    </h4>
-                    <p className="text-sm text-slate-600">
-                      {activity.description}
-                    </p>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                      <span className="font-medium">{activity.project}</span>
-                      <span>•</span>
-                      <span>{activity.time}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Recent Projects Overview */}
@@ -407,18 +242,6 @@ const RequestorDashboardRoute = () => {
                   </button>
                 ))}
               </div>
-
-              {transformedProjects.length > 6 && (
-                <div className="mt-4 text-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate(paths.requester.projects.getHref())}
-                  >
-                    View All {transformedProjects.length} Projects
-                  </Button>
-                </div>
-              )}
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-12">
