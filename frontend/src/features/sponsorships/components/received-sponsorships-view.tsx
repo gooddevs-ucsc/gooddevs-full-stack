@@ -5,6 +5,12 @@ import {
   Clock,
   Filter,
   User,
+  Wallet,
+  TrendingUp,
+  AlertCircle,
+  ArrowDownToLine,
+  Building2,
+  CreditCard,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -12,7 +18,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
+import { Table, TableColumn } from '@/components/ui/table';
+import {
+  useMyWithdrawals,
+  Withdrawal,
+} from '@/features/sponsorships/api/get-my-withdrawals';
 import { useReceivedSponsorships } from '@/features/sponsorships/api/get-received-sponsorships';
+import { useWithdrawalBalance } from '@/features/sponsorships/api/get-withdrawal-balance';
+import { WithdrawalRequestDialog } from '@/features/sponsorships/components/withdrawal-request-dialog';
 import { PAYMENT_STATUS } from '@/types/api';
 
 export const ReceivedSponsorshipsView = () => {
@@ -25,7 +38,17 @@ export const ReceivedSponsorshipsView = () => {
     page: 1,
   });
 
+  // Fetch withdrawal balance
+  const balanceQuery = useWithdrawalBalance();
+
+  // Fetch withdrawal history
+  const withdrawalsQuery = useMyWithdrawals({
+    page: 1,
+  });
+
   const sponsorships = sponsorshipsQuery.data?.data || [];
+  const balance = balanceQuery.data;
+  const withdrawals = withdrawalsQuery.data?.data || [];
 
   // Filter sponsorships based on selected status
   const filteredSponsorships = sponsorships.filter((sponsorship) => {
@@ -93,8 +116,150 @@ export const ReceivedSponsorshipsView = () => {
     });
   };
 
+  // Define withdrawal table columns
+  const withdrawalColumns: TableColumn<Withdrawal>[] = [
+    {
+      title: 'Date',
+      field: 'requested_at',
+      Cell: ({ entry }) => (
+        <div className="flex items-center gap-2">
+          <Calendar className="size-4 text-gray-400" />
+          <div>
+            <div className="font-medium">{formatDate(entry.requested_at)}</div>
+            {entry.completed_at && (
+              <div className="text-xs text-gray-500">
+                Completed: {formatDate(entry.completed_at)}
+              </div>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Amount Requested',
+      field: 'amount_requested',
+      Cell: ({ entry }) => (
+        <div className="font-semibold text-gray-900">
+          LKR {entry.amount_requested.toFixed(2)}
+        </div>
+      ),
+    },
+    {
+      title: 'Fee (6%)',
+      field: 'fee_amount',
+      Cell: ({ entry }) => (
+        <div className="font-medium text-red-600">
+          - LKR {entry.fee_amount.toFixed(2)}
+        </div>
+      ),
+    },
+    {
+      title: 'Amount to Transfer',
+      field: 'amount_to_transfer',
+      Cell: ({ entry }) => (
+        <div className="font-semibold text-green-600">
+          LKR {entry.amount_to_transfer.toFixed(2)}
+        </div>
+      ),
+    },
+    {
+      title: 'Bank Details',
+      field: 'bank_name',
+      Cell: ({ entry }) => (
+        <div className="flex items-start gap-2">
+          <Building2 className="mt-0.5 size-4 shrink-0 text-gray-400" />
+          <div className="space-y-1">
+            <div className="font-medium">{entry.bank_name}</div>
+            <div className="flex items-center gap-1 text-xs">
+              <CreditCard className="size-3" />
+              {entry.bank_account_number}
+            </div>
+            <div className="text-xs">{entry.account_holder_name}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Status',
+      field: 'status',
+      Cell: ({ entry }) => {
+        if (entry.status === 'COMPLETED') {
+          return (
+            <Badge className="bg-green-100 text-green-800">
+              <CheckCircle className="mr-1 size-3" />
+              Completed
+            </Badge>
+          );
+        }
+        if (entry.status === 'PENDING') {
+          return (
+            <Badge className="bg-yellow-100 text-yellow-800">
+              <Clock className="mr-1 size-3" />
+              Pending
+            </Badge>
+          );
+        }
+        return (
+          <Badge className="bg-gray-100 text-gray-800">
+            <Clock className="mr-1 size-3" />
+            {entry.status}
+          </Badge>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="space-y-6">
+      {/* Withdrawal Balance Card */}
+      {balance && (
+        <Card className="border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Wallet className="size-5 text-green-600" />
+                <CardTitle>Withdrawal Balance</CardTitle>
+              </div>
+              <WithdrawalRequestDialog
+                availableBalance={balance.available_balance}
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-4">
+              <div>
+                <p className="text-sm text-gray-600">Total Received</p>
+                <p className="text-xl font-bold text-gray-900">
+                  LKR {balance.total_received.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Total Withdrawn</p>
+                <p className="text-xl font-bold text-gray-900">
+                  LKR {balance.total_withdrawn.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Pending Withdrawals</p>
+                <p className="text-xl font-bold text-yellow-600">
+                  LKR {balance.pending_withdrawals.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Available Balance</p>
+                <p className="text-2xl font-bold text-green-600">
+                  LKR {balance.available_balance.toFixed(2)}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-800">
+              <AlertCircle className="size-4" />
+              <p>A 6% processing fee will be deducted from all withdrawals.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -102,7 +267,7 @@ export const ReceivedSponsorshipsView = () => {
             <CardTitle className="text-sm font-medium">
               Total Received
             </CardTitle>
-            <Heart className="size-4 text-pink-600" />
+            <TrendingUp className="size-4 text-pink-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -142,6 +307,60 @@ export const ReceivedSponsorshipsView = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Withdrawals Table */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ArrowDownToLine className="size-5 text-green-600" />
+              <CardTitle>Withdrawal History</CardTitle>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Loading State */}
+          {withdrawalsQuery.isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <Spinner size="lg" className="text-green-600" />
+            </div>
+          )}
+
+          {/* Error State */}
+          {withdrawalsQuery.error && (
+            <div className="rounded-lg bg-red-50 p-4 text-center">
+              <p className="text-red-800">
+                Failed to load withdrawal history. Please try again.
+              </p>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!withdrawalsQuery.isLoading &&
+            !withdrawalsQuery.error &&
+            withdrawals.length === 0 && (
+              <div className="py-12 text-center">
+                <Wallet className="mx-auto mb-4 size-12 text-gray-400" />
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                  No withdrawals yet
+                </h3>
+                <p className="mb-6 text-gray-600">
+                  You haven&apos;t requested any withdrawals yet.
+                </p>
+              </div>
+            )}
+
+          {/* Withdrawals Table */}
+          {!withdrawalsQuery.isLoading &&
+            !withdrawalsQuery.error &&
+            withdrawals.length > 0 && (
+              <Table<Withdrawal>
+                data={withdrawals}
+                columns={withdrawalColumns}
+              />
+            )}
+        </CardContent>
+      </Card>
 
       {/* Main Content Card */}
       <Card>

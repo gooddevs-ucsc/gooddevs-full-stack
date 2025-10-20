@@ -7,6 +7,7 @@ import {
   Ribbon,
   BarChart3,
   Heart,
+  Wallet,
 } from 'lucide-react';
 import { Outlet } from 'react-router';
 
@@ -53,6 +54,11 @@ const AdminRoot = () => {
       name: 'My Sponsorships',
       to: paths.admin.mySponsorships.getHref(),
       icon: Heart,
+    },
+    {
+      name: 'Withdrawals',
+      to: paths.admin.withdrawals.getHref(),
+      icon: Wallet,
     },
     {
       name: 'Settings',
