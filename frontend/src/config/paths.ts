@@ -114,6 +114,10 @@ export const paths = {
       path: 'my-sponsorships',
       getHref: () => '/admin/my-sponsorships',
     },
+    withdrawals: {
+      path: 'withdrawals',
+      getHref: () => '/admin/withdrawals',
+    },
     projectDetail: {
       path: 'project-approvals/:id',
       getHref: (id: string) => `/admin/project-approvals/${id}`,
