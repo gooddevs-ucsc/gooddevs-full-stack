@@ -3,7 +3,7 @@ from app.models import (
     Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, UserRole,
     ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate, TaskStatus,
     PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, DonationStatistics, UserVolunteerRole, VolunteerRole, VolunteerProfile, VolunteerProfileCreate, VolunteerProfilePublic, VolunteerProfileUpdate,
-    ApplicationReviewerPermission, ApplicationReviewerPermissionCreate, ApplicationReviewerPermissionPublic, ReviewerPermissionStatus
+    ApplicationReviewerPermission, ApplicationReviewerPermissionCreate, ApplicationReviewerPermissionPublic, ReviewerPermissionStatus, Sponsorship, SponsorshipCreate, SponsorshipStatistics, UserVolunteerRole, VolunteerRole,
 )
 
 import uuid
@@ -26,7 +26,7 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
-    
+
     if db_obj.role == UserRole.VOLUNTEER:
         default_profile = VolunteerProfileCreate(
             bio=f"Hi! I'm {db_obj.firstname} {db_obj.lastname}. I'm passionate about contributing to meaningful projects.",
@@ -1019,6 +1019,259 @@ def get_donation_statistics(
     )
 
 
+# Sponsorship CRUD operations
+
+
+def create_sponsorship(
+    *,
+    session: Session,
+    order_id: int,
+    sponsor_id: uuid.UUID,
+    recipient_id: uuid.UUID,
+    message: str | None = None
+) -> Sponsorship:
+    """
+    Create a new sponsorship record linked to a payment.
+    Called during payment initiation, not after payment completion.
+    """
+    # Check if sponsorship already exists for this order_id
+    existing = get_sponsorship_by_order_id(session=session, order_id=order_id)
+    if existing:
+        raise ValueError("Sponsorship already exists for this payment")
+
+    # Validate that sponsor and recipient are different users
+    if sponsor_id == recipient_id:
+        raise ValueError("Cannot sponsor yourself")
+
+    # Create sponsorship
+    db_sponsorship = Sponsorship(
+        sponsor_id=sponsor_id,
+        recipient_id=recipient_id,
+        order_id=order_id,
+        message=message
+    )
+    session.add(db_sponsorship)
+    session.commit()
+    session.refresh(db_sponsorship)
+    return db_sponsorship
+
+
+def get_sponsorship_by_order_id(
+    *,
+    session: Session,
+    order_id: int
+) -> Sponsorship | None:
+    """Get sponsorship by payment order_id"""
+    statement = select(Sponsorship).where(Sponsorship.order_id == order_id)
+    return session.exec(statement).first()
+
+
+def get_sponsorships_by_sponsor_id(
+    *,
+    session: Session,
+    sponsor_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Sponsorship]:
+    """
+    Get all sponsorships made by a specific sponsor with SUCCESS or PENDING payment status,
+    ordered by order_id (descending).
+    This returns sponsorships with their relationships loaded.
+    Only includes sponsorships where payment status is SUCCESS (2) or PENDING (0).
+    """
+    statement = (
+        select(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Sponsorship.sponsor_id == sponsor_id,
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+        .order_by(Sponsorship.order_id.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def get_sponsorships_by_recipient_id(
+    *,
+    session: Session,
+    recipient_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Sponsorship]:
+    """
+    Get all sponsorships received by a specific recipient with SUCCESS or PENDING payment status,
+    ordered by order_id (descending).
+    This returns sponsorships with their relationships loaded.
+    Only includes sponsorships where payment status is SUCCESS (2) or PENDING (0).
+    """
+    statement = (
+        select(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Sponsorship.recipient_id == recipient_id,
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+        .order_by(Sponsorship.order_id.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_sponsorships_by_sponsor_id(
+    *,
+    session: Session,
+    sponsor_id: uuid.UUID
+) -> int:
+    """
+    Count total sponsorships made by a specific sponsor with SUCCESS or PENDING payment status.
+    Only counts sponsorships where payment status is SUCCESS (2) or PENDING (0).
+    """
+    statement = (
+        select(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Sponsorship.sponsor_id == sponsor_id,
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+    )
+    return len(list(session.exec(statement).all()))
+
+
+def count_sponsorships_by_recipient_id(
+    *,
+    session: Session,
+    recipient_id: uuid.UUID
+) -> int:
+    """
+    Count total sponsorships received by a specific recipient with SUCCESS or PENDING payment status.
+    Only counts sponsorships where payment status is SUCCESS (2) or PENDING (0).
+    """
+    statement = (
+        select(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Sponsorship.recipient_id == recipient_id,
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+    )
+    return len(list(session.exec(statement).all()))
+
+
+def get_all_sponsorships(
+    *,
+    session: Session,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Sponsorship]:
+    """
+    Get all sponsorships with SUCCESS or PENDING payment status,
+    ordered by order_id (descending) - for admin use.
+    """
+    statement = (
+        select(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+        .order_by(Sponsorship.order_id.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_all_sponsorships(
+    *,
+    session: Session
+) -> int:
+    """
+    Count total sponsorships with SUCCESS or PENDING payment status - for admin use.
+    """
+    statement = (
+        select(func.count())
+        .select_from(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+    )
+    return session.exec(statement).one()
+
+
+def get_sponsorship_statistics(
+    *,
+    session: Session
+) -> SponsorshipStatistics:
+    """
+    Get sponsorship statistics for admin dashboard.
+    Returns total sponsorships, total amount, average sponsorship, etc.
+    """
+    # Get all successful sponsorships
+    statement = (
+        select(Sponsorship, Payment)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.SUCCESS)
+    )
+    results = list(session.exec(statement).all())
+
+    if not results:
+        return SponsorshipStatistics(
+            total_sponsorships=0,
+            total_amount=0.0,
+            average_sponsorship=0.0,
+            pending_sponsorships=0,
+            successful_sponsorships=0,
+            unique_sponsors=0,
+            unique_recipients=0
+        )
+
+    # Calculate statistics
+    total_amount = sum(payment.amount for _, payment in results)
+    successful_count = len(results)
+    average_sponsorship = total_amount / \
+        successful_count if successful_count > 0 else 0.0
+
+    # Count pending sponsorships
+    pending_statement = (
+        select(func.count())
+        .select_from(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.PENDING)
+    )
+    pending_count = session.exec(pending_statement).one()
+
+    # Count unique sponsors
+    unique_sponsors_statement = (
+        select(func.count(func.distinct(Sponsorship.sponsor_id)))
+        .select_from(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.SUCCESS)
+    )
+    unique_sponsors = session.exec(unique_sponsors_statement).one()
+
+    # Count unique recipients
+    unique_recipients_statement = (
+        select(func.count(func.distinct(Sponsorship.recipient_id)))
+        .select_from(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.SUCCESS)
+    )
+    unique_recipients = session.exec(unique_recipients_statement).one()
+
+    return SponsorshipStatistics(
+        total_sponsorships=successful_count + pending_count,
+        total_amount=float(total_amount),
+        average_sponsorship=float(average_sponsorship),
+        pending_sponsorships=pending_count,
+        successful_sponsorships=successful_count,
+        unique_sponsors=unique_sponsors,
+        unique_recipients=unique_recipients
+    )
+
+
 # Requester Profile CRUD operations
 
 
@@ -1663,6 +1916,7 @@ def check_user_is_approved_volunteer(
     application = session.exec(statement).first()
     return application is not None
 
+
 def create_volunteer_profile(
     *, session: Session, profile_in: VolunteerProfileCreate, user_id: uuid.UUID
 ) -> VolunteerProfile:
@@ -1760,7 +2014,8 @@ def get_volunteer_profiles(
 
     # Convert to public models
     public_profiles = [
-        VolunteerProfilePublic.model_validate(profile, update={"user": profile.user})
+        VolunteerProfilePublic.model_validate(
+            profile, update={"user": profile.user})
         for profile in profiles
     ]
 
@@ -1806,16 +2061,19 @@ def search_volunteer_profiles(
         statement = statement.where(*filters)
 
     # Add pagination and ordering
-    count_statement = statement.with_only_columns(func.count(VolunteerProfile.id))
+    count_statement = statement.with_only_columns(
+        func.count(VolunteerProfile.id))
     count = session.exec(count_statement).one()
 
     profiles = session.exec(
-        statement.offset(skip).limit(limit).order_by(VolunteerProfile.created_at.desc())
+        statement.offset(skip).limit(limit).order_by(
+            VolunteerProfile.created_at.desc())
     ).all()
 
     # Convert to public models
     public_profiles = [
-        VolunteerProfilePublic.model_validate(profile, update={"user": profile.user})
+        VolunteerProfilePublic.model_validate(
+            profile, update={"user": profile.user})
         for profile in profiles
     ]
 
@@ -1895,7 +2153,7 @@ def get_volunteer_approved_projects(
         .limit(limit)
         .order_by(Project.created_at.desc())
     )
-    
+
     projects = session.exec(statement).all()
 
     count_statement = (
@@ -2008,7 +2266,8 @@ def get_volunteer_profiles(
 
     # Convert to public models
     public_profiles = [
-        VolunteerProfilePublic.model_validate(profile, update={"user": profile.user})
+        VolunteerProfilePublic.model_validate(
+            profile, update={"user": profile.user})
         for profile in profiles
     ]
 
@@ -2054,16 +2313,19 @@ def search_volunteer_profiles(
         statement = statement.where(*filters)
 
     # Add pagination and ordering
-    count_statement = statement.with_only_columns(func.count(VolunteerProfile.id))
+    count_statement = statement.with_only_columns(
+        func.count(VolunteerProfile.id))
     count = session.exec(count_statement).one()
 
     profiles = session.exec(
-        statement.offset(skip).limit(limit).order_by(VolunteerProfile.created_at.desc())
+        statement.offset(skip).limit(limit).order_by(
+            VolunteerProfile.created_at.desc())
     ).all()
 
     # Convert to public models
     public_profiles = [
-        VolunteerProfilePublic.model_validate(profile, update={"user": profile.user})
+        VolunteerProfilePublic.model_validate(
+            profile, update={"user": profile.user})
         for profile in profiles
     ]
 
@@ -2143,7 +2405,7 @@ def get_volunteer_approved_projects(
         .limit(limit)
         .order_by(Project.created_at.desc())
     )
-    
+
     projects = session.exec(statement).all()
 
     count_statement = (
