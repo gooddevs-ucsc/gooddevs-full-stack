@@ -3,13 +3,9 @@ import {
   Users,
   FolderPlus,
   Clock,
-  Calendar,
   Eye,
   Shield,
   AlertTriangle,
-  Database,
-  UserCheck,
-  Activity,
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 
@@ -83,61 +79,6 @@ const AdminDashboardRoute = () => {
     },
   ];
 
-  const recentActivities = [
-    {
-      title: 'New user registration',
-      description: 'John Smith registered as a developer',
-      time: '5 minutes ago',
-      type: 'user',
-      status: 'info',
-    },
-    {
-      title: 'Project approval needed',
-      description: 'Community Garden Management System awaiting review',
-      time: '15 minutes ago',
-      type: 'approval',
-      status: 'warning',
-    },
-    {
-      title: 'New project submitted',
-      description: 'Animal Shelter Management System submitted for review',
-      time: '3 hours ago',
-      type: 'project',
-      status: 'info',
-    },
-  ];
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'user':
-        return <UserCheck className="size-3 text-blue-600" />;
-      case 'approval':
-        return <Clock className="size-3 text-orange-600" />;
-      case 'report':
-        return <AlertTriangle className="size-3 text-red-600" />;
-      case 'system':
-        return <Database className="size-3 text-green-600" />;
-      case 'project':
-        return <FolderPlus className="size-3 text-purple-600" />;
-      default:
-        return <Calendar className="size-3 text-slate-600" />;
-    }
-  };
-
-  const getActivityStatusColor = (status: string) => {
-    switch (status) {
-      case 'success':
-        return 'bg-green-100';
-      case 'warning':
-        return 'bg-yellow-100';
-      case 'error':
-        return 'bg-red-100';
-      case 'info':
-      default:
-        return 'bg-blue-100';
-    }
-  };
-
   return (
     <ContentLayout title="Dashboard">
       <div className="space-y-8">
@@ -156,8 +97,7 @@ const AdminDashboardRoute = () => {
             </span>
           </p>
           <p className="mt-4 text-slate-600">
-            Monitor platform activity, manage users, and oversee project
-            approvals.
+            Manage users and oversee project approvals.
           </p>
         </div>
 
@@ -251,39 +191,33 @@ const AdminDashboardRoute = () => {
             </div>
           </div>
 
-          {/* Recent System Activity */}
-          <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
-              <Activity className="size-5 text-primary" />
-              Recent System Activity
-            </h2>
-            <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div
-                  key={index}
-                  className={`flex items-start gap-4 rounded-lg p-3 transition-colors hover:bg-slate-50 ${getActivityStatusColor(activity.status)}`}
-                >
-                  <div className="mt-1 flex size-6 items-center justify-center rounded-full bg-white">
-                    {getActivityIcon(activity.type)}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-slate-900">
-                      {activity.title}
-                    </h4>
-                    <p className="text-sm text-slate-600">
-                      {activity.description}
-                    </p>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                      <span>{activity.time}</span>
-                    </div>
-                  </div>
+          {/* Platform Statistics */}
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-1">
+            <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
+              <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
+                <BarChart3 className="size-5 text-primary" />
+                Platform Growth
+              </h2>
+              <div className="space-y-6 px-10 pt-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">
+                    New Users (30 days)
+                  </span>
+                  <span className="font-semibold text-slate-900">+127</span>
                 </div>
-              ))}
-            </div>
-            <div className="mt-4 text-center">
-              <Button variant="outline" size="sm">
-                View All Activity
-              </Button>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">
+                    Projects Completed
+                  </span>
+                  <span className="font-semibold text-slate-900">89</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">
+                    Active Developers
+                  </span>
+                  <span className="font-semibold text-slate-900">342</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -365,36 +299,6 @@ const AdminDashboardRoute = () => {
             >
               View All Pending Items
             </Button>
-          </div>
-        </div>
-
-        {/* Platform Statistics */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
-              <BarChart3 className="size-5 text-primary" />
-              Platform Growth
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">
-                  New Users (30 days)
-                </span>
-                <span className="font-semibold text-slate-900">+127</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">
-                  Projects Completed
-                </span>
-                <span className="font-semibold text-slate-900">89</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">
-                  Active Developers
-                </span>
-                <span className="font-semibold text-slate-900">342</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
