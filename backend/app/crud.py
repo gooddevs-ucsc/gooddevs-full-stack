@@ -1,9 +1,9 @@
 from sqlalchemy.orm import selectinload
 from app.models import (
-    Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread,
-    ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate,
-    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, DonationStatistics, Sponsorship, SponsorshipCreate, SponsorshipStatistics, UserVolunteerRole, VolunteerRole,
-    ApplicationReviewerPermission, ApplicationReviewerPermissionCreate, ApplicationReviewerPermissionPublic, ReviewerPermissionStatus
+    Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, UserRole,
+    ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate, TaskStatus,
+    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, DonationStatistics, UserVolunteerRole, VolunteerRole, VolunteerProfile, VolunteerProfileCreate, VolunteerProfilePublic, VolunteerProfileUpdate,
+    ApplicationReviewerPermission, ApplicationReviewerPermissionCreate, ApplicationReviewerPermissionPublic, ReviewerPermissionStatus, Sponsorship, SponsorshipCreate, SponsorshipStatistics, UserVolunteerRole, VolunteerRole,
 )
 
 import uuid
@@ -26,6 +26,19 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
+
+    if db_obj.role == UserRole.VOLUNTEER:
+        default_profile = VolunteerProfileCreate(
+            bio=f"Hi! I'm {db_obj.firstname} {db_obj.lastname}. I'm passionate about contributing to meaningful projects.",
+            tagline="Volunteer Developer",
+            skills=[],
+            experience=[]
+        )
+        create_volunteer_profile(
+            session=session,
+            profile_in=default_profile,
+            user_id=db_obj.id
+        )
     return db_obj
 
 
@@ -1685,3 +1698,724 @@ def check_user_is_approved_volunteer(
     )
     application = session.exec(statement).first()
     return application is not None
+
+
+# Public Profile CRUD operations
+def get_user_approved_projects(
+    *, session: Session, requester_id: uuid.UUID, skip: int = 0, limit: int = 100
+) -> list[Project]:
+    """Get approved projects for a specific user (for public view)"""
+    statement = (
+        select(Project)
+        .where(
+            Project.requester_id == requester_id,
+            Project.status == ProjectStatus.APPROVED
+        )
+        .order_by(Project.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+
+    projects = session.exec(statement).all()
+    return list(projects)
+
+
+def count_user_approved_projects(*, session: Session, requester_id: uuid.UUID) -> int:
+    """Count approved projects for a specific user"""
+    statement = select(func.count(Project.id)).where(
+        Project.requester_id == requester_id,
+        Project.status == ProjectStatus.APPROVED
+    )
+
+    count = session.exec(statement).one() or 0
+    return count
+
+# Application Reviewer Permissions
+
+
+def grant_reviewer_permission(
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    reviewer_id: uuid.UUID,
+    granted_by: uuid.UUID
+) -> ApplicationReviewerPermission:
+    """
+    Grant permission to a volunteer to review applications for a project.
+    Only approved volunteers for the project can be granted this permission.
+    If a revoked permission exists, it will be reactivated.
+    """
+    # Check if a permission already exists (active or revoked)
+    statement = select(ApplicationReviewerPermission).where(
+        ApplicationReviewerPermission.project_id == project_id,
+        ApplicationReviewerPermission.reviewer_id == reviewer_id
+    )
+    existing_permission = session.exec(statement).first()
+
+    if existing_permission:
+        # Reactivate if revoked
+        if existing_permission.status == ReviewerPermissionStatus.REVOKED:
+            existing_permission.status = ReviewerPermissionStatus.ACTIVE
+            existing_permission.revoked_at = None
+            existing_permission.granted_by = granted_by
+            session.add(existing_permission)
+            session.commit()
+            session.refresh(existing_permission)
+            return existing_permission
+        else:
+            # Already active
+            return existing_permission
+
+    # Create new permission record
+    db_permission = ApplicationReviewerPermission(
+        project_id=project_id,
+        reviewer_id=reviewer_id,
+        granted_by=granted_by,
+        status=ReviewerPermissionStatus.ACTIVE
+    )
+    session.add(db_permission)
+    session.commit()
+    session.refresh(db_permission)
+    return db_permission
+
+
+def revoke_reviewer_permission(
+    *,
+    session: Session,
+    permission_id: uuid.UUID
+) -> bool:
+    """Revoke reviewer permission by setting status to REVOKED"""
+    permission = session.get(ApplicationReviewerPermission, permission_id)
+    if permission and permission.status == ReviewerPermissionStatus.ACTIVE:
+        permission.status = ReviewerPermissionStatus.REVOKED
+        permission.revoked_at = datetime.now(timezone.utc)
+        session.add(permission)
+        session.commit()
+        return True
+    return False
+
+
+def revoke_reviewer_permission_by_ids(
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    reviewer_id: uuid.UUID
+) -> bool:
+    """Revoke reviewer permission by project and reviewer IDs"""
+    statement = select(ApplicationReviewerPermission).where(
+        ApplicationReviewerPermission.project_id == project_id,
+        ApplicationReviewerPermission.reviewer_id == reviewer_id,
+        ApplicationReviewerPermission.status == ReviewerPermissionStatus.ACTIVE
+    )
+    permission = session.exec(statement).first()
+    if permission:
+        permission.status = ReviewerPermissionStatus.REVOKED
+        permission.revoked_at = datetime.now(timezone.utc)
+        session.add(permission)
+        session.commit()
+        return True
+    return False
+
+
+def check_reviewer_permission(
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    user_id: uuid.UUID
+) -> bool:
+    """
+    Check if a user has permission to review applications for a project.
+    Returns True if the user is the project owner OR has an ACTIVE reviewer permission.
+    """
+    # Check if user is the project owner
+    project = session.get(Project, project_id)
+    if project and project.requester_id == user_id:
+        return True
+
+    # Check if user has an active reviewer permission
+    statement = select(ApplicationReviewerPermission).where(
+        ApplicationReviewerPermission.project_id == project_id,
+        ApplicationReviewerPermission.reviewer_id == user_id,
+        ApplicationReviewerPermission.status == ReviewerPermissionStatus.ACTIVE
+    )
+    permission = session.exec(statement).first()
+    return permission is not None
+
+
+def get_reviewer_permissions_for_project(
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    include_revoked: bool = False
+) -> list[ApplicationReviewerPermission]:
+    """
+    Get all reviewer permissions for a specific project with reviewer info.
+    By default, only returns ACTIVE permissions.
+    """
+    statement = (
+        select(ApplicationReviewerPermission)
+        .where(ApplicationReviewerPermission.project_id == project_id)
+        .options(selectinload(ApplicationReviewerPermission.reviewer))
+        .order_by(ApplicationReviewerPermission.created_at.desc())
+    )
+
+    if not include_revoked:
+        statement = statement.where(
+            ApplicationReviewerPermission.status == ReviewerPermissionStatus.ACTIVE
+        )
+
+    return list(session.exec(statement).all())
+
+
+def get_projects_user_can_review(
+    *,
+    session: Session,
+    user_id: uuid.UUID
+) -> list[Project]:
+    """
+    Get all projects where the user has permission to review applications.
+    This includes projects they own and projects where they have ACTIVE reviewer permission.
+    """
+    # Get projects owned by user
+    owned_projects_statement = select(Project).where(
+        Project.requester_id == user_id
+    )
+    owned_projects = list(session.exec(owned_projects_statement).all())
+
+    # Get projects where user has active reviewer permission
+    permission_statement = (
+        select(Project)
+        .join(ApplicationReviewerPermission,
+              ApplicationReviewerPermission.project_id == Project.id)
+        .where(
+            ApplicationReviewerPermission.reviewer_id == user_id,
+            ApplicationReviewerPermission.status == ReviewerPermissionStatus.ACTIVE
+        )
+    )
+    permitted_projects = list(session.exec(permission_statement).all())
+
+    # Combine and deduplicate
+    all_projects = {p.id: p for p in owned_projects + permitted_projects}
+    return list(all_projects.values())
+
+
+def check_user_is_approved_volunteer(
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    user_id: uuid.UUID
+) -> bool:
+    """
+    Check if a user is an approved volunteer for a specific project.
+    """
+    statement = select(ProjectApplication).where(
+        ProjectApplication.project_id == project_id,
+        ProjectApplication.volunteer_id == user_id,
+        ProjectApplication.status == ApplicationStatus.APPROVED
+    )
+    application = session.exec(statement).first()
+    return application is not None
+
+
+def create_volunteer_profile(
+    *, session: Session, profile_in: VolunteerProfileCreate, user_id: uuid.UUID
+) -> VolunteerProfile:
+    """Create a new volunteer profile"""
+    db_profile = VolunteerProfile.model_validate(
+        profile_in, update={
+            "user_id": user_id,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
+        }
+    )
+    session.add(db_profile)
+    session.commit()
+    session.refresh(db_profile)
+    return db_profile
+
+
+def get_volunteer_profile(*, session: Session, profile_id: uuid.UUID) -> VolunteerProfilePublic | None:
+    """Get volunteer profile by ID with user data"""
+    statement = (
+        select(VolunteerProfile)
+        .options(selectinload(VolunteerProfile.user))
+        .where(VolunteerProfile.id == profile_id)
+    )
+    profile = session.exec(statement).first()
+
+    if not profile:
+        return None
+
+    # Convert to public model
+    return VolunteerProfilePublic.model_validate(profile, update={"user": profile.user})
+
+
+def get_volunteer_profile_by_user_id(
+    *, session: Session, user_id: uuid.UUID
+) -> VolunteerProfilePublic | None:
+    """Get volunteer profile by user ID with user data"""
+    statement = (
+        select(VolunteerProfile)
+        .options(selectinload(VolunteerProfile.user))
+        .where(VolunteerProfile.user_id == user_id)
+    )
+    profile = session.exec(statement).first()
+
+    if not profile:
+        return None
+
+    # Convert to public model
+    return VolunteerProfilePublic.model_validate(profile, update={"user": profile.user})
+
+
+def update_volunteer_profile(
+    *, session: Session, db_profile: VolunteerProfile, profile_in: VolunteerProfileUpdate
+) -> VolunteerProfilePublic:
+    """Update an existing volunteer profile"""
+    profile_data = profile_in.model_dump(exclude_unset=True)
+    profile_data["updated_at"] = datetime.now(timezone.utc)
+
+    db_profile.sqlmodel_update(profile_data)
+    session.add(db_profile)
+    session.commit()
+    session.refresh(db_profile)
+
+    # Load user relationship for response
+    session.refresh(db_profile, ["user"])
+
+    return VolunteerProfilePublic.model_validate(db_profile, update={"user": db_profile.user})
+
+
+def delete_volunteer_profile(*, session: Session, profile_id: uuid.UUID) -> bool:
+    """Delete a volunteer profile"""
+    profile = session.get(VolunteerProfile, profile_id)
+    if profile:
+        session.delete(profile)
+        session.commit()
+        return True
+    return False
+
+
+def get_volunteer_profiles(
+    *, session: Session, skip: int = 0, limit: int = 100
+) -> tuple[list[VolunteerProfilePublic], int]:
+    """Get all volunteer profiles with pagination"""
+    statement = (
+        select(VolunteerProfile)
+        .options(selectinload(VolunteerProfile.user))
+        .offset(skip)
+        .limit(limit)
+        .order_by(VolunteerProfile.created_at.desc())
+    )
+    profiles = session.exec(statement).all()
+
+    count_statement = select(func.count(VolunteerProfile.id))
+    count = session.exec(count_statement).one()
+
+    # Convert to public models
+    public_profiles = [
+        VolunteerProfilePublic.model_validate(
+            profile, update={"user": profile.user})
+        for profile in profiles
+    ]
+
+    return public_profiles, count
+
+
+def search_volunteer_profiles(
+    *,
+    session: Session,
+    search_query: str | None = None,
+    skills: list[str] | None = None,
+    location: str | None = None,
+    skip: int = 0,
+    limit: int = 100
+) -> tuple[list[VolunteerProfilePublic], int]:
+    """Search volunteer profiles with filters"""
+    statement = (
+        select(VolunteerProfile)
+        .join(User, VolunteerProfile.user_id == User.id)
+        .options(selectinload(VolunteerProfile.user))
+    )
+
+    # Add search filters
+    filters = []
+    if search_query:
+        search_filter = (
+            User.firstname.ilike(f"%{search_query}%") |
+            User.lastname.ilike(f"%{search_query}%") |
+            VolunteerProfile.bio.ilike(f"%{search_query}%") |
+            VolunteerProfile.tagline.ilike(f"%{search_query}%")
+        )
+        filters.append(search_filter)
+
+    if location:
+        filters.append(VolunteerProfile.location.ilike(f"%{location}%"))
+
+    if skills:
+        # PostgreSQL array contains operator
+        for skill in skills:
+            filters.append(VolunteerProfile.skills.contains([skill]))
+
+    if filters:
+        statement = statement.where(*filters)
+
+    # Add pagination and ordering
+    count_statement = statement.with_only_columns(
+        func.count(VolunteerProfile.id))
+    count = session.exec(count_statement).one()
+
+    profiles = session.exec(
+        statement.offset(skip).limit(limit).order_by(
+            VolunteerProfile.created_at.desc())
+    ).all()
+
+    # Convert to public models
+    public_profiles = [
+        VolunteerProfilePublic.model_validate(
+            profile, update={"user": profile.user})
+        for profile in profiles
+    ]
+
+    return public_profiles, count
+
+
+def get_volunteer_profile_stats(*, session: Session, user_id: uuid.UUID) -> dict:
+    """Get statistics for volunteer's dashboard"""
+
+    # Count approved projects the volunteer contributed to
+    total_projects_contributed = session.exec(
+        select(func.count(func.distinct(ProjectApplication.project_id)))
+        .where(
+            ProjectApplication.volunteer_id == user_id,
+            ProjectApplication.status == ApplicationStatus.APPROVED
+        )
+    ).one() or 0
+
+    # Count tasks assigned to volunteer (excluding cancelled)
+    total_tasks_assigned = session.exec(
+        select(func.count(Task.id))
+        .where(
+            Task.assignee_id == user_id,
+            Task.status != TaskStatus.CANCELLED
+        )
+    ).one() or 0
+
+    # Count completed tasks
+    total_tasks_completed = session.exec(
+        select(func.count(Task.id))
+        .where(
+            Task.assignee_id == user_id,
+            Task.status == TaskStatus.COMPLETED
+        )
+    ).one() or 0
+
+    # Count threads created by volunteer
+    total_threads_created = session.exec(
+        select(func.count(ProjectThread.id))
+        .where(ProjectThread.author_id == user_id)
+    ).one() or 0
+
+    # Count comments made by volunteer
+    total_comments_made = session.exec(
+        select(func.count(Comment.id))
+        .where(Comment.author_id == user_id)
+    ).one() or 0
+
+    # Count replies made by volunteer
+    total_replies_made = session.exec(
+        select(func.count(Reply.id))
+        .where(Reply.author_id == user_id)
+    ).one() or 0
+
+    return {
+        "total_projects_contributed": total_projects_contributed,
+        "total_tasks_assigned": total_tasks_assigned,
+        "total_tasks_completed": total_tasks_completed,
+        "total_threads_created": total_threads_created,
+        "total_comments_made": total_comments_made,
+        "total_replies_made": total_replies_made,
+    }
+
+
+def get_volunteer_approved_projects(
+    *, session: Session, user_id: uuid.UUID, skip: int = 0, limit: int = 100
+) -> tuple[list[Project], int]:
+    """Get projects that the volunteer has been approved to contribute to"""
+    statement = (
+        select(Project)
+        .join(ProjectApplication, ProjectApplication.project_id == Project.id)
+        .where(
+            ProjectApplication.volunteer_id == user_id,
+            ProjectApplication.status == ApplicationStatus.APPROVED
+        )
+        .offset(skip)
+        .limit(limit)
+        .order_by(Project.created_at.desc())
+    )
+
+    projects = session.exec(statement).all()
+
+    count_statement = (
+        select(func.count(Project.id))
+        .join(ProjectApplication, ProjectApplication.project_id == Project.id)
+        .where(
+            ProjectApplication.volunteer_id == user_id,
+            ProjectApplication.status == ApplicationStatus.APPROVED
+        )
+    )
+    count = session.exec(count_statement).one()
+
+    return list(projects), count
+
+
+def create_volunteer_profile(
+    *, session: Session, profile_in: VolunteerProfileCreate, user_id: uuid.UUID
+) -> VolunteerProfile:
+    """Create a new volunteer profile"""
+    db_profile = VolunteerProfile.model_validate(
+        profile_in, update={
+            "user_id": user_id,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
+        }
+    )
+    session.add(db_profile)
+    session.commit()
+    session.refresh(db_profile)
+    return db_profile
+
+
+def get_volunteer_profile(*, session: Session, profile_id: uuid.UUID) -> VolunteerProfilePublic | None:
+    """Get volunteer profile by ID with user data"""
+    statement = (
+        select(VolunteerProfile)
+        .options(selectinload(VolunteerProfile.user))
+        .where(VolunteerProfile.id == profile_id)
+    )
+    profile = session.exec(statement).first()
+
+    if not profile:
+        return None
+
+    # Convert to public model
+    return VolunteerProfilePublic.model_validate(profile, update={"user": profile.user})
+
+
+def get_volunteer_profile_by_user_id(
+    *, session: Session, user_id: uuid.UUID
+) -> VolunteerProfilePublic | None:
+    """Get volunteer profile by user ID with user data"""
+    statement = (
+        select(VolunteerProfile)
+        .options(selectinload(VolunteerProfile.user))
+        .where(VolunteerProfile.user_id == user_id)
+    )
+    profile = session.exec(statement).first()
+
+    if not profile:
+        return None
+
+    # Convert to public model
+    return VolunteerProfilePublic.model_validate(profile, update={"user": profile.user})
+
+
+def update_volunteer_profile(
+    *, session: Session, db_profile: VolunteerProfile, profile_in: VolunteerProfileUpdate
+) -> VolunteerProfilePublic:
+    """Update an existing volunteer profile"""
+    profile_data = profile_in.model_dump(exclude_unset=True)
+    profile_data["updated_at"] = datetime.now(timezone.utc)
+
+    db_profile.sqlmodel_update(profile_data)
+    session.add(db_profile)
+    session.commit()
+    session.refresh(db_profile)
+
+    # Load user relationship for response
+    session.refresh(db_profile, ["user"])
+
+    return VolunteerProfilePublic.model_validate(db_profile, update={"user": db_profile.user})
+
+
+def delete_volunteer_profile(*, session: Session, profile_id: uuid.UUID) -> bool:
+    """Delete a volunteer profile"""
+    profile = session.get(VolunteerProfile, profile_id)
+    if profile:
+        session.delete(profile)
+        session.commit()
+        return True
+    return False
+
+
+def get_volunteer_profiles(
+    *, session: Session, skip: int = 0, limit: int = 100
+) -> tuple[list[VolunteerProfilePublic], int]:
+    """Get all volunteer profiles with pagination"""
+    statement = (
+        select(VolunteerProfile)
+        .options(selectinload(VolunteerProfile.user))
+        .offset(skip)
+        .limit(limit)
+        .order_by(VolunteerProfile.created_at.desc())
+    )
+    profiles = session.exec(statement).all()
+
+    count_statement = select(func.count(VolunteerProfile.id))
+    count = session.exec(count_statement).one()
+
+    # Convert to public models
+    public_profiles = [
+        VolunteerProfilePublic.model_validate(
+            profile, update={"user": profile.user})
+        for profile in profiles
+    ]
+
+    return public_profiles, count
+
+
+def search_volunteer_profiles(
+    *,
+    session: Session,
+    search_query: str | None = None,
+    skills: list[str] | None = None,
+    location: str | None = None,
+    skip: int = 0,
+    limit: int = 100
+) -> tuple[list[VolunteerProfilePublic], int]:
+    """Search volunteer profiles with filters"""
+    statement = (
+        select(VolunteerProfile)
+        .join(User, VolunteerProfile.user_id == User.id)
+        .options(selectinload(VolunteerProfile.user))
+    )
+
+    # Add search filters
+    filters = []
+    if search_query:
+        search_filter = (
+            User.firstname.ilike(f"%{search_query}%") |
+            User.lastname.ilike(f"%{search_query}%") |
+            VolunteerProfile.bio.ilike(f"%{search_query}%") |
+            VolunteerProfile.tagline.ilike(f"%{search_query}%")
+        )
+        filters.append(search_filter)
+
+    if location:
+        filters.append(VolunteerProfile.location.ilike(f"%{location}%"))
+
+    if skills:
+        # PostgreSQL array contains operator
+        for skill in skills:
+            filters.append(VolunteerProfile.skills.contains([skill]))
+
+    if filters:
+        statement = statement.where(*filters)
+
+    # Add pagination and ordering
+    count_statement = statement.with_only_columns(
+        func.count(VolunteerProfile.id))
+    count = session.exec(count_statement).one()
+
+    profiles = session.exec(
+        statement.offset(skip).limit(limit).order_by(
+            VolunteerProfile.created_at.desc())
+    ).all()
+
+    # Convert to public models
+    public_profiles = [
+        VolunteerProfilePublic.model_validate(
+            profile, update={"user": profile.user})
+        for profile in profiles
+    ]
+
+    return public_profiles, count
+
+
+def get_volunteer_profile_stats(*, session: Session, user_id: uuid.UUID) -> dict:
+    """Get statistics for volunteer's dashboard"""
+
+    # Count approved projects the volunteer contributed to
+    total_projects_contributed = session.exec(
+        select(func.count(func.distinct(ProjectApplication.project_id)))
+        .where(
+            ProjectApplication.volunteer_id == user_id,
+            ProjectApplication.status == ApplicationStatus.APPROVED
+        )
+    ).one() or 0
+
+    # Count tasks assigned to volunteer (excluding cancelled)
+    total_tasks_assigned = session.exec(
+        select(func.count(Task.id))
+        .where(
+            Task.assignee_id == user_id,
+            Task.status != TaskStatus.CANCELLED
+        )
+    ).one() or 0
+
+    # Count completed tasks
+    total_tasks_completed = session.exec(
+        select(func.count(Task.id))
+        .where(
+            Task.assignee_id == user_id,
+            Task.status == TaskStatus.COMPLETED
+        )
+    ).one() or 0
+
+    # Count threads created by volunteer
+    total_threads_created = session.exec(
+        select(func.count(ProjectThread.id))
+        .where(ProjectThread.author_id == user_id)
+    ).one() or 0
+
+    # Count comments made by volunteer
+    total_comments_made = session.exec(
+        select(func.count(Comment.id))
+        .where(Comment.author_id == user_id)
+    ).one() or 0
+
+    # Count replies made by volunteer
+    total_replies_made = session.exec(
+        select(func.count(Reply.id))
+        .where(Reply.author_id == user_id)
+    ).one() or 0
+
+    return {
+        "total_projects_contributed": total_projects_contributed,
+        "total_tasks_assigned": total_tasks_assigned,
+        "total_tasks_completed": total_tasks_completed,
+        "total_threads_created": total_threads_created,
+        "total_comments_made": total_comments_made,
+        "total_replies_made": total_replies_made,
+    }
+
+
+def get_volunteer_approved_projects(
+    *, session: Session, user_id: uuid.UUID, skip: int = 0, limit: int = 100
+) -> tuple[list[Project], int]:
+    """Get projects that the volunteer has been approved to contribute to"""
+    statement = (
+        select(Project)
+        .join(ProjectApplication, ProjectApplication.project_id == Project.id)
+        .where(
+            ProjectApplication.volunteer_id == user_id,
+            ProjectApplication.status == ApplicationStatus.APPROVED
+        )
+        .offset(skip)
+        .limit(limit)
+        .order_by(Project.created_at.desc())
+    )
+
+    projects = session.exec(statement).all()
+
+    count_statement = (
+        select(func.count(Project.id))
+        .join(ProjectApplication, ProjectApplication.project_id == Project.id)
+        .where(
+            ProjectApplication.volunteer_id == user_id,
+            ProjectApplication.status == ApplicationStatus.APPROVED
+        )
+    )
+    count = session.exec(count_statement).one()
+
+    return list(projects), count

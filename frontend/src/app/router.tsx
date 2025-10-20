@@ -13,6 +13,7 @@ import {
 import DeveloperRoot, {
   ErrorBoundary as DeveloperRootErrorBoundary,
 } from './routes/developer/root';
+import PublicVolunteerProfile from './routes/public-profile/volunteer';
 import {
   default as RequesterRoot,
   ErrorBoundary as RequestorRootErrorBoundary,
@@ -356,7 +357,10 @@ export const createAppRouter = (queryClient: QueryClient) =>
         },
       ],
     },
-
+    {
+      path: '/volunteer/:userId',
+      element: <PublicVolunteerProfile />,
+    },
     {
       path: '*',
       lazy: () => import('./routes/not-found').then(convert(queryClient)),

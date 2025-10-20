@@ -1,824 +1,694 @@
-import React, { useState } from 'react';
+import { Calendar, Edit2, Save, Users, X } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
 
-// Interfaces for structured data
-interface Project {
-  title: string;
-  description: string;
-  link: string;
-}
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useNotifications } from '@/components/ui/notifications';
+import { Spinner } from '@/components/ui/spinner';
+import {
+  BioCard,
+  ContactInfoCard,
+  ExperienceCard,
+  ExperienceItem,
+  ImageUploadModal,
+  ProfileHeader,
+  SkillsCard,
+  StatsCard,
+  UpdateVolunteerProfileInput,
+  useUpdateVolunteerProfile,
+  useUploadVolunteerCoverImage,
+  useUploadVolunteerProfileImage,
+  useVolunteerApprovedProjects,
+  useVolunteerProfile,
+  useVolunteerStats,
+  VolunteerProject,
+} from '@/features/volunteer';
+import { useUser } from '@/lib/auth';
 
-interface Experience {
-  title: string;
-  company: string;
-  years: string;
-  description: string;
-}
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'APPROVED':
+    case 'Active':
+      return 'border-green-200 bg-green-50 text-green-700';
+    case 'IN_PROGRESS':
+      return 'border-blue-200 bg-blue-50 text-blue-700';
+    case 'COMPLETED':
+      return 'border-gray-200 bg-gray-50 text-gray-700';
+    default:
+      return 'border-slate-200 bg-slate-50 text-slate-700';
+  }
+};
 
-export interface ProfileData {
-  name: string;
-  age: number;
-  title: string;
-  bio: string;
-  email: string;
-  phone: string;
-  location: string;
-  profilePhoto: string;
-  skills: string[];
-  experience: Experience[];
-  projects: Project[];
-  linkedinProfileUrl: string;
-}
+const getStatusInfo = (status: string) => {
+  switch (status) {
+    case 'APPROVED':
+      return { label: 'Active' };
+    case 'IN_PROGRESS':
+      return { label: 'In Progress' };
+    case 'COMPLETED':
+      return { label: 'Completed' };
+    default:
+      return { label: status };
+  }
+};
 
-const DeveloperProfilePage: React.FC = () => {
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [profileData, setProfileData] = useState<ProfileData>({
-    name: 'Vihan Perera',
-    age: 29,
-    title: 'Senior Frontend Developer',
-    bio: 'Passionate about crafting intuitive and performant user interfaces. Experienced in React, TypeScript, and modern web development practices.',
-    email: 'vihan@gmail.com',
-    phone: '+94 77 123 4567',
-    location: 'Colombo, Sri Lanka',
-    profilePhoto: '/profile.png',
-    skills: [
-      'React',
-      'TypeScript',
-      'JavaScript',
-      'Next.js',
-      'Tailwind CSS',
-      'Node.js',
-      'Express',
-      'MongoDB',
-      'PostgreSQL',
-      'Git',
-      'AWS Basics',
-      'UI/UX Design',
-      'Agile Methodologies',
-    ],
-    experience: [
-      {
-        title: 'Senior Frontend Developer',
-        company: 'Innovate Tech Solutions',
-        years: 'Jan 2022 - Present',
-        description:
-          'Led development of scalable web applications using React and Next.js, mentored junior developers, and optimized application performance by 25%.',
-      },
-      {
-        title: 'Frontend Developer',
-        company: 'Creative Web Works',
-        years: 'Mar 2019 - Dec 2021',
-        description:
-          'Developed responsive user interfaces from design mockups, integrated with various RESTful APIs, and contributed to component library development.',
-      },
-    ],
-    projects: [
-      {
-        title: 'E-commerce Platform Redesign',
-        description:
-          'Led the frontend redesign of a high-traffic e-commerce site, resulting in a 15% increase in conversion rates.',
-        link: 'https://www.example.com/project-ecommerce',
-      },
-      {
-        title: 'Real-time Chat Application',
-        description:
-          'Developed a real-time chat application using WebSockets and React.',
-        link: 'https://www.example.com/project-chat',
-      },
-      {
-        title: 'Dashboard Analytics Tool',
-        description:
-          'Built an interactive data visualization dashboard for business intelligence.',
-        link: 'https://www.example.com/project-dashboard',
-      },
-    ],
-    linkedinProfileUrl: 'https://www.linkedin.com/in/janedoe',
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
+const VolunteerProfile = () => {
+  const { userId } = useParams();
+  const { data: currentUser } = useUser();
+  const { addNotification } = useNotifications();
+  const navigate = useNavigate();
+
+  // Determine if viewing own profile or someone else's
+  const isOwnProfile = !userId || userId === currentUser?.id;
+  const profileUserId = userId || currentUser?.id;
+
+  // Fetch profile data
+  const {
+    data: profileResponse,
+    isLoading: profileLoading,
+    error: profileError,
+  } = useVolunteerProfile(profileUserId);
+
+  const profile = profileResponse?.data;
+
+  // Fetch stats (only for own profile)
+  const { data: stats } = useVolunteerStats();
+
+  // Fetch approved projects
+  const { data: projectsData } = useVolunteerApprovedProjects({
+    page: 1,
+    limit: 10,
   });
 
-  // State for new skill input
-  const [newSkill, setNewSkill] = useState<string>('');
-  // State for new experience input
-  const [newExperience, setNewExperience] = useState<Experience>({
-    title: '',
-    company: '',
-    years: '',
-    description: '',
-  });
-  // State for new project input
-  const [newProject, setNewProject] = useState<Project>({
-    title: '',
-    description: '',
-    link: '',
+  const projects = projectsData?.data || [];
+
+  // Update profile mutation
+  const updateProfileMutation = useUpdateVolunteerProfile({
+    mutationConfig: {
+      onSuccess: () => {
+        addNotification({
+          type: 'success',
+          title: 'Profile Updated',
+          message: 'Your profile has been updated successfully.',
+        });
+        setEditingSection(null);
+      },
+      onError: () => {
+        addNotification({
+          type: 'error',
+          title: 'Update Failed',
+          message: 'Failed to update profile. Please try again.',
+        });
+      },
+    },
   });
 
-  // --- Handlers for general input fields ---
-  const handleGenericChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  // Upload profile image mutation
+  const uploadProfileImageMutation = useUploadVolunteerProfileImage({
+    mutationConfig: {
+      onSuccess: () => {
+        addNotification({
+          type: 'success',
+          title: 'Profile Image Updated',
+          message: 'Profile image uploaded and saved successfully!',
+        });
+        setEditingSection(null);
+        setUploadingImage({ profileImage: false, coverImage: false });
+      },
+      onError: (error: any) => {
+        const errorMessage =
+          error.response?.data?.detail ||
+          error.response?.data?.message ||
+          'Failed to upload profile image. Please try again.';
+        addNotification({
+          type: 'error',
+          title: 'Upload Failed',
+          message: errorMessage,
+        });
+        setUploadingImage({ profileImage: false, coverImage: false });
+      },
+    },
+  });
+
+  // Upload cover image mutation
+  const uploadCoverImageMutation = useUploadVolunteerCoverImage({
+    mutationConfig: {
+      onSuccess: () => {
+        addNotification({
+          type: 'success',
+          title: 'Cover Image Updated',
+          message: 'Cover image uploaded and saved successfully!',
+        });
+        setEditingSection(null);
+        setUploadingImage({ profileImage: false, coverImage: false });
+      },
+      onError: (error: any) => {
+        const errorMessage =
+          error.response?.data?.detail ||
+          error.response?.data?.message ||
+          'Failed to upload cover image. Please try again.';
+        addNotification({
+          type: 'error',
+          title: 'Upload Failed',
+          message: errorMessage,
+        });
+        setUploadingImage({ profileImage: false, coverImage: false });
+      },
+    },
+  });
+
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState({
+    profileImage: false,
+    coverImage: false,
+  });
+  const [editData, setEditData] = useState({
+    tagline: '',
+    location: '',
+    bio: '',
+    skills: [] as string[],
+    experience: [] as ExperienceItem[],
+    website: '',
+    contact_phone: '',
+    github_url: '',
+    linkedin_url: '',
+    portfolio_url: '',
+    profile_image_url: '',
+    cover_image_url: '',
+  });
+
+  // Projects pagination
+  const [currentProjectPage, setCurrentProjectPage] = useState(1);
+  const projectsPerPage = 6;
+
+  // Handle file select for upload
+  const handleFileSelect = (
+    file: File,
+    type: 'profile-image' | 'cover-image',
   ) => {
-    setProfileData({ ...profileData, [e.target.name]: e.target.value });
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      addNotification({
+        type: 'error',
+        title: 'File Too Large',
+        message: 'Please select an image smaller than 5MB.',
+      });
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      addNotification({
+        type: 'error',
+        title: 'Invalid File Type',
+        message: 'Please select an image file.',
+      });
+      return;
+    }
+
+    if (type === 'profile-image') {
+      setUploadingImage((prev) => ({ ...prev, profileImage: true }));
+      uploadProfileImageMutation.mutate({ file });
+    } else {
+      setUploadingImage((prev) => ({ ...prev, coverImage: true }));
+      uploadCoverImageMutation.mutate({ file });
+    }
   };
 
-  const handleEditToggle = () => setIsEditing((prev) => !prev);
+  // Calculate pagination for projects
+  const totalProjectPages = Math.ceil(projects.length / projectsPerPage);
+  const displayedProjects = projects.slice(
+    (currentProjectPage - 1) * projectsPerPage,
+    currentProjectPage * projectsPerPage,
+  );
 
-  // --- Save/Cancel for the entire form ---
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsEditing(false);
-    // In a real application, you would send profileData to your backend API here
-    console.log('Profile data saved:', profileData);
+  // Transform projects to match ProjectCard interface
+  const transformedProjects = displayedProjects.map(
+    (project: VolunteerProject) => ({
+      id: project.id,
+      title: project.title,
+      description: project.description,
+      status:
+        project.status === 'APPROVED'
+          ? ('APPROVED' as const)
+          : project.status === 'IN_PROGRESS'
+            ? ('IN_PROGRESS' as const)
+            : ('COMPLETED' as const),
+      project_type: project.project_type || 'OTHER',
+      preferred_technologies: project.preferred_technologies,
+      created_at: project.created_at,
+      updated_at: project.updated_at,
+    }),
+  );
+
+  const handleEditSection = (section: string) => {
+    if (!profile) return;
+
+    setEditingSection(section);
+    setEditData({
+      tagline: profile.tagline || '',
+      location: profile.location || '',
+      bio: profile.bio || '',
+      skills: profile.skills || [],
+      experience: profile.experience || [],
+      website: profile.website || '',
+      contact_phone: profile.contact_phone || '',
+      github_url: profile.github_url || '',
+      linkedin_url: profile.linkedin_url || '',
+      portfolio_url: profile.portfolio_url || '',
+      profile_image_url: profile.profile_image_url || '',
+      cover_image_url: profile.cover_image_url || '',
+    });
+  };
+
+  const handleSaveSection = async () => {
+    if (!profile) return;
+
+    let payload: UpdateVolunteerProfileInput = {};
+
+    if (editingSection === 'header') {
+      payload = {
+        tagline: editData.tagline,
+        location: editData.location,
+      };
+    } else if (editingSection === 'bio') {
+      payload = {
+        bio: editData.bio,
+      };
+    } else if (editingSection === 'skills') {
+      payload = {
+        skills: editData.skills,
+      };
+    } else if (editingSection === 'experience') {
+      payload = {
+        experience: editData.experience,
+      };
+    } else if (editingSection === 'contact') {
+      payload = {
+        website: editData.website,
+        contact_phone: editData.contact_phone,
+        github_url: editData.github_url,
+        linkedin_url: editData.linkedin_url,
+        portfolio_url: editData.portfolio_url,
+      };
+    } else if (editingSection === 'profile-image') {
+      payload = {
+        profile_image_url: editData.profile_image_url,
+      };
+    } else if (editingSection === 'cover-image') {
+      payload = {
+        cover_image_url: editData.cover_image_url,
+      };
+    }
+
+    updateProfileMutation.mutate({ data: payload });
   };
 
   const handleCancelEdit = () => {
-    setIsEditing(false);
-    // Optionally, reset profileData to its original state before editing if you track it
-    // For this example, we just exit edit mode without changing data if not saved.
+    setEditingSection(null);
   };
 
-  // --- Skills Handlers ---
-  const handleAddSkill = () => {
-    if (newSkill.trim() && !profileData.skills.includes(newSkill.trim())) {
-      setProfileData((prevData) => ({
-        ...prevData,
-        skills: [...prevData.skills, newSkill.trim()],
-      }));
-      setNewSkill('');
-    }
-  };
+  const loading = profileLoading || updateProfileMutation.isPending;
 
-  const handleDeleteSkill = (skillToDelete: string) => {
-    setProfileData((prevData) => ({
-      ...prevData,
-      skills: prevData.skills.filter((skill) => skill !== skillToDelete),
-    }));
-  };
-
-  // --- Experience Handlers ---
-  const handleExperienceInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    index: number,
-    field: keyof Experience,
-  ) => {
-    const updatedExperience = profileData.experience.map((exp, i) =>
-      i === index ? { ...exp, [field]: e.target.value } : exp,
+  if (profileLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner size="lg" />
+      </div>
     );
-    setProfileData((prevData) => ({
-      ...prevData,
-      experience: updatedExperience,
-    }));
-  };
+  }
 
-  const handleAddExperience = () => {
-    if (newExperience.title.trim() && newExperience.company.trim()) {
-      setProfileData((prevData) => ({
-        ...prevData,
-        experience: [...prevData.experience, newExperience],
-      }));
-      setNewExperience({ title: '', company: '', years: '', description: '' });
-    } else {
-      alert(
-        'Please fill at least the title and company for the new experience.',
-      );
-    }
-  };
-
-  const handleDeleteExperience = (index: number) => {
-    setProfileData((prevData) => ({
-      ...prevData,
-      experience: prevData.experience.filter((_, i) => i !== index),
-    }));
-  };
-
-  // --- Project Handlers ---
-  const handleProjectInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    index: number,
-    field: keyof Project,
-  ) => {
-    const updatedProjects = profileData.projects.map((proj, i) =>
-      i === index ? { ...proj, [field]: e.target.value } : proj,
+  if (profileError || !profile) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="mb-4 text-red-600">
+            {profileError?.message || 'Profile not found'}
+          </p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      </div>
     );
-    setProfileData((prevData) => ({
-      ...prevData,
-      projects: updatedProjects,
-    }));
-  };
-
-  const handleAddProject = () => {
-    if (newProject.title.trim()) {
-      setProfileData((prevData) => ({
-        ...prevData,
-        projects: [...prevData.projects, newProject],
-      }));
-      setNewProject({ title: '', description: '', link: '' });
-    } else {
-      alert('Please fill at least the title for the new project.');
-    }
-  };
-
-  const handleDeleteProject = (index: number) => {
-    setProfileData((prevData) => ({
-      ...prevData,
-      projects: prevData.projects.filter((_, i) => i !== index),
-    }));
-  };
+  }
 
   return (
-    <div className="mx-auto mt-10 max-w-3xl rounded-xl border border-gray-200 bg-white p-10 shadow-lg">
-      <form onSubmit={handleSave}>
-        <div className="mb-4 flex justify-end gap-2">
-          {isEditing ? (
-            <>
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 shadow hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="rounded-md bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700"
-              >
-                Save Changes ✅
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={handleEditToggle}
-              className="rounded-md bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700"
-            >
-              Edit Profile ✏️
-            </button>
+    <div className="mx-auto max-w-7xl space-y-8">
+      {/* Profile Header with Cover */}
+      <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm">
+        {/* Cover Image */}
+        <div className="relative h-64 bg-gradient-to-r from-blue-500 to-purple-600">
+          <img
+            src={
+              profile.cover_image_url ||
+              'https://placehold.co/1200x300/475569/FFFFFF?text=+'
+            }
+            alt="Cover"
+            className="size-full object-cover opacity-80"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+
+          {/* Cover Image Edit Button */}
+          {isOwnProfile && (
+            <div className="absolute right-4 top-4">
+              {editingSection === 'cover-image' ? (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleSaveSection}
+                    disabled={loading}
+                    className="bg-white/90 backdrop-blur-sm hover:bg-white"
+                  >
+                    <Save className="size-3" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCancelEdit}
+                    disabled={loading}
+                    className="bg-white/90 backdrop-blur-sm hover:bg-white"
+                  >
+                    <X className="size-3" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEditSection('cover-image')}
+                  disabled={loading}
+                  className="border-white/30 bg-white/20 text-white backdrop-blur-sm hover:bg-white/30"
+                  title="Edit cover image"
+                >
+                  <Edit2 className="size-3" />
+                </Button>
+              )}
+            </div>
           )}
         </div>
-        {/* --- Profile Header Section --- */}
-        <div className="mb-8 flex items-center space-x-8">
-          <div className="relative">
-            <img
-              src={profileData.profilePhoto}
-              alt="Profile"
-              className="size-40 rounded-full border-4 border-blue-500 object-cover shadow-md"
-            />
-            <span className="absolute bottom-2 right-2 rounded-full bg-blue-600 px-2 py-1 text-xs text-white shadow">
-              Age: {profileData.age}
-            </span>
-          </div>
-          <div>
-            {isEditing ? (
-              <>
-                <input
-                  type="text"
-                  name="name"
-                  value={profileData.name}
-                  onChange={handleGenericChange}
-                  className="w-full rounded border px-2 py-1 text-2xl font-bold"
-                />
-                <input
-                  type="number"
-                  name="age"
-                  value={profileData.age}
-                  onChange={handleGenericChange}
-                  className="mt-1 w-full rounded border px-2 py-1"
-                  min={0}
-                />
-                <input
-                  type="text"
-                  name="title"
-                  value={profileData.title}
-                  onChange={handleGenericChange}
-                  className="mt-1 w-full rounded border px-2 py-1 font-semibold text-blue-700"
-                />
-                <input
-                  type="text"
-                  name="location"
-                  value={profileData.location}
-                  onChange={handleGenericChange}
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm text-gray-500"
-                />
-                <input
-                  type="text"
-                  name="profilePhoto"
-                  value={profileData.profilePhoto}
-                  onChange={handleGenericChange}
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm text-gray-500"
-                  placeholder="Profile photo URL"
-                />
-              </>
-            ) : (
-              <>
-                <h2 className="text-3xl font-extrabold text-gray-900">
-                  {profileData.name}
-                </h2>
-                <p className="mt-1 text-lg font-semibold text-blue-700">
-                  {profileData.title}
+
+        {/* Profile Header Component */}
+        <ProfileHeader
+          profile={profile}
+          onEdit={handleEditSection}
+          onSave={handleSaveSection}
+          onCancel={handleCancelEdit}
+          editingSection={editingSection}
+          editData={{ tagline: editData.tagline, location: editData.location }}
+          onEditDataChange={(data) => setEditData({ ...editData, ...data })}
+          loading={loading}
+          isOwner={isOwnProfile}
+        />
+      </div>
+
+      {/* Image Upload Modals */}
+      {editingSection === 'profile-image' && (
+        <ImageUploadModal
+          type="profile-image"
+          currentImageUrl={editData.profile_image_url}
+          onImageUrlChange={(url) =>
+            setEditData({ ...editData, profile_image_url: url })
+          }
+          onFileSelect={(file: File) => handleFileSelect(file, 'profile-image')}
+          onSave={handleSaveSection}
+          onCancel={handleCancelEdit}
+          uploading={uploadingImage.profileImage}
+          loading={loading}
+        />
+      )}
+
+      {editingSection === 'cover-image' && (
+        <ImageUploadModal
+          type="cover-image"
+          currentImageUrl={editData.cover_image_url}
+          onImageUrlChange={(url) =>
+            setEditData({ ...editData, cover_image_url: url })
+          }
+          onFileSelect={(file: File) => handleFileSelect(file, 'cover-image')}
+          onSave={handleSaveSection}
+          onCancel={handleCancelEdit}
+          uploading={uploadingImage.coverImage}
+          loading={loading}
+        />
+      )}
+
+      {/* Main Content - Two Column Layout */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        {/* Left Column - Contact Info & Stats */}
+        <div className="space-y-6 lg:col-span-1">
+          {/* Contact Information Card */}
+          <ContactInfoCard
+            profile={profile}
+            onEdit={handleEditSection}
+            onSave={handleSaveSection}
+            onCancel={handleCancelEdit}
+            editingSection={editingSection}
+            editData={{
+              website: editData.website,
+              contact_phone: editData.contact_phone,
+              github_url: editData.github_url,
+              linkedin_url: editData.linkedin_url,
+              portfolio_url: editData.portfolio_url,
+            }}
+            onEditDataChange={(data) => setEditData({ ...editData, ...data })}
+            loading={loading}
+            isOwner={isOwnProfile}
+          />
+
+          {/* Stats Card - Only show for own profile or if stats are available */}
+          {isOwnProfile && stats && (
+            <StatsCard stats={stats} isOwner={isOwnProfile} />
+          )}
+        </div>
+
+        {/* Right Column - Bio, Skills, Experience, Projects */}
+        <div className="space-y-8 lg:col-span-2">
+          {/* Bio Section */}
+          <BioCard
+            profile={profile}
+            onEdit={handleEditSection}
+            onSave={handleSaveSection}
+            onCancel={handleCancelEdit}
+            editingSection={editingSection}
+            editData={{ bio: editData.bio }}
+            onEditDataChange={(data) => setEditData({ ...editData, ...data })}
+            loading={loading}
+            isOwner={isOwnProfile}
+          />
+
+          {/* Skills Section */}
+          <SkillsCard
+            profile={profile}
+            onEdit={handleEditSection}
+            onSave={handleSaveSection}
+            onCancel={handleCancelEdit}
+            editingSection={editingSection}
+            editData={{ skills: editData.skills }}
+            onEditDataChange={(data) => setEditData({ ...editData, ...data })}
+            loading={loading}
+            isOwner={isOwnProfile}
+          />
+
+          {/* Experience Section */}
+          <ExperienceCard
+            profile={profile}
+            onEdit={handleEditSection}
+            onSave={handleSaveSection}
+            onCancel={handleCancelEdit}
+            editingSection={editingSection}
+            editData={{
+              experience: editData.experience,
+            }}
+            onEditDataChange={(data) => setEditData({ ...editData, ...data })}
+            loading={loading}
+            isOwner={isOwnProfile}
+          />
+
+          {/* Projects Section - Enhanced like Requester Profile */}
+          <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-slate-900">
+                Contributed Projects ({projects.length})
+              </h2>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/projects')}
+                >
+                  Browse Projects
+                </Button>
+              </div>
+            </div>
+
+            {/* Project Stats */}
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {
+                    projects.filter(
+                      (p) => p.status === 'APPROVED' || p.status === 'ACTIVE',
+                    ).length
+                  }
+                </div>
+                <div className="text-sm text-green-700">Active Projects</div>
+              </div>
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {projects.filter((p) => p.status === 'IN_PROGRESS').length}
+                </div>
+                <div className="text-sm text-blue-700">In Progress</div>
+              </div>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-center">
+                <div className="text-2xl font-bold text-gray-600">
+                  {projects.filter((p) => p.status === 'COMPLETED').length}
+                </div>
+                <div className="text-sm text-gray-700">Completed</div>
+              </div>
+            </div>
+
+            {projects.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="rounded-full bg-slate-100 p-4">
+                  <Users className="size-8 text-slate-400" />
+                </div>
+                <h3 className="mt-4 text-lg font-medium text-slate-900">
+                  No Projects Yet
+                </h3>
+                <p className="mt-2 max-w-sm text-center text-slate-600">
+                  {isOwnProfile
+                    ? "You haven't contributed to any projects yet. Browse and apply to projects to get started!"
+                    : "This developer hasn't contributed to any projects yet."}
                 </p>
-                <p className="text-sm text-gray-500">{profileData.location}</p>
-              </>
-            )}
-          </div>
-        </div>
-        {/* --- Bio Section --- */}
-        <div className="mb-6">
-          <h3 className="mb-2 font-semibold text-gray-800">Bio</h3>
-          {isEditing ? (
-            <textarea
-              name="bio"
-              value={profileData.bio}
-              onChange={handleGenericChange}
-              className="w-full rounded border px-2 py-1 text-gray-700"
-              rows={4}
-            />
-          ) : (
-            <p className="text-gray-700">{profileData.bio}</p>
-          )}
-        </div>
-        {/* --- Contact Section --- */}
-        <div className="mb-6">
-          <h3 className="mb-2 font-semibold text-gray-800">Contact</h3>
-          <div className="flex flex-col gap-1">
-            {isEditing ? (
-              <>
-                <label
-                  htmlFor="profile-email"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Email:
-                </label>
-                <input
-                  id="profile-email"
-                  type="email"
-                  name="email"
-                  value={profileData.email}
-                  onChange={handleGenericChange}
-                  className="w-full rounded border px-2 py-1"
-                />
-                <label
-                  htmlFor="profile-phone"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Phone:
-                </label>
-                <input
-                  id="profile-phone"
-                  type="text"
-                  name="phone"
-                  value={profileData.phone}
-                  onChange={handleGenericChange}
-                  className="w-full rounded border px-2 py-1"
-                />
-                <label
-                  htmlFor="profile-linkedin-url"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  LinkedIn URL:
-                </label>
-                <input
-                  id="profile-linkedin-url"
-                  type="url"
-                  name="linkedinProfileUrl"
-                  value={profileData.linkedinProfileUrl}
-                  onChange={handleGenericChange}
-                  className="w-full rounded border px-2 py-1"
-                />
-              </>
+                {isOwnProfile && (
+                  <Button
+                    className="mt-4"
+                    onClick={() => navigate('/projects')}
+                  >
+                    <Users className="mr-2 size-4" />
+                    Browse Projects
+                  </Button>
+                )}
+              </div>
             ) : (
               <>
-                <span>
-                  <span className="font-medium text-gray-700">Email:</span>{' '}
-                  {profileData.email}
-                </span>
-                <span>
-                  <span className="font-medium text-gray-700">Phone:</span>{' '}
-                  {profileData.phone}
-                </span>
-                <a
-                  href={profileData.linkedinProfileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-blue-600 underline"
-                >
-                  LinkedIn
-                </a>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {transformedProjects.map((project) => (
+                    <div
+                      key={project.id}
+                      className="cursor-pointer rounded-lg border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/50 p-4 transition-all hover:shadow-md"
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          navigate(`/projects/${project.id}`);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`View project: ${project.title}`}
+                    >
+                      <div className="mb-3 flex items-start justify-between">
+                        <h3 className="line-clamp-1 font-semibold text-slate-900 hover:text-blue-600">
+                          {project.title}
+                        </h3>
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getStatusColor(project.status)}`}
+                        >
+                          {getStatusInfo(project.status).label}
+                        </span>
+                      </div>
+                      <p className="mb-3 line-clamp-2 text-sm text-slate-600">
+                        {project.description}
+                      </p>
+
+                      {/* Technologies - Fixed Badge usage */}
+                      {project.preferred_technologies && (
+                        <div className="mb-3">
+                          <div className="flex flex-wrap gap-1">
+                            {project.preferred_technologies
+                              .split(',')
+                              .slice(0, 3)
+                              .map((tech, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {tech.trim()}
+                                </Badge>
+                              ))}
+                            {project.preferred_technologies.split(',').length >
+                              3 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +
+                                {project.preferred_technologies.split(',')
+                                  .length - 3}{' '}
+                                more
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between text-xs text-slate-500">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="size-3" />
+                          <span>Joined {formatDate(project.created_at)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span>Updated {formatDate(project.updated_at)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalProjectPages > 1 && (
+                  <div className="mt-6 flex items-center justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentProjectPage((prev) => Math.max(prev - 1, 1))
+                      }
+                      disabled={currentProjectPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-slate-600">
+                      Page {currentProjectPage} of {totalProjectPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentProjectPage((prev) =>
+                          Math.min(prev + 1, totalProjectPages),
+                        )
+                      }
+                      disabled={currentProjectPage === totalProjectPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
               </>
             )}
           </div>
         </div>
-        {/* --- Skills Section --- */}
-        <hr className="my-6" />
-        <h3 className="mb-2 font-semibold text-gray-800">Skills</h3>
-        {isEditing ? (
-          <>
-            <div className="mb-4 flex flex-wrap gap-2">
-              {profileData.skills.map((skill, idx) => (
-                <span
-                  key={idx}
-                  className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800 shadow"
-                >
-                  {skill}
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteSkill(skill)}
-                    className="ml-2 text-blue-800 hover:text-blue-900 focus:outline-none"
-                  >
-                    &times;
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="mb-6 flex gap-2">
-              <input
-                type="text"
-                value={newSkill}
-                onChange={(e) => setNewSkill(e.target.value)}
-                placeholder="Add new skill"
-                className="grow rounded-md border border-gray-300 p-2"
-              />
-              <button
-                type="button"
-                onClick={handleAddSkill}
-                className="rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-              >
-                Add
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {profileData.skills.map((skill, idx) => (
-              <span
-                key={idx}
-                className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800 shadow"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        )}
-        {/* --- Experience Section --- */}
-        <hr className="my-6" />
-        <h3 className="mb-2 font-semibold text-gray-800">Experience</h3>
-        {isEditing ? (
-          <>
-            {profileData.experience.map((exp, idx) => (
-              <div
-                key={idx}
-                className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm"
-              >
-                <div className="mb-2 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteExperience(idx)}
-                    className="text-red-500 hover:text-red-700 focus:outline-none"
-                  >
-                    Delete Experience
-                  </button>
-                </div>
-                <div className="mb-2">
-                  <label
-                    htmlFor={`experience-title-${idx}`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Title
-                  </label>
-                  <input
-                    id={`experience-title-${idx}`}
-                    type="text"
-                    value={exp.title}
-                    onChange={(e) =>
-                      handleExperienceInputChange(e, idx, 'title')
-                    }
-                    className="w-full rounded-md border border-gray-300 p-2"
-                  />
-                </div>
-                <div className="mb-2">
-                  <label
-                    htmlFor={`experience-company-${idx}`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Company
-                  </label>
-                  <input
-                    id={`experience-company-${idx}`}
-                    type="text"
-                    value={exp.company}
-                    onChange={(e) =>
-                      handleExperienceInputChange(e, idx, 'company')
-                    }
-                    className="w-full rounded-md border border-gray-300 p-2"
-                  />
-                </div>
-                <div className="mb-2">
-                  <label
-                    htmlFor={`experience-years-${idx}`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Years
-                  </label>
-                  <input
-                    id={`experience-years-${idx}`}
-                    type="text"
-                    value={exp.years}
-                    onChange={(e) =>
-                      handleExperienceInputChange(e, idx, 'years')
-                    }
-                    className="w-full rounded-md border border-gray-300 p-2"
-                  />
-                </div>
-                <div className="mb-2">
-                  <label
-                    htmlFor={`experience-description-${idx}`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    id={`experience-description-${idx}`}
-                    value={exp.description}
-                    onChange={(e) =>
-                      handleExperienceInputChange(e, idx, 'description')
-                    }
-                    rows={3}
-                    className="w-full rounded-md border border-gray-300 p-2"
-                  ></textarea>
-                </div>
-              </div>
-            ))}
-            {/* Add New Experience Form */}
-            <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm">
-              <h4 className="mb-2 text-base font-semibold text-gray-800">
-                Add New Experience
-              </h4>
-              <div className="mb-2">
-                <label
-                  htmlFor="new-experience-title"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Title
-                </label>
-                <input
-                  id="new-experience-title"
-                  type="text"
-                  value={newExperience.title}
-                  onChange={(e) =>
-                    setNewExperience((prev) => ({
-                      ...prev,
-                      title: e.target.value,
-                    }))
-                  }
-                  className="w-full rounded-md border border-gray-300 p-2"
-                  placeholder="e.g., Software Engineer"
-                />
-              </div>
-              <div className="mb-2">
-                <label
-                  htmlFor="new-experience-company"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Company
-                </label>
-                <input
-                  id="new-experience-company"
-                  type="text"
-                  value={newExperience.company}
-                  onChange={(e) =>
-                    setNewExperience((prev) => ({
-                      ...prev,
-                      company: e.target.value,
-                    }))
-                  }
-                  className="w-full rounded-md border border-gray-300 p-2"
-                  placeholder="e.g., Tech Innovations"
-                />
-              </div>
-              <div className="mb-2">
-                <label
-                  htmlFor="new-experience-years"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Years
-                </label>
-                <input
-                  id="new-experience-years"
-                  type="text"
-                  value={newExperience.years}
-                  onChange={(e) =>
-                    setNewExperience((prev) => ({
-                      ...prev,
-                      years: e.target.value,
-                    }))
-                  }
-                  className="w-full rounded-md border border-gray-300 p-2"
-                  placeholder="e.g., 2020 - 2023"
-                />
-              </div>
-              <div className="mb-2">
-                <label
-                  htmlFor="new-experience-description"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="new-experience-description"
-                  value={newExperience.description}
-                  onChange={(e) =>
-                    setNewExperience((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                  rows={2}
-                  className="w-full rounded-md border border-gray-300 p-2"
-                  placeholder="Brief description of responsibilities..."
-                ></textarea>
-              </div>
-              <button
-                type="button"
-                onClick={handleAddExperience}
-                className="mt-2 rounded-md bg-green-500 px-4 py-2 text-white hover:bg-green-600"
-              >
-                Add New Experience
-              </button>
-            </div>
-          </>
-        ) : (
-          profileData.experience.map((exp, idx) => (
-            <div
-              key={idx}
-              className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm"
-            >
-              <p className="font-medium text-blue-700">
-                {exp.title}{' '}
-                <span className="text-gray-600">- {exp.company}</span>
-              </p>
-              <p className="text-sm text-gray-500">{exp.years}</p>
-              <p className="text-gray-700">{exp.description}</p>
-            </div>
-          ))
-        )}
-        {/* --- Projects Section --- */}
-        <hr className="my-6" />
-        <h3 className="mb-2 font-semibold text-gray-800">Projects</h3>
-        {isEditing ? (
-          <>
-            {profileData.projects.map((project, idx) => (
-              <div
-                key={idx}
-                className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm"
-              >
-                <div className="mb-2 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteProject(idx)}
-                    className="text-red-500 hover:text-red-700 focus:outline-none"
-                  >
-                    Delete Project
-                  </button>
-                </div>
-                <div className="mb-2">
-                  <label
-                    htmlFor={`project-title-${idx}`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Title
-                  </label>
-                  <input
-                    id={`project-title-${idx}`}
-                    type="text"
-                    value={project.title}
-                    onChange={(e) => handleProjectInputChange(e, idx, 'title')}
-                    className="w-full rounded-md border border-gray-300 p-2"
-                  />
-                </div>
-                <div className="mb-2">
-                  <label
-                    htmlFor={`project-description-${idx}`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    id={`project-description-${idx}`}
-                    value={project.description}
-                    onChange={(e) =>
-                      handleProjectInputChange(e, idx, 'description')
-                    }
-                    rows={3}
-                    className="w-full rounded-md border border-gray-300 p-2"
-                  ></textarea>
-                </div>
-                <div className="mb-2">
-                  <label
-                    htmlFor={`project-link-${idx}`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Link
-                  </label>
-                  <input
-                    id={`project-link-${idx}`}
-                    type="url"
-                    value={project.link}
-                    onChange={(e) => handleProjectInputChange(e, idx, 'link')}
-                    className="w-full rounded-md border border-gray-300 p-2"
-                  />
-                </div>
-              </div>
-            ))}
-            {/* Add New Project Form */}
-            <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm">
-              <h4 className="mb-2 text-base font-semibold text-gray-800">
-                Add New Project
-              </h4>
-              <div className="mb-2">
-                <label
-                  htmlFor="new-project-title"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Title
-                </label>
-                <input
-                  id="new-project-title"
-                  type="text"
-                  value={newProject.title}
-                  onChange={(e) =>
-                    setNewProject((prev) => ({
-                      ...prev,
-                      title: e.target.value,
-                    }))
-                  }
-                  className="w-full rounded-md border border-gray-300 p-2"
-                  placeholder="e.g., My Awesome App"
-                />
-              </div>
-              <div className="mb-2">
-                <label
-                  htmlFor="new-project-description"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="new-project-description"
-                  value={newProject.description}
-                  onChange={(e) =>
-                    setNewProject((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                  rows={2}
-                  className="w-full rounded-md border border-gray-300 p-2"
-                  placeholder="Brief description of the project..."
-                ></textarea>
-              </div>
-              <div className="mb-2">
-                <label
-                  htmlFor="new-project-link"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Link
-                </label>
-                <input
-                  id="new-project-link"
-                  type="url"
-                  value={newProject.link}
-                  onChange={(e) =>
-                    setNewProject((prev) => ({ ...prev, link: e.target.value }))
-                  }
-                  className="w-full rounded-md border border-gray-300 p-2"
-                  placeholder="https://your-project-link.com"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={handleAddProject}
-                className="mt-2 rounded-md bg-green-500 px-4 py-2 text-white hover:bg-green-600"
-              >
-                Add New Project
-              </button>
-            </div>
-          </>
-        ) : (
-          profileData.projects.map((project, idx) => (
-            <div
-              key={idx}
-              className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm"
-            >
-              <a
-                href={project.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-blue-600 underline"
-              >
-                {project.title}
-              </a>
-              <p className="text-gray-700">{project.description}</p>
-            </div>
-          ))
-        )}
-      </form>
+      </div>
     </div>
   );
 };
 
-export default DeveloperProfilePage;
+export default VolunteerProfile;
