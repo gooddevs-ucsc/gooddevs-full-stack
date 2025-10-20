@@ -56,7 +56,7 @@ export const InitiateSponsorship = ({
         formElement.method = 'post';
         formElement.action = 'https://sandbox.payhere.lk/pay/checkout';
 
-        const envUrl = import.meta.env.VITE_APP_APP_URL;
+        const envUrl = env.APP_URL;
         const sponsorshipsUrl = envUrl ? getSponsorshipsPath() : null;
 
         const fields = {
