@@ -6,6 +6,7 @@ import {
   User,
   Ribbon,
   Heart,
+  Gift,
 } from 'lucide-react';
 import { Outlet } from 'react-router';
 
@@ -38,6 +39,11 @@ const DeveloperRoot = () => {
       name: 'My Sponsorships',
       to: paths.developer.mySponsorships.getHref(),
       icon: Heart,
+    },
+    {
+      name: 'Sponsorships Received',
+      to: paths.developer.receivedSponsorships.getHref(),
+      icon: Gift,
     },
     {
       name: 'Profile',

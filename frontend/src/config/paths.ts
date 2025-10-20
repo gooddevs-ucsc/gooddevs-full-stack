@@ -229,6 +229,10 @@ export const paths = {
       path: 'my-sponsorships',
       getHref: () => '/developer/my-sponsorships',
     },
+    receivedSponsorships: {
+      path: 'received-sponsorships',
+      getHref: () => '/developer/received-sponsorships',
+    },
     profile: {
       path: 'profile',
       getHref: () => '/developer/profile',
