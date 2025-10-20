@@ -1,35 +1,45 @@
-import { ArrowRight, Code, Heart, BookOpen } from 'lucide-react';
+import { ArrowRight, Code } from 'lucide-react';
 import { FC } from 'react';
 import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { useApprovedProjects } from '@/features/projects/api/get-approved-projects';
+import { ProjectType, PROJECT_TYPES } from '@/types/api';
+
+// Helper function to get icon based on project type - using consistent style
+const getProjectTypeIcon = (projectType: ProjectType) => {
+  // Use the same consistent icons for all project types
+  switch (projectType) {
+    case PROJECT_TYPES.WEBSITE:
+      return Code;
+    case PROJECT_TYPES.MOBILE_APP:
+      return Code;
+    case PROJECT_TYPES.DATABASE:
+      return Code;
+    case PROJECT_TYPES.API:
+      return Code;
+    case PROJECT_TYPES.DESKTOP_APP:
+      return Code;
+    default:
+      return Code; // Consistent Code icon for all
+  }
+};
 
 export const HeroSection: FC = () => {
   const navigate = useNavigate();
 
-  const featuredProjects = [
-    {
-      icon: Heart,
-      title: 'NGO Donation Portal',
-      description:
-        'Build a secure and transparent platform for a local nonprofit to manage donations.',
-      tags: ['React', 'Node.js', 'Stripe'],
-    },
-    {
-      icon: BookOpen,
-      title: 'Open Source Library',
-      description:
-        'Contribute to an open-source library for data visualization and analysis.',
-      tags: ['TypeScript', 'D3.js', 'Python'],
-    },
-    {
-      icon: Code,
-      title: 'Community Health App',
-      description:
-        'Develop a mobile app to connect community members with local health resources.',
-      tags: ['React Native', 'FastAPI', 'PostgreSQL'],
-    },
-  ];
+  // Fetch approved projects for featured section
+  const {
+    data: projectsData,
+    isLoading,
+    error,
+  } = useApprovedProjects({
+    page: 1,
+    limit: 3, // Only get 3 projects for featured section
+  });
+
+  const featuredProjects = projectsData?.data || [];
 
   return (
     <section
@@ -76,7 +86,7 @@ export const HeroSection: FC = () => {
           </div>
         </div>
 
-        {/* Featured Projects Section (makes it longer) */}
+        {/* Featured Projects Section */}
         <div className="mt-24">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-slate-800">
@@ -87,38 +97,88 @@ export const HeroSection: FC = () => {
             </p>
           </div>
 
-          <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
-            {featuredProjects.map((project, index) => (
-              <div
-                key={index}
-                className="group rounded-2xl border border-slate-200/50 bg-white/60 p-6 shadow-lg backdrop-blur-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+          {/* Loading State */}
+          {isLoading && (
+            <div className="mt-12 flex justify-center">
+              <Spinner size="lg" />
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="mt-12 text-center">
+              <p className="text-slate-600">
+                Unable to load featured projects. Please try again later.
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => navigate('/projects')}
               >
-                <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <project.icon className="size-6" />
-                </div>
-                <h3 className="mb-2 text-xl font-semibold text-slate-900">
-                  {project.title}
-                </h3>
-                <p className="mb-4 text-slate-600">{project.description}</p>
-                <div className="mb-6 flex flex-wrap gap-2">
-                  {project.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full bg-primary/5 px-3 py-1 text-xs font-medium text-primary"
+                View All Projects
+              </Button>
+            </div>
+          )}
+
+          {/* Featured Projects Grid */}
+          {!isLoading && !error && featuredProjects.length > 0 && (
+            <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+              {featuredProjects.map((project) => {
+                const IconComponent = getProjectTypeIcon(project.project_type);
+                const technologies = project.preferred_technologies
+                  ? project.preferred_technologies
+                      .split(',')
+                      .map((tech) => tech.trim())
+                      .slice(0, 3)
+                  : [];
+
+                return (
+                  <div
+                    key={project.id}
+                    className="group rounded-2xl border border-slate-200/50 bg-white/60 p-6 shadow-lg backdrop-blur-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+                  >
+                    <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <IconComponent className="size-6" />
+                    </div>
+                    <h3 className="mb-2 text-xl font-semibold text-slate-900">
+                      {project.title}
+                    </h3>
+                    <p className="mb-4 line-clamp-3 text-slate-600">
+                      {project.description}
+                    </p>
+                    <div className="mb-6 flex flex-wrap gap-2">
+                      {technologies.map((tech) => (
+                        <span
+                          key={tech}
+                          className="rounded-full bg-primary/5 px-3 py-1 text-xs font-medium text-primary"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                      className="font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100"
                     >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <button
-                  onClick={() => navigate('/projects')}
-                  className="font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100"
-                >
-                  View Project <ArrowRight className="ml-1 inline size-4" />
-                </button>
-              </div>
-            ))}
-          </div>
+                      View Project <ArrowRight className="ml-1 inline size-4" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* No Projects State */}
+          {!isLoading && !error && featuredProjects.length === 0 && (
+            <div className="mt-12 text-center">
+              <p className="text-slate-600">
+                No featured projects available at the moment.
+              </p>
+              <Button className="mt-4" onClick={() => navigate('/projects')}>
+                Browse All Projects
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </section>
