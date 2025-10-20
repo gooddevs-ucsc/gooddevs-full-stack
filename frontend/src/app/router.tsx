@@ -148,6 +148,11 @@ export const createAppRouter = (queryClient: QueryClient) =>
             import('./routes/admin/my-sponsorships').then(convert(queryClient)),
         },
         {
+          path: paths.admin.withdrawals.path,
+          lazy: () =>
+            import('./routes/admin/withdrawals').then(convert(queryClient)),
+        },
+        {
           path: paths.admin.allDonations.path,
           lazy: () =>
             import('./routes/admin/all-donations').then(convert(queryClient)),
