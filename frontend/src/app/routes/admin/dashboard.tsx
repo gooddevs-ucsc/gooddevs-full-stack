@@ -1,11 +1,12 @@
 import {
-  BarChart3,
   Users,
   FolderPlus,
   Clock,
   Eye,
   Shield,
   AlertTriangle,
+  Heart,
+  DollarSign,
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 
@@ -131,7 +132,7 @@ const AdminDashboardRoute = () => {
         </div>
 
         {/* Content Grid */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
           {/* Admin Quick Actions */}
           <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
             <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
@@ -139,24 +140,6 @@ const AdminDashboardRoute = () => {
               Admin Controls
             </h2>
             <div className="space-y-4">
-              <div className="rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 p-4">
-                <h3 className="font-semibold text-slate-900">
-                  User Management
-                </h3>
-                <div className="mt-3 space-y-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-10 w-full justify-start border-primary/20 text-primary"
-                  >
-                    <div className="flex items-center gap-6">
-                      <Users className="size-4" />
-                      <span>Manage Users</span>
-                    </div>
-                  </Button>
-                </div>
-              </div>
-
               <div className="rounded-lg bg-gradient-to-r from-green-50 to-green-100/50 p-4">
                 <h3 className="font-semibold text-slate-900">
                   Project Oversight
@@ -191,31 +174,40 @@ const AdminDashboardRoute = () => {
             </div>
           </div>
 
-          {/* Platform Statistics */}
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-1">
-            <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-              <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
-                <BarChart3 className="size-5 text-primary" />
-                Platform Growth
-              </h2>
-              <div className="space-y-6 px-10 pt-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">
-                    New Users (30 days)
-                  </span>
-                  <span className="font-semibold text-slate-900">+127</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">
-                    Projects Completed
-                  </span>
-                  <span className="font-semibold text-slate-900">89</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">
-                    Active Developers
-                  </span>
-                  <span className="font-semibold text-slate-900">342</span>
+          {/* Financial Quick Links */}
+          <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
+            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
+              <DollarSign className="size-5 text-primary" />
+              Financial Overview
+            </h2>
+            <div className="space-y-4">
+              <div className="rounded-lg bg-gradient-to-r from-blue-50 to-blue-100/50 p-4">
+                <h3 className="font-semibold text-slate-900">
+                  Platform Transactions
+                </h3>
+                <div className="mt-3 space-y-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-10 w-full justify-start"
+                    onClick={() => navigate('/admin/my-donations')}
+                  >
+                    <div className="flex items-center gap-6">
+                      <Heart className="size-4" />
+                      <span>View My Donations</span>
+                    </div>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-10 w-full justify-start"
+                    onClick={() => navigate('/admin/my-sponsorships')}
+                  >
+                    <div className="flex items-center gap-6">
+                      <DollarSign className="size-4" />
+                      <span>View My Sponsorships</span>
+                    </div>
+                  </Button>
                 </div>
               </div>
             </div>
