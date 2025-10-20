@@ -1,32 +1,85 @@
-import { Code, GitBranch, TrendingUp, Activity, Calendar } from 'lucide-react';
+import { Code, TrendingUp, Activity, Calendar, FolderPlus } from 'lucide-react';
+import { useNavigate } from 'react-router';
 
 import { ContentLayout } from '@/components/layouts';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { paths } from '@/config/paths';
+import { useApplications } from '@/features/projects/api/get-applications';
 import { useUser } from '@/lib/auth';
+import { ProjectApplication } from '@/types/api';
 
 const DashboardRoute = () => {
   const user = useUser();
 
+  // Fetch volunteer's applications
+  const { data: applicationsData, isLoading } = useApplications({
+    page: 1,
+    limit: 100,
+  });
+
+  const applications = applicationsData?.data || [];
+
+  // Calculate counts based on application status
+  const appliedProjectsCount = applications.filter(
+    (app: ProjectApplication) => app.status === 'PENDING',
+  ).length;
+
+  const acceptedProjectsCount = applications.filter(
+    (app: ProjectApplication) => app.status === 'APPROVED',
+  ).length;
+
+  // Get accepted projects for display
+  const acceptedProjects = applications
+    .filter((app: ProjectApplication) => app.status === 'APPROVED')
+    .map((app: ProjectApplication) => ({
+      id: app.project?.id || app.id,
+      title: app.project?.title || 'Unknown Project',
+      description: app.project?.description || 'No description available',
+      created_at: app.created_at,
+    }));
+
+  // Navigation for project overview actions
+  const navigate = useNavigate();
+
+  // Transform accepted projects for overview display (Recent Projects Overview)
+  const transformedActiveProjects = acceptedProjects.map((p) => ({
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    status: 'Accepted',
+    statusColor: 'border-green-200 bg-green-50 text-green-600',
+    createdAt: new Date(p.created_at).toLocaleDateString(),
+    lastUpdate: new Date(p.created_at).toLocaleDateString(),
+  }));
+
   const stats = [
     {
       title: 'Applied Projects',
-      value: '3',
-      change: '+5%',
+      value: appliedProjectsCount.toString(),
+      change:
+        applications.length > 0
+          ? `${appliedProjectsCount} applied`
+          : 'No applications',
       icon: Activity,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
     },
     {
       title: 'Accepted Projects',
-      value: '2',
-      change: '+10%',
+      value: acceptedProjectsCount.toString(),
+      change:
+        acceptedProjectsCount > 0
+          ? `${acceptedProjectsCount} active`
+          : 'No accepted projects',
       icon: Activity,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
     },
     {
       title: 'Active Projects',
-      value: '3',
-      change: '+5%',
+      value: acceptedProjectsCount.toString(),
+      change: acceptedProjectsCount > 0 ? 'In progress' : 'No active projects',
       icon: TrendingUp,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
@@ -41,43 +94,15 @@ const DashboardRoute = () => {
     },
   ];
 
-  const recentActivities = [
-    {
-      title: 'New Pull Request',
-      description: 'Added feature for real-time collaboration',
-      time: '1 hour ago',
-      user: 'Januli Nanayakkara',
-    },
-    {
-      title: 'Issue Resolved',
-      description: 'Fixed bug in authentication flow',
-      time: '3 hours ago',
-      user: 'Chathuri Nadeesha',
-    },
-    {
-      title: 'Code Review Completed',
-      description: 'Reviewed PR #42 for performance improvements',
-      time: '5 hours ago',
-      user: 'Peshani Ranaweera',
-    },
-    {
-      title: 'New Repository Starred',
-      description: 'Starred "Open Source Dashboard"',
-      time: '7 hours ago',
-      user: 'Hashini Sewmini',
-    },
-  ];
-
-  const acceptedProjects = [
-    {
-      title: 'Remote Work Platform',
-      description: 'Facilitate remote team collaboration.',
-    },
-    {
-      title: 'Food Delivery App',
-      description: 'Streamline food ordering and delivery.',
-    },
-  ];
+  if (isLoading) {
+    return (
+      <ContentLayout title="Dashboard">
+        <div className="flex h-48 w-full items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      </ContentLayout>
+    );
+  }
 
   return (
     <ContentLayout title="Dashboard">
@@ -126,208 +151,85 @@ const DashboardRoute = () => {
           ))}
         </div>
 
-        {/* Content Grid */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {/* Recent Activity */}
-          <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
-              <Calendar className="size-5 text-primary" />
-              Recent Activity
+        {/* Recent Projects Overview */}
+        <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-xl font-semibold text-slate-900">
+              <FolderPlus className="size-5 text-primary" />
+              My Projects Overview
             </h2>
-            <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-4 rounded-lg p-3 transition-colors hover:bg-gray-100"
-                >
-                  <div className="mt-1 size-2 rounded-full bg-primary"></div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-slate-900">
-                      {activity.title}
-                    </h4>
-                    <p className="text-sm text-slate-600">
-                      {activity.description}
-                    </p>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                      <span>{activity.user}</span>
-                      <span>•</span>
-                      <span>{activity.time}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                +navigate(`${paths.developer.projects.getHref()}?tab=accepted`)
+              }
+            >
+              View My Projects
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <div className="flex h-32 items-center justify-center">
+              <Spinner size="md" />
+            </div>
+          ) : transformedActiveProjects.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {transformedActiveProjects.slice(0, 6).map((project) => (
+                  <button
+                    key={project.id}
+                    className="cursor-pointer rounded-lg border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/50 p-4 text-left transition-all hover:shadow-md"
+                    onClick={() => navigate(`/projects/${project.id}`)}
+                  >
+                    <div className="mb-3 flex items-start justify-between">
+                      <h3 className="line-clamp-1 font-semibold text-slate-900">
+                        {project.title}
+                      </h3>
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Upcoming Deadlines Section */}
-          <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
-              <Calendar className="size-5 text-primary" />
-              Upcoming Deadlines
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg bg-gradient-to-r from-red-50 to-red-100/50 p-4">
-                <div>
-                  <h3 className="font-semibold text-slate-900">
-                    Project Management Tool
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600">
-                    Deadline:{' '}
-                    <span className="font-semibold text-red-600">
-                      July 30, 2025
-                    </span>
-                  </p>
-                </div>
-                <span className="text-sm font-medium text-red-600">
-                  5 days left
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg bg-gradient-to-r from-yellow-50 to-yellow-100/50 p-4">
-                <div>
-                  <h3 className="font-semibold text-slate-900">
-                    Fitness Tracker App
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600">
-                    Deadline:{' '}
-                    <span className="font-semibold text-yellow-600">
-                      August 15, 2025
-                    </span>
-                  </p>
-                </div>
-                <span className="text-sm font-medium text-yellow-600">
-                  24 days left
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Content Grid */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {/* Active Project Progress Section */}
-          <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
-              <TrendingUp className="size-5 text-primary" />
-              Active Project Progress
-            </h2>
-            <div className="space-y-4">
-              <div className="rounded-lg bg-gradient-to-r from-green-50 to-green-100/50 p-4">
-                <h3 className="font-semibold text-slate-900">
-                  Project Management Tool
-                </h3>
-                <p className="mt-2 text-sm text-slate-600">
-                  Progress:{' '}
-                  <span className="font-semibold text-green-600">75%</span>
-                </p>
-                <div className="mt-2 h-2 w-full rounded-full bg-green-200">
-                  <div className="h-full w-3/4 rounded-full bg-green-600"></div>
-                </div>
-              </div>
-              <div className="rounded-lg bg-gradient-to-r from-blue-50 to-blue-100/50 p-4">
-                <h3 className="font-semibold text-slate-900">
-                  Fitness Tracker App
-                </h3>
-                <p className="mt-2 text-sm text-slate-600">
-                  Progress:{' '}
-                  <span className="font-semibold text-blue-600">50%</span>
-                </p>
-                <div className="mt-2 h-2 w-full rounded-full bg-blue-200">
-                  <div className="h-full w-1/2 rounded-full bg-blue-600"></div>
-                </div>
-              </div>
-              <div className="rounded-lg bg-gradient-to-r from-yellow-50 to-yellow-100/50 p-4">
-                <h3 className="font-semibold text-slate-900">
-                  Inventory Management System
-                </h3>
-                <p className="mt-2 text-sm text-slate-600">
-                  Progress:{' '}
-                  <span className="font-semibold text-yellow-600">30%</span>
-                </p>
-                <div className="mt-2 h-2 w-full rounded-full bg-yellow-200">
-                  <div className="h-full w-1/4 rounded-full bg-yellow-600"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Accepted Projects Section */}
-          <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
-              <GitBranch className="size-5 text-primary" />
-              Accepted Projects
-            </h2>
-            <div className="space-y-4">
-              {acceptedProjects.map((project, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-4 rounded-lg p-3 transition-colors hover:bg-gray-100"
-                >
-                  <div className="flex-1">
-                    <h4 className="font-medium text-slate-900">
-                      {project.title}
-                    </h4>
-                    <p className="text-sm text-slate-600">
+                    <p className="mb-3 line-clamp-2 text-sm text-slate-600">
                       {project.description}
                     </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="size-3" />
+                        <span>Created {project.createdAt}</span>
+                      </div>
+                      <span>Updated {project.lastUpdate}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
 
-        {/* Developer's Contributions Section */}
-        <div className="rounded-xl border border-slate-200/60 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-          <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900">
-            <TrendingUp className="size-5 text-primary" />
-            Past Contributions
-          </h2>
-          <div className="space-y-4">
-            <div className="flex items-start gap-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100/50 p-4">
-              <div className="flex-1">
-                <h4 className="font-medium text-slate-900">
-                  E-Commerce Platform
-                </h4>
-                <p className="text-sm text-slate-600">
-                  Contribution:{' '}
-                  <span className="font-medium text-green-600">40%</span>
-                </p>
-                <div className="mt-2 h-2 w-full rounded-full bg-green-200">
-                  <div className="h-full w-2/5 rounded-full bg-green-600"></div>
+              {transformedActiveProjects.length > 6 && (
+                <div className="mt-4 text-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      +navigate(
+                        `${paths.developer.projects.getHref()}?tab=accepted`,
+                      )
+                    }
+                  >
+                    View All {transformedActiveProjects.length} Projects
+                  </Button>
                 </div>
-                <h5 className="mt-4 text-sm font-semibold text-slate-900">
-                  Tasks
-                </h5>
-                <ul className="mt-2 list-disc pl-5 text-sm text-slate-600">
-                  <li>Developed product listing and search functionality</li>
-                  <li>Integrated payment gateway for secure transactions</li>
-                  <li>Implemented user authentication and authorization</li>
-                </ul>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="rounded-full bg-slate-100 p-4">
+                <FolderPlus className="size-8 text-slate-400" />
               </div>
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">
+                No active projects yet
+              </h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Accept projects to see them here
+              </p>
             </div>
-            <div className="flex items-start gap-4 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100/50 p-4">
-              <div className="flex-1">
-                <h4 className="font-medium text-slate-900">
-                  Online Learning Portal
-                </h4>
-                <p className="text-sm text-slate-600">
-                  Contribution:{' '}
-                  <span className="font-medium text-blue-600">25%</span>
-                </p>
-                <div className="mt-2 h-2 w-full rounded-full bg-blue-200">
-                  <div className="h-full w-1/4 rounded-full bg-blue-600"></div>
-                </div>
-                <h5 className="mt-4 text-sm font-semibold text-slate-900">
-                  Tasks
-                </h5>
-                <ul className="mt-2 list-disc pl-5 text-sm text-slate-600">
-                  <li>Designed and implemented course management system</li>
-                  <li>Developed real-time video streaming for live classes</li>
-                  <li>Optimized database for faster content delivery</li>
-                </ul>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </ContentLayout>

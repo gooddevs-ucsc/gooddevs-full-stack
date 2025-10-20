@@ -162,26 +162,28 @@ export function DashboardLayout({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={() => {
-                    const role = user.data?.role?.toLowerCase();
-                    if (role === 'requester') {
-                      navigate(paths.requester.profile.getHref());
-                    } else if (role === 'volunteer') {
-                      navigate(paths.developer.profile.getHref());
-                    } else if (role === 'sponsor') {
-                      navigate(paths.sponsor.profile.getHref());
-                    } else if (role === 'admin') {
-                      navigate(paths.admin.profile.getHref());
-                    } else {
-                      navigate(paths.app.profile.getHref());
-                    }
-                  }}
-                  className="cursor-pointer"
-                >
-                  <User2 className="mr-2 size-4" />
-                  Your Profile
-                </DropdownMenuItem>
+                {user.data?.role?.toLowerCase() !== 'admin' && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const role = user.data?.role?.toLowerCase();
+                      if (role === 'requester') {
+                        navigate(paths.requester.profile.getHref());
+                      } else if (role === 'volunteer') {
+                        navigate(paths.developer.profile.getHref());
+                      } else if (role === 'sponsor') {
+                        navigate(paths.sponsor.profile.getHref());
+                      } else if (role === 'admin') {
+                        navigate(paths.admin.dashboard.getHref());
+                      } else {
+                        navigate(paths.app.profile.getHref());
+                      }
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <User2 className="mr-2 size-4" />
+                    Your Profile
+                  </DropdownMenuItem>
+                )}
 
                 <DropdownMenuItem
                   onClick={() => {
@@ -189,14 +191,12 @@ export function DashboardLayout({
                     if (role === 'requester') {
                       navigate(paths.requester.settings.getHref());
                     } else if (role === 'volunteer') {
-                      // <-- changed from 'developer' to 'volunteer'
                       navigate(paths.developer.settings.getHref());
                     } else if (role === 'sponsor') {
                       navigate(paths.sponsor.settings.getHref());
                     } else if (role === 'admin') {
                       navigate(paths.admin.settings.getHref());
                     }
-                    // For other roles or no role, do nothing or navigate to a default
                   }}
                   className="cursor-pointer"
                 >
