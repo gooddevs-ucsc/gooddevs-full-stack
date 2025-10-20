@@ -1,7 +1,8 @@
-import { Calendar, Users } from 'lucide-react';
-import { useParams } from 'react-router';
+import { Calendar, Users, ArrowLeft } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
   BioCard,
@@ -51,6 +52,7 @@ const formatDate = (dateString: string) => {
 
 const PublicVolunteerProfile = () => {
   const { userId } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
 
   // Move ALL hooks to the top, before any conditional logic
   const {
@@ -117,6 +119,20 @@ const PublicVolunteerProfile = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
+      {/* Back Button */}
+      <div className="px-4 pt-6">
+        <Button
+          variant="outline"
+          onClick={() => navigate(-1)}
+          className="mb-6 flex items-center gap-2"
+        >
+          <div className="flex items-center gap-4">
+            <ArrowLeft className="size-4" />
+            Back
+          </div>
+        </Button>
+      </div>
+
       {/* Profile Header with Cover - No edit functionality */}
       <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm">
         {/* Cover Image */}

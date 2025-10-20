@@ -112,7 +112,8 @@ export const AdminProjectDetailView = ({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4 pt-4">
+            <div className="grid grid-cols-3 gap-4 pt-4">
+              {/* Created Date */}
               <div className="flex items-center gap-2 text-sm text-slate-600">
                 <Calendar className="size-4" />
                 <div>
@@ -121,17 +122,29 @@ export const AdminProjectDetailView = ({
                 </div>
               </div>
 
-              {project.estimated_timeline && (
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <Clock className="size-4" />
-                  <div>
-                    <div className="font-medium">Timeline</div>
-                    <div>
-                      {formatEstimatedTimeline(project.estimated_timeline)}
-                    </div>
+              {/* Last Updated */}
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Calendar className="size-4" />
+                <div>
+                  <div className="font-medium text-slate-900">Last Updated</div>
+                  <div className="mt-1 text-slate-600">
+                    {new Date(project.updated_at).toLocaleString()}
                   </div>
                 </div>
-              )}
+              </div>
+
+              {/* Timeline */}
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Clock className="size-4" />
+                <div>
+                  <div className="font-medium">Timeline</div>
+                  <div>
+                    {project.estimated_timeline
+                      ? formatEstimatedTimeline(project.estimated_timeline)
+                      : 'Not specified'}
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -184,13 +197,6 @@ export const AdminProjectDetailView = ({
               </div>
             ) : null}
 
-            <div className="border-t pt-4">
-              <h4 className="mb-2 font-medium text-slate-900">Requester ID</h4>
-              <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">
-                {project.requester_id}
-              </code>
-            </div>
-
             {!requesterProfile?.data &&
               !requesterLoading &&
               !requesterError && (
@@ -204,35 +210,6 @@ export const AdminProjectDetailView = ({
           </CardContent>
         </Card>
       </div>
-
-      {/* Project Metadata */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Project Metadata</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
-            <div>
-              <div className="font-medium text-slate-900">Project ID</div>
-              <code className="mt-1 block rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">
-                {project.id}
-              </code>
-            </div>
-            <div>
-              <div className="font-medium text-slate-900">Created At</div>
-              <div className="mt-1 text-slate-600">
-                {new Date(project.created_at).toLocaleString()}
-              </div>
-            </div>
-            <div>
-              <div className="font-medium text-slate-900">Last Updated</div>
-              <div className="mt-1 text-slate-600">
-                {new Date(project.updated_at).toLocaleString()}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
