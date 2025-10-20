@@ -67,7 +67,7 @@ export const RoadmapSection: FC = () => {
 
         <div className="relative">
           {/* Timeline line */}
-          <div className="absolute left-8 top-0 h-full w-0.5 bg-gradient-to-b from-primary via-accent to-primary md:left-1/2 md:-translate-x-0.5"></div>
+          <div className="absolute left-8 top-0 z-0 h-full w-0.5 bg-gradient-to-b from-primary via-accent to-primary md:left-1/2 md:-translate-x-0.5"></div>
 
           <div className="space-y-16">
             {storyMilestones.map((milestone, index) => (
@@ -78,7 +78,7 @@ export const RoadmapSection: FC = () => {
                 }`}
               >
                 {/* Timeline dot */}
-                <div className="absolute left-8 z-10 flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-white shadow-lg md:left-1/2 md:-translate-x-8">
+                <div className="absolute left-8 z-0 flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-white shadow-lg md:left-1/2 md:-translate-x-8">
                   <milestone.icon className="size-8" />
                 </div>
 
