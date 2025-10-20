@@ -7,8 +7,6 @@ import {
   HeroSection,
   RoadmapSection,
   ServicesSection,
-  StatsSection,
-  TestimonialsSection,
   ValuesSection,
   VisionMissionSection,
 } from '@/features/about/components';
@@ -21,12 +19,10 @@ const AboutUsRoute: FC = () => {
         <Navbar />
         <main>
           <HeroSection />
-          <StatsSection />
           <VisionMissionSection />
           <ServicesSection />
           <ValuesSection />
           <RoadmapSection />
-          <TestimonialsSection />
         </main>
         <Footer />
       </div>
