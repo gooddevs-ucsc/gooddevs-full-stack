@@ -1,20 +1,20 @@
 import {
-  Clock,
-  Users,
   ArrowLeft,
-  Code,
-  Target,
-  CheckCircle,
-  Heart,
-  GitBranch,
-  Zap,
   Calendar,
-  Eye,
-  User,
+  CheckCircle,
+  Clock,
+  Code,
   ExternalLink,
+  Eye,
+  GitBranch,
+  Heart,
+  Target,
+  User,
+  Users,
+  Zap,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -198,9 +198,10 @@ export const ProjectDescriptionTab = ({
                 const styles = getRoleStyles(member.volunteer_role);
 
                 return (
-                  <div
+                  <Link
                     key={member.id}
-                    className={`flex items-start gap-4 rounded-lg border p-4 ${styles.border} ${styles.bg}`}
+                    to={`/volunteer/${member.id}`} // Link to public profile
+                    className={`flex items-start gap-4 rounded-lg border p-4 transition-all hover:shadow-md ${styles.border} ${styles.bg}`}
                   >
                     <div
                       className={`flex size-12 items-center justify-center rounded-full ${styles.avatar}`}
@@ -209,7 +210,7 @@ export const ProjectDescriptionTab = ({
                     </div>
                     <div className="flex-1">
                       <div className="mb-2 flex items-center gap-3">
-                        <h4 className="font-semibold text-slate-900">
+                        <h4 className="font-semibold text-slate-900 hover:text-blue-600">
                           {member.firstname} {member.lastname}
                         </h4>
                         <span
@@ -222,7 +223,8 @@ export const ProjectDescriptionTab = ({
                         <p className="text-sm text-slate-600">{member.email}</p>
                       )}
                     </div>
-                  </div>
+                    <ExternalLink className="size-4 text-slate-400" />
+                  </Link>
                 );
               })}
             </div>

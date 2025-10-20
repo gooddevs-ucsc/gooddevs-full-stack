@@ -7,7 +7,8 @@ from urllib.parse import urlparse
 
 from pydantic import EmailStr, field_validator, ValidationError
 from sqlmodel import Field, Relationship, SQLModel, Column, Enum, Identity, Integer
-
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy import String
 
 class UserRole(str, enum.Enum):
     ADMIN = "ADMIN"
@@ -1136,3 +1137,97 @@ class RequesterProfileResponse(SQLModel):
 class RequesterProfilesPublic(SQLModel):
     data: list[RequesterProfilePublic]
     count: int
+
+class VolunteerProfileBase(SQLModel):
+    bio: str | None = Field(default=None, max_length=1000)
+    tagline: str | None = Field(default=None, max_length=200)
+    location: str | None = Field(default=None, max_length=255)
+    profile_image_url: str | None = Field(default=None, max_length=500)
+    cover_image_url: str | None = Field(default=None, max_length=500)
+    
+    # Contact & Social
+    github_url: str | None = Field(default=None, max_length=500)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    portfolio_url: str | None = Field(default=None, max_length=500)
+    twitter_url: str | None = Field(default=None, max_length=500)
+    contact_phone: str | None = Field(default=None, max_length=20)
+    website: str | None = Field(default=None, max_length=255)
+
+
+class VolunteerProfileCreate(SQLModel):
+    bio: str | None = Field(default=None, max_length=1000)
+    tagline: str | None = Field(default=None, max_length=200)
+    location: str | None = Field(default=None, max_length=255)
+    profile_image_url: str | None = Field(default=None, max_length=500)
+    cover_image_url: str | None = Field(default=None, max_length=500)
+    github_url: str | None = Field(default=None, max_length=500)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    portfolio_url: str | None = Field(default=None, max_length=500)
+    twitter_url: str | None = Field(default=None, max_length=500)
+    contact_phone: str | None = Field(default=None, max_length=20)
+    website: str | None = Field(default=None, max_length=255)
+    skills: list[str] | None = None
+    experience: list[dict] | None = None
+
+
+class VolunteerProfileUpdate(SQLModel):
+    bio: str | None = Field(default=None, max_length=1000)
+    tagline: str | None = Field(default=None, max_length=200)
+    location: str | None = Field(default=None, max_length=255)
+    profile_image_url: str | None = Field(default=None, max_length=500)
+    cover_image_url: str | None = Field(default=None, max_length=500)
+    github_url: str | None = Field(default=None, max_length=500)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    portfolio_url: str | None = Field(default=None, max_length=500)
+    twitter_url: str | None = Field(default=None, max_length=500)
+    contact_phone: str | None = Field(default=None, max_length=20)
+    website: str | None = Field(default=None, max_length=255)
+    skills: list[str] | None = None
+    experience: list[dict] | None = None
+
+
+class VolunteerProfile(VolunteerProfileBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE", unique=True
+    )
+    # Use PostgreSQL-specific types for advanced features
+    skills: list[str] | None = Field(default=None, sa_column=Column(ARRAY(String)))
+    experience: list[dict] | None = Field(default=None, sa_column=Column(JSONB))
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationship
+    user: User | None = Relationship()
+
+
+class VolunteerProfilePublic(VolunteerProfileBase):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    skills: list[str] | None = None
+    experience: list[dict] | None = None
+    created_at: datetime
+    updated_at: datetime
+    user: UserPublic | None = None
+
+
+class VolunteerProfileResponse(SQLModel):
+    data: VolunteerProfilePublic
+
+
+class VolunteerProfilesPublic(SQLModel):
+    data: list[VolunteerProfilePublic]
+    count: int
+
+
+# Volunteer Stats Model
+class VolunteerStatsPublic(SQLModel):
+    total_projects_contributed: int
+    total_tasks_assigned: int
+    total_tasks_completed: int
+    total_threads_created: int
+    total_comments_made: int
+    total_replies_made: int
+    volunteer_name: str
+    member_since: str

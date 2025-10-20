@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import items, login, private, users, utils, projects, project_threads, tasks, project_applications, notifications, payments, requester_profile, donations, public_profiles
+from app.api.routes import items, login, private, users, utils, projects, project_threads, tasks, project_applications, notifications, payments, requester_profile, donations, volunteer_profile, public_profiles
 from app.core.config import settings
 
 api_router = APIRouter()
@@ -20,6 +20,11 @@ api_router.include_router(
     requester_profile.router,
     prefix="/requester-profile",
     tags=["requester-profile"]
+)
+api_router.include_router(
+    volunteer_profile.router,
+    prefix="/volunteer-profile",
+    tags=["volunteer-profile"]
 )
 
 # Public profile routes (no authentication required)
