@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router';
+
 import { Button } from '@/components/ui/button';
 import { Form, Input, Select, Textarea } from '@/components/ui/form';
 import { env } from '@/config/env';
@@ -20,6 +22,7 @@ export const InitiateSponsorship = ({
   recipientName,
 }: InitiateSponsorshipProps) => {
   const user = useUser();
+  const navigate = useNavigate();
 
   // Determine the sponsorships path based on user role
   const getSponsorshipsPath = () => {
@@ -154,11 +157,19 @@ export const InitiateSponsorship = ({
                 registration={register('message')}
                 placeholder="Leave a message of support for the volunteer..."
               />
-              <div>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate(-1)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
                 <Button
                   isLoading={initiateSponsorshipMutation.isPending}
                   type="submit"
-                  className="w-full"
+                  className="flex-1"
                 >
                   Proceed to Sponsor
                 </Button>
