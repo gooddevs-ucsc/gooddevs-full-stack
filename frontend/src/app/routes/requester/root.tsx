@@ -1,10 +1,12 @@
 import {
   ArrowLeft,
-  DollarSign,
+  // DollarSign,
   Folder,
   Home,
   Settings,
   User,
+  Ribbon,
+  Heart,
 } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router';
 
@@ -28,10 +30,21 @@ const RequesterRoot = () => {
   const defaultNavigation = [
     { name: 'Dashboard', to: paths.requester.dashboard.getHref(), icon: Home },
     { name: 'Projects', to: paths.requester.projects.getHref(), icon: Folder },
+    // TODO: Remove this path and related code
+    // {
+    //   name: 'Sponsorships',
+    //   to: paths.requester.sponsorships.getHref(),
+    //   icon: DollarSign,
+    // },
     {
-      name: 'Sponsorships',
-      to: paths.requester.sponsorships.getHref(),
-      icon: DollarSign,
+      name: 'My Donations',
+      to: paths.requester.myDonations.getHref(),
+      icon: Ribbon,
+    },
+    {
+      name: 'My Sponsorships',
+      to: paths.requester.mySponsorships.getHref(),
+      icon: Heart,
     },
     { name: 'Profile', to: paths.requester.profile.getHref(), icon: User },
     {

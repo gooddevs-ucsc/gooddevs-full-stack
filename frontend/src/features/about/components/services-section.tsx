@@ -1,12 +1,9 @@
 import {
   Briefcase,
   CheckCircle,
-  Clock,
   Code,
   Heart,
   Shield,
-  Star,
-  TrendingUp,
   Users,
 } from 'lucide-react';
 import { FC } from 'react';
@@ -55,13 +52,6 @@ const services = [
       'Real-time progress updates',
     ],
   },
-];
-
-const achievements = [
-  { metric: '98%', label: 'Project Success Rate', icon: TrendingUp },
-  { metric: '4.9/5', label: 'Client Satisfaction', icon: Star },
-  { metric: '45 Days', label: 'Average Project Delivery', icon: Clock },
-  { metric: '24/7', label: 'Global Support Coverage', icon: Shield },
 ];
 
 export const ServicesSection: FC = () => {
@@ -117,21 +107,6 @@ export const ServicesSection: FC = () => {
                   ))}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Achievement Stats */}
-        <div className="mt-20 grid grid-cols-2 gap-8 md:grid-cols-4">
-          {achievements.map((achievement, index) => (
-            <div key={index} className="group text-center">
-              <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 ring-1 ring-primary/10 transition-all duration-300 group-hover:scale-110">
-                <achievement.icon className="size-8 text-primary" />
-              </div>
-              <div className="mb-1 text-3xl font-bold text-slate-900">
-                {achievement.metric}
-              </div>
-              <div className="text-sm text-slate-600">{achievement.label}</div>
             </div>
           ))}
         </div>

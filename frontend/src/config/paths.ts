@@ -41,6 +41,11 @@ export const paths = {
     getHref: () => '/about-us',
   },
 
+  profile: {
+    path: '/profile/:userId',
+    getHref: (userId: string) => `/profile/${userId}`,
+  },
+
   app: {
     root: {
       path: '/app',
@@ -97,6 +102,30 @@ export const paths = {
       path: 'project-approvals',
       getHref: () => '/admin/project-approvals',
     },
+    myDonations: {
+      path: 'my-donations',
+      getHref: () => '/admin/my-donations',
+    },
+    allDonations: {
+      path: 'all-donations',
+      getHref: () => '/admin/all-donations',
+    },
+    mySponsorships: {
+      path: 'my-sponsorships',
+      getHref: () => '/admin/my-sponsorships',
+    },
+    withdrawals: {
+      path: 'withdrawals',
+      getHref: () => '/admin/withdrawals',
+    },
+    projectDetail: {
+      path: 'project-approvals/:id',
+      getHref: (id: string) => `/admin/project-approvals/${id}`,
+    },
+    settings: {
+      path: 'settings',
+      getHref: () => '/admin/settings',
+    },
   },
 
   sponsor: {
@@ -115,6 +144,10 @@ export const paths = {
     myDonations: {
       path: 'my-donations',
       getHref: () => '/sponsor/my-donations',
+    },
+    mySponsorships: {
+      path: 'my-sponsorships',
+      getHref: () => '/sponsor/my-sponsorships',
     },
     profile: {
       path: 'profile',
@@ -148,9 +181,18 @@ export const paths = {
       getHref: (projectId: string) =>
         `/requester/projects/${projectId}/applications`,
     },
+
     sponsorships: {
       path: 'sponsorships',
       getHref: () => '/requester/sponsorships',
+    },
+    myDonations: {
+      path: 'my-donations',
+      getHref: () => '/requester/my-donations',
+    },
+    mySponsorships: {
+      path: 'my-sponsorships',
+      getHref: () => '/requester/my-sponsorships',
     },
     profile: {
       path: 'profile',
@@ -174,9 +216,26 @@ export const paths = {
       path: 'projects',
       getHref: () => '/developer/projects',
     },
+    reviewApplications: {
+      path: 'projects/:projectId/review-applications',
+      getHref: (projectId: string) =>
+        `/developer/projects/${projectId}/review-applications`,
+    },
     sponsorships: {
       path: 'sponsorships',
       getHref: () => '/developer/sponsorships',
+    },
+    myDonations: {
+      path: 'my-donations',
+      getHref: () => '/developer/my-donations',
+    },
+    mySponsorships: {
+      path: 'my-sponsorships',
+      getHref: () => '/developer/my-sponsorships',
+    },
+    receivedSponsorships: {
+      path: 'received-sponsorships',
+      getHref: () => '/developer/received-sponsorships',
     },
     profile: {
       path: 'profile',
@@ -199,6 +258,10 @@ export const paths = {
     donation: {
       path: 'donation',
       getHref: () => '/payments/donation',
+    },
+    sponsorship: {
+      path: 'sponsorship/:recipientId',
+      getHref: (recipientId: string) => `/payments/sponsorship/${recipientId}`,
     },
   },
 } as const;

@@ -5,7 +5,7 @@ import { NavLink, useNavigate, useNavigation } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { paths } from '@/config/paths';
-import { useLogout } from '@/lib/auth';
+import { useUser, useLogout } from '@/lib/auth';
 import { cn } from '@/utils/cn';
 
 import {
@@ -85,6 +85,7 @@ export function DashboardLayout({
   headerExtras, // Accept the prop
 }: DashboardLayoutProps) {
   const navigate = useNavigate();
+  const user = useUser();
   const logout = useLogout({
     onSuccess: () => navigate(paths.auth.login.getHref()),
   });
@@ -161,14 +162,44 @@ export function DashboardLayout({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                {user.data?.role?.toLowerCase() !== 'admin' && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const role = user.data?.role?.toLowerCase();
+                      if (role === 'requester') {
+                        navigate(paths.requester.profile.getHref());
+                      } else if (role === 'volunteer') {
+                        navigate(paths.developer.profile.getHref());
+                      } else if (role === 'sponsor') {
+                        navigate(paths.sponsor.profile.getHref());
+                      } else if (role === 'admin') {
+                        navigate(paths.admin.dashboard.getHref());
+                      } else {
+                        navigate(paths.app.profile.getHref());
+                      }
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <User2 className="mr-2 size-4" />
+                    Your Profile
+                  </DropdownMenuItem>
+                )}
+
                 <DropdownMenuItem
-                  onClick={() => navigate(paths.app.profile.getHref())}
+                  onClick={() => {
+                    const role = user.data?.role?.toLowerCase();
+                    if (role === 'requester') {
+                      navigate(paths.requester.settings.getHref());
+                    } else if (role === 'volunteer') {
+                      navigate(paths.developer.settings.getHref());
+                    } else if (role === 'sponsor') {
+                      navigate(paths.sponsor.settings.getHref());
+                    } else if (role === 'admin') {
+                      navigate(paths.admin.settings.getHref());
+                    }
+                  }}
                   className="cursor-pointer"
                 >
-                  <User2 className="mr-2 size-4" />
-                  Your Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
                   <Settings className="mr-2 size-4" />
                   Settings
                 </DropdownMenuItem>

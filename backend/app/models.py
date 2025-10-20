@@ -7,6 +7,8 @@ from urllib.parse import urlparse
 
 from pydantic import EmailStr, field_validator, ValidationError
 from sqlmodel import Field, Relationship, SQLModel, Column, Enum, Identity, Integer
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy import String
 
 
 class UserRole(str, enum.Enum):
@@ -39,6 +41,7 @@ class EstimatedTimeline(str, enum.Enum):
     THREE_TO_SIX_MONTHS = "THREE_TO_SIX_MONTHS"
     MORE_THAN_SIX_MONTHS = "MORE_THAN_SIX_MONTHS"
 
+
 class VolunteerRole(str, enum.Enum):
     FRONTEND = "FRONTEND"
     BACKEND = "BACKEND"
@@ -47,7 +50,14 @@ class VolunteerRole(str, enum.Enum):
     PROJECTMANAGER = "PROJECTMANAGER"
     QA = "QA"
 
+
+class ReviewerPermissionStatus(str, enum.Enum):
+    ACTIVE = "ACTIVE"
+    REVOKED = "REVOKED"
+
 # Shared properties
+
+
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     is_active: bool = True
@@ -101,6 +111,19 @@ class User(UserBase, table=True):
         back_populates="recipient")
     volunteer_roles: list["UserVolunteerRole"] = Relationship(
         back_populates="user", cascade_delete=True)
+    reviewer_permissions: list["ApplicationReviewerPermission"] = Relationship(
+        back_populates="reviewer",
+        cascade_delete=True,
+        sa_relationship_kwargs={
+            "foreign_keys": "[ApplicationReviewerPermission.reviewer_id]"}
+    )
+    granted_permissions: list["ApplicationReviewerPermission"] = Relationship(
+        back_populates="granter",
+        cascade_delete=True,
+        sa_relationship_kwargs={
+            "foreign_keys": "[ApplicationReviewerPermission.granted_by]"}
+    )
+
 
 class UserVolunteerRole(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -114,6 +137,8 @@ class UserVolunteerRole(SQLModel, table=True):
     user: User | None = Relationship(back_populates="volunteer_roles")
 
 # Properties to return via API, id is always required
+
+
 class UserPublic(UserBase):
     id: uuid.UUID
 
@@ -221,6 +246,7 @@ class Project(ProjectBase, table=True):
     tasks: list["Task"] = Relationship(
         back_populates="project", cascade_delete=True)
     threads: list["ProjectThread"] = Relationship(back_populates="project")
+    openings: list["OpenPosition"] = Relationship(back_populates="project")
 
 
 # Properties to return via API, id is always required
@@ -333,13 +359,19 @@ class Task(TaskBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     project_id: uuid.UUID = Field(
         foreign_key="project.id", nullable=False, ondelete="CASCADE")
+    creator_id: uuid.UUID | None = Field(default=None, foreign_key="user.id")
     assignee_id: uuid.UUID | None = Field(default=None, foreign_key="user.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    # Relationships
+    # Relationships - Use sa_relationship_kwargs for SQLModel
     project: Project | None = Relationship(back_populates="tasks")
-    assignee: User | None = Relationship()
+    assignee: User | None = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[Task.assignee_id]"}
+    )
+    creator: User | None = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[Task.creator_id]"}
+    )
 
 # Public Api models
 
@@ -347,8 +379,10 @@ class Task(TaskBase, table=True):
 class TaskPublic(TaskBase):
     id: uuid.UUID
     project_id: uuid.UUID
+    creator_id: uuid.UUID | None = None
     assignee_id: uuid.UUID | None = None
     assignee: UserPublic | None = None
+    creator: UserPublic | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -530,93 +564,100 @@ class ProjectApplicationBase(SQLModel):
 
 # API models for creating application
 class ProjectApplicationCreate(ProjectApplicationBase):
-    
+
     @field_validator('cover_letter')
     @classmethod
     def validate_cover_letter(cls, v: str | None) -> str | None:
         if v is None:
             raise ValueError('Cover letter is required')
-        
+
         # Clean and validate the content
         trimmed = v.strip()
-        
+
         if len(trimmed) < 50:
             raise ValueError('Cover letter must be at least 50 characters')
-        
+
         if len(trimmed) > 2000:
             raise ValueError('Cover letter must not exceed 2000 characters')
-        
+
         # Check if it's just repeated characters or numbers
         if re.match(r'^(.)\1{49,}$', trimmed):  # 50+ of the same character
-            raise ValueError('Cover letter must contain meaningful text, not repeated characters')
-        
+            raise ValueError(
+                'Cover letter must contain meaningful text, not repeated characters')
+
         if re.match(r'^[0-9\s]*$', trimmed):  # Only numbers and spaces
-            raise ValueError('Cover letter must contain meaningful text, not just numbers')
-        
+            raise ValueError(
+                'Cover letter must contain meaningful text, not just numbers')
+
         if re.match(r'^[^a-zA-Z]*$', trimmed):  # No letters at all
-            raise ValueError('Cover letter must contain meaningful text with actual words')
-        
+            raise ValueError(
+                'Cover letter must contain meaningful text with actual words')
+
         # Check for minimum word count (at least 8 words)
         words = [word for word in trimmed.split() if len(word) > 0]
         if len(words) < 8:
-            raise ValueError('Cover letter must contain at least 8 meaningful words')
-        
+            raise ValueError(
+                'Cover letter must contain at least 8 meaningful words')
+
         return trimmed
-    
+
     @classmethod
     def _validate_url_with_tld(cls, url: str) -> bool:
         """Validate that URL has a proper domain with TLD"""
         try:
             parsed = urlparse(url)
             hostname = parsed.hostname
-            
+
             if not hostname:
                 return False
-            
+
             # Check if hostname has at least one dot and a valid TLD
             parts = hostname.split('.')
             if len(parts) < 2:
                 return False
-            
+
             # Get the TLD (last part)
             tld = parts[-1]
-            
+
             # TLD must be at least 2 characters and contain only letters
             return len(tld) >= 2 and tld.isalpha()
         except Exception:
             return False
-    
+
     @field_validator('portfolio_url')
     @classmethod
     def validate_portfolio_url(cls, v: str | None) -> str | None:
         if v is None or v == '':
             return v
-        
+
         if not cls._validate_url_with_tld(v):
-            raise ValueError('Please enter a valid portfolio URL with a proper domain (e.g., .com, .org)')
-        
+            raise ValueError(
+                'Please enter a valid portfolio URL with a proper domain (e.g., .com, .org)')
+
         return v
-    
+
     @field_validator('linkedin_url')
     @classmethod
     def validate_linkedin_url(cls, v: str | None) -> str | None:
         if v is None or v == '':
             return v
-        
+
         if not cls._validate_url_with_tld(v):
-            raise ValueError('Please enter a valid LinkedIn URL with a proper domain')
-        
+            raise ValueError(
+                'Please enter a valid LinkedIn URL with a proper domain')
+
         return v
-    
+
     @field_validator('github_url')
     @classmethod
     def validate_github_url(cls, v: str | None) -> str | None:
         if v is None or v == '':
             raise ValueError('GitHub profile is required')
-        
+
         if not cls._validate_url_with_tld(v):
-            raise ValueError('Please enter a valid GitHub URL with a proper domain')
-        
+            raise ValueError(
+                'Please enter a valid GitHub URL with a proper domain')
+
         return v
 
 
@@ -701,6 +742,7 @@ class PaymentStatus(int, enum.Enum):
     CANCELLED = -1
     FAILED = -2
     CHARGEDBACK = -3
+    NOT_FOUND = -404  # If payment not found in PayHere after initiation
     SUCCESS = 2
 
 
@@ -945,6 +987,236 @@ class DonationsPublic(SQLModel):
     data: list[DonationPublic]
     meta: Meta
 
+
+class DonationStatistics(SQLModel):
+    """Statistics about donations in the system"""
+    total_donations: int
+    total_amount: float
+    average_donation: float
+    pending_donations: int
+    successful_donations: int
+    unique_donors: int
+
+
+# Sponsorship models
+class WithdrawalStatus(str, enum.Enum):
+    NOT_WITHDRAWN = "NOT_WITHDRAWN"
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+
+
+class SponsorshipBase(SQLModel):
+    message: str | None = Field(default=None, max_length=500)
+
+
+class SponsorshipCreate(SponsorshipBase):
+    # recipient_id is now passed as path parameter, not in body
+    amount: float = Field(ge=0)
+    phone: str = Field(max_length=50)
+    address: str = Field(max_length=500)
+    city: str = Field(max_length=255)
+    country: str = Field(max_length=255)
+
+
+class WithdrawalRequest(SQLModel):
+    """Request model for withdrawing sponsorship funds"""
+    amount: float = Field(ge=0, description="Amount to withdraw (before fees)")
+    bank_account_number: str = Field(
+        max_length=50, description="Bank account number for withdrawal")
+    bank_name: str = Field(max_length=255, description="Name of the bank")
+    account_holder_name: str = Field(
+        max_length=255, description="Account holder name")
+
+
+class Sponsorship(SponsorshipBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    sponsor_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    recipient_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    order_id: int = Field(
+        foreign_key="payment.order_id", nullable=False, unique=True
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationships
+    sponsor: User | None = Relationship(
+        sa_relationship_kwargs={
+            "foreign_keys": "[Sponsorship.sponsor_id]"
+        }
+    )
+    recipient: User | None = Relationship(
+        sa_relationship_kwargs={
+            "foreign_keys": "[Sponsorship.recipient_id]"
+        }
+    )
+    payment: Payment | None = Relationship()
+
+
+class SponsorshipPublic(SponsorshipBase):
+    id: uuid.UUID
+    sponsor_id: uuid.UUID
+    recipient_id: uuid.UUID
+    order_id: int
+    created_at: datetime
+    sponsor: UserPublic | None = None
+    recipient: UserPublic | None = None
+    payment: PaymentPublic | None = None
+
+
+class SponsorshipResponse(SQLModel):
+    data: SponsorshipPublic
+
+
+class SponsorshipsPublic(SQLModel):
+    data: list[SponsorshipPublic]
+    meta: Meta
+
+
+class SponsorshipStatistics(SQLModel):
+    """Statistics about sponsorships in the system"""
+    total_sponsorships: int
+    total_amount: float
+    average_sponsorship: float
+    pending_sponsorships: int
+    successful_sponsorships: int
+    unique_sponsors: int
+    unique_recipients: int
+
+
+# Withdrawal models
+class Withdrawal(SQLModel, table=True):
+    """
+    Tracks withdrawal requests from volunteers.
+    Since we don't have access to real payment APIs, this is a mock system.
+    """
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    recipient_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    amount_requested: float = Field(
+        ge=0, description="Amount requested by user")
+    fee_percentage: float = Field(
+        default=6.0, description="Fee percentage (default 6%)")
+    fee_amount: float = Field(ge=0, description="Calculated fee amount")
+    amount_to_transfer: float = Field(
+        ge=0, description="Amount after deducting fee")
+    bank_account_number: str = Field(max_length=50)
+    bank_name: str = Field(max_length=255)
+    account_holder_name: str = Field(max_length=255)
+    status: WithdrawalStatus = Field(
+        default=WithdrawalStatus.PENDING,
+        sa_column=Column(Enum(WithdrawalStatus))
+    )
+    requested_at: datetime = Field(default_factory=datetime.utcnow)
+    completed_at: datetime | None = Field(default=None)
+
+    # Relationship
+    recipient: User | None = Relationship()
+
+
+class WithdrawalPublic(SQLModel):
+    """Public model for withdrawal data"""
+    id: uuid.UUID
+    recipient_id: uuid.UUID
+    amount_requested: float
+    fee_percentage: float
+    fee_amount: float
+    amount_to_transfer: float
+    bank_account_number: str
+    bank_name: str
+    account_holder_name: str
+    status: WithdrawalStatus
+    requested_at: datetime
+    completed_at: datetime | None = None
+    recipient: UserPublic | None = None
+
+
+class WithdrawalsPublic(SQLModel):
+    """List of withdrawals with pagination"""
+    data: list[WithdrawalPublic]
+    meta: Meta
+
+
+class WithdrawalBalance(SQLModel):
+    """Balance information for withdrawals"""
+    total_received: float = Field(
+        description="Total successfully received sponsorships")
+    total_withdrawn: float = Field(
+        description="Total amount already withdrawn (completed)")
+    pending_withdrawals: float = Field(
+        description="Total amount in pending withdrawals")
+    available_balance: float = Field(
+        description="Available balance for withdrawal")
+
+
+# Application Reviewer Permission models
+
+
+class ApplicationReviewerPermission(SQLModel, table=True):
+    """
+    Tracks which approved volunteers have permission to review applications for a specific project.
+    Only project owners (requesters) can grant this permission.
+    Uses status field (ACTIVE/REVOKED) instead of deleting records for audit trail.
+    """
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    project_id: uuid.UUID = Field(
+        foreign_key="project.id", nullable=False, ondelete="CASCADE"
+    )
+    reviewer_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    granted_by: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False
+    )
+    status: ReviewerPermissionStatus = Field(
+        default=ReviewerPermissionStatus.ACTIVE,
+        sa_column=Column(Enum(ReviewerPermissionStatus))
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    revoked_at: datetime | None = Field(default=None)
+
+    # Relationships
+    project: Project | None = Relationship()
+    reviewer: User | None = Relationship(
+        back_populates="reviewer_permissions",
+        sa_relationship_kwargs={
+            "foreign_keys": "[ApplicationReviewerPermission.reviewer_id]"}
+    )
+    granter: User | None = Relationship(
+        back_populates="granted_permissions",
+        sa_relationship_kwargs={
+            "foreign_keys": "[ApplicationReviewerPermission.granted_by]"}
+    )
+
+
+# API models for reviewer permissions
+class ApplicationReviewerPermissionCreate(SQLModel):
+    reviewer_id: uuid.UUID
+
+
+class ApplicationReviewerPermissionPublic(SQLModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    reviewer_id: uuid.UUID
+    granted_by: uuid.UUID
+    status: ReviewerPermissionStatus
+    created_at: datetime
+    revoked_at: datetime | None = None
+    reviewer: UserPublic | None = None
+
+
+class ApplicationReviewerPermissionsPublic(SQLModel):
+    data: list[ApplicationReviewerPermissionPublic]
+    count: int
+
+
+class CanReviewResponse(SQLModel):
+    can_review: bool
+
+
 # Enhanced Requester Profile models
 
 
@@ -1021,6 +1293,153 @@ class RequesterProfileResponse(SQLModel):
 class RequesterProfilesPublic(SQLModel):
     data: list[RequesterProfilePublic]
     count: int
+
+class VolunteerProfileBase(SQLModel):
+    bio: str | None = Field(default=None, max_length=1000)
+    tagline: str | None = Field(default=None, max_length=200)
+    location: str | None = Field(default=None, max_length=255)
+    profile_image_url: str | None = Field(default=None, max_length=500)
+    cover_image_url: str | None = Field(default=None, max_length=500)
+
+    # Contact & Social
+    github_url: str | None = Field(default=None, max_length=500)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    portfolio_url: str | None = Field(default=None, max_length=500)
+    twitter_url: str | None = Field(default=None, max_length=500)
+    contact_phone: str | None = Field(default=None, max_length=20)
+    website: str | None = Field(default=None, max_length=255)
+
+
+class VolunteerProfileCreate(SQLModel):
+    bio: str | None = Field(default=None, max_length=1000)
+    tagline: str | None = Field(default=None, max_length=200)
+    location: str | None = Field(default=None, max_length=255)
+    profile_image_url: str | None = Field(default=None, max_length=500)
+    cover_image_url: str | None = Field(default=None, max_length=500)
+    github_url: str | None = Field(default=None, max_length=500)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    portfolio_url: str | None = Field(default=None, max_length=500)
+    twitter_url: str | None = Field(default=None, max_length=500)
+    contact_phone: str | None = Field(default=None, max_length=20)
+    website: str | None = Field(default=None, max_length=255)
+    skills: list[str] | None = None
+    experience: list[dict] | None = None
+
+
+class VolunteerProfileUpdate(SQLModel):
+    bio: str | None = Field(default=None, max_length=1000)
+    tagline: str | None = Field(default=None, max_length=200)
+    location: str | None = Field(default=None, max_length=255)
+    profile_image_url: str | None = Field(default=None, max_length=500)
+    cover_image_url: str | None = Field(default=None, max_length=500)
+    github_url: str | None = Field(default=None, max_length=500)
+    linkedin_url: str | None = Field(default=None, max_length=500)
+    portfolio_url: str | None = Field(default=None, max_length=500)
+    twitter_url: str | None = Field(default=None, max_length=500)
+    contact_phone: str | None = Field(default=None, max_length=20)
+    website: str | None = Field(default=None, max_length=255)
+    skills: list[str] | None = None
+    experience: list[dict] | None = Field(default=None)
+
+
+class VolunteerProfile(VolunteerProfileBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE", unique=True
+    )
+    # Use PostgreSQL-specific types for advanced features
+    skills: list[str] | None = Field(
+        default=None, sa_column=Column(ARRAY(String)))
+    experience: list[dict] | None = Field(
+        default=None, sa_column=Column(JSONB))
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationship
+    user: User | None = Relationship()
+
+
+class VolunteerProfilePublic(VolunteerProfileBase):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    skills: list[str] | None = None
+    experience: list[dict] | None = None
+    created_at: datetime
+    updated_at: datetime
+    user: UserPublic | None = None
+
+
+class VolunteerProfileResponse(SQLModel):
+    data: VolunteerProfilePublic
+
+
+class VolunteerProfilesPublic(SQLModel):
+    data: list[VolunteerProfilePublic]
+    count: int
+
+
+# Volunteer Stats Model
+class VolunteerStatsPublic(SQLModel):
+    total_projects_contributed: int
+    total_tasks_assigned: int
+    total_tasks_completed: int
+    total_threads_created: int
+    total_comments_made: int
+    total_replies_made: int
+    volunteer_name: str
+    member_since: str
+
+class OpenPosition(SQLModel, table=True):
+    """
+    Tracks open positions for projects that need volunteers.
+    Only users with review permissions can manage these.
+    """
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    project_id: uuid.UUID = Field(
+        foreign_key="project.id", nullable=False, ondelete="CASCADE"
+    )
+    volunteer_role: DeveloperRole = Field(
+        sa_column=Column(Enum(DeveloperRole))
+    )
+    openings_count: int = Field(ge=1, le=10, default=1)
+    description: str | None = Field(default=None, max_length=500)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationship
+    project: Project | None = Relationship()
+
+
+# API models for open positions
+class OpenPositionCreate(SQLModel):
+    volunteer_role: DeveloperRole
+    openings_count: int = Field(ge=1, le=10, default=1)
+    description: str | None = Field(default=None, max_length=500)
+
+
+class OpenPositionUpdate(SQLModel):
+    openings_count: int | None = Field(default=None, ge=1, le=10)
+    description: str | None = Field(default=None, max_length=500)
+
+
+class OpenPositionPublic(SQLModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    volunteer_role: DeveloperRole
+    openings_count: int
+    description: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class OpenPositionsPublic(SQLModel):
+    data: list[OpenPositionPublic]
+    count: int
+
+
+class OpenPositionResponse(SQLModel):
+    data: OpenPositionPublic
 
 # Sponsor Profile models 
 class SponsorProfileBase(SQLModel):

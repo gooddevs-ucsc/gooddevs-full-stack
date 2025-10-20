@@ -13,6 +13,7 @@ import {
 import DeveloperRoot, {
   ErrorBoundary as DeveloperRootErrorBoundary,
 } from './routes/developer/root';
+import PublicVolunteerProfile from './routes/public-profile/volunteer';
 import {
   default as RequesterRoot,
   ErrorBoundary as RequestorRootErrorBoundary,
@@ -57,6 +58,10 @@ export const createAppRouter = (queryClient: QueryClient) =>
     {
       path: paths.aboutUs.path,
       lazy: () => import('./routes/about-us').then(convert(queryClient)),
+    },
+    {
+      path: paths.profile.path,
+      lazy: () => import('./routes/public-profile').then(convert(queryClient)),
     },
     {
       path: paths.auth.register.path,
@@ -132,6 +137,36 @@ export const createAppRouter = (queryClient: QueryClient) =>
               convert(queryClient),
             ),
         },
+        {
+          path: paths.admin.myDonations.path,
+          lazy: () =>
+            import('./routes/admin/my-donations').then(convert(queryClient)),
+        },
+        {
+          path: paths.admin.mySponsorships.path,
+          lazy: () =>
+            import('./routes/admin/my-sponsorships').then(convert(queryClient)),
+        },
+        {
+          path: paths.admin.withdrawals.path,
+          lazy: () =>
+            import('./routes/admin/withdrawals').then(convert(queryClient)),
+        },
+        {
+          path: paths.admin.allDonations.path,
+          lazy: () =>
+            import('./routes/admin/all-donations').then(convert(queryClient)),
+        },
+        {
+          path: paths.admin.projectDetail.path,
+          lazy: () =>
+            import('./routes/admin/project-detail').then(convert(queryClient)),
+        },
+        {
+          path: paths.admin.settings.path,
+          lazy: () =>
+            import('./routes/admin/settings').then(convert(queryClient)),
+        },
       ],
     },
     {
@@ -154,6 +189,13 @@ export const createAppRouter = (queryClient: QueryClient) =>
           path: paths.sponsor.myDonations.path,
           lazy: () =>
             import('./routes/sponsor/my-donations').then(convert(queryClient)),
+        },
+        {
+          path: paths.sponsor.mySponsorships.path,
+          lazy: () =>
+            import('./routes/sponsor/my-sponsorships').then(
+              convert(queryClient),
+            ),
         },
         {
           path: paths.sponsor.profile.path,
@@ -200,10 +242,25 @@ export const createAppRouter = (queryClient: QueryClient) =>
               convert(queryClient),
             ),
         },
+
         {
           path: paths.requester.sponsorships.path,
           lazy: () =>
             import('./routes/requester/sponsorships').then(
+              convert(queryClient),
+            ),
+        },
+        {
+          path: paths.requester.myDonations.path,
+          lazy: () =>
+            import('./routes/requester/my-donations').then(
+              convert(queryClient),
+            ),
+        },
+        {
+          path: paths.requester.mySponsorships.path,
+          lazy: () =>
+            import('./routes/requester/my-sponsorships').then(
               convert(queryClient),
             ),
         },
@@ -239,9 +296,37 @@ export const createAppRouter = (queryClient: QueryClient) =>
             import('./routes/developer/projects').then(convert(queryClient)),
         },
         {
+          path: paths.developer.reviewApplications.path,
+          lazy: () =>
+            import('./routes/developer/review-applications').then(
+              convert(queryClient),
+            ),
+        },
+        {
           path: paths.developer.sponsorships.path,
           lazy: () =>
             import('./routes/developer/sponsorships').then(
+              convert(queryClient),
+            ),
+        },
+        {
+          path: paths.developer.myDonations.path,
+          lazy: () =>
+            import('./routes/developer/my-donations').then(
+              convert(queryClient),
+            ),
+        },
+        {
+          path: paths.developer.mySponsorships.path,
+          lazy: () =>
+            import('./routes/developer/my-sponsorships').then(
+              convert(queryClient),
+            ),
+        },
+        {
+          path: paths.developer.receivedSponsorships.path,
+          lazy: () =>
+            import('./routes/developer/received-sponsorships').then(
               convert(queryClient),
             ),
         },
@@ -270,9 +355,17 @@ export const createAppRouter = (queryClient: QueryClient) =>
           lazy: () =>
             import('./routes/payments/donation').then(convert(queryClient)),
         },
+        {
+          path: paths.payments.sponsorship.path,
+          lazy: () =>
+            import('./routes/payments/sponsorship').then(convert(queryClient)),
+        },
       ],
     },
-
+    {
+      path: '/volunteer/:userId',
+      element: <PublicVolunteerProfile />,
+    },
     {
       path: '*',
       lazy: () => import('./routes/not-found').then(convert(queryClient)),

@@ -1,8 +1,13 @@
 import {
   ClipboardCheck,
   // Users, Folder,
-  DollarSign,
+  // DollarSign,
   Home,
+  Settings,
+  Ribbon,
+  BarChart3,
+  Heart,
+  Wallet,
 } from 'lucide-react';
 import { Outlet } from 'react-router';
 
@@ -29,10 +34,36 @@ const AdminRoot = () => {
       to: paths.admin.projectApprovals.getHref(),
       icon: ClipboardCheck,
     },
+    // TODO: Remove this path and related code
+    // {
+    //   name: 'Donations & Sponsorships',
+    //   to: paths.admin.donationsSponshorships.getHref(),
+    //   icon: DollarSign,
+    // },
     {
-      name: 'Donations & Sponsorships',
-      to: paths.admin.donationsSponshorships.getHref(),
-      icon: DollarSign,
+      name: 'All Donations & Reports',
+      to: paths.admin.allDonations.getHref(),
+      icon: BarChart3,
+    },
+    {
+      name: 'My Donations',
+      to: paths.admin.myDonations.getHref(),
+      icon: Ribbon,
+    },
+    {
+      name: 'My Sponsorships',
+      to: paths.admin.mySponsorships.getHref(),
+      icon: Heart,
+    },
+    {
+      name: 'Withdrawals',
+      to: paths.admin.withdrawals.getHref(),
+      icon: Wallet,
+    },
+    {
+      name: 'Settings',
+      to: paths.admin.settings.getHref(),
+      icon: Settings,
     },
   ].filter(Boolean) as SideNavigationItem[];
 

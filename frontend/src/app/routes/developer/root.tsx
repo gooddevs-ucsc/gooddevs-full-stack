@@ -1,4 +1,13 @@
-import { DollarSign, Folder, Home, Settings, User } from 'lucide-react';
+import {
+  // DollarSign,
+  Folder,
+  Home,
+  Settings,
+  User,
+  Ribbon,
+  Heart,
+  Gift,
+} from 'lucide-react';
 import { Outlet } from 'react-router';
 
 import { DashboardLayout, type SideNavigationItem } from '@/components/layouts';
@@ -16,10 +25,26 @@ const DeveloperRoot = () => {
   const navigation = [
     { name: 'Dashboard', to: paths.developer.dashboard.getHref(), icon: Home },
     { name: 'Projects', to: paths.developer.projects.getHref(), icon: Folder },
+    // TODO: Remove this path and related code
+    // {
+    //   name: 'Sponsorships',
+    //   to: paths.developer.sponsorships.getHref(),
+    //   icon: DollarSign,
+    // },
     {
-      name: 'Sponsorships',
-      to: paths.developer.sponsorships.getHref(),
-      icon: DollarSign,
+      name: 'My Donations',
+      to: paths.developer.myDonations.getHref(),
+      icon: Ribbon,
+    },
+    {
+      name: 'My Sponsorships',
+      to: paths.developer.mySponsorships.getHref(),
+      icon: Heart,
+    },
+    {
+      name: 'Sponsorships Received',
+      to: paths.developer.receivedSponsorships.getHref(),
+      icon: Gift,
     },
     {
       name: 'Profile',

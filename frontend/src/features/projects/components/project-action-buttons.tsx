@@ -12,11 +12,13 @@ import { useRejectProject } from '../api/reject-project';
 interface ProjectActionButtonsProps {
   projectId: string;
   projectTitle: string;
+  onActionComplete?: () => void;
 }
 
 export const ProjectActionButtons = ({
   projectId,
   projectTitle,
+  onActionComplete,
 }: ProjectActionButtonsProps) => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotifications();
@@ -32,6 +34,7 @@ export const ProjectActionButtons = ({
           title: 'Project Approved',
           message: `Project "${projectTitle}" has been approved successfully.`,
         });
+        onActionComplete?.();
       },
       onError: (error) => {
         console.error('Approval error:', error);
@@ -55,6 +58,7 @@ export const ProjectActionButtons = ({
           title: 'Project Rejected',
           message: `Project "${projectTitle}" has been rejected.`,
         });
+        onActionComplete?.();
       },
       onError: () => {
         addNotification({

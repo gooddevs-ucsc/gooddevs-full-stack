@@ -170,6 +170,7 @@ export enum TaskPriority {
 export interface Task {
   id: string;
   project_id: string;
+  creator_id: string;
   title: string;
   description?: string;
   status: TaskStatus;
@@ -178,6 +179,7 @@ export interface Task {
   actual_hours?: number;
   due_date?: string;
   assignee_id?: string;
+  creator?: User;
   assignee?: User;
   created_at: string;
   updated_at: string;
@@ -292,6 +294,24 @@ export type Donation = {
 
 export type DonationsResponse = {
   data: Donation[];
+  meta: Meta;
+};
+
+// Sponsorship types
+export type Sponsorship = {
+  id: string;
+  sponsor_id: string;
+  recipient_id: string;
+  order_id: number;
+  message?: string;
+  created_at: string;
+  sponsor?: User;
+  recipient?: User;
+  payment?: PaymentPublic;
+};
+
+export type SponsorshipsResponse = {
+  data: Sponsorship[];
   meta: Meta;
 };
 
@@ -414,4 +434,40 @@ export interface NotificationsResponse {
     total: number;
     totalPages: number;
   };
+}
+
+// Add these types at the end of the file
+
+export interface OpenPosition {
+  id: string;
+  project_id: string;
+  volunteer_role: DeveloperRole;
+  openings_count: number;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OpenPositionCreate {
+  volunteer_role: DeveloperRole;
+  openings_count: number;
+  description?: string;
+}
+
+export interface OpenPositionUpdate {
+  openings_count?: number;
+  description?: string;
+}
+
+export interface OpenPositionsResponse {
+  data: OpenPosition[];
+  count: number;
+}
+
+export interface OpenPositionResponse {
+  data: OpenPosition;
+}
+
+export interface CanManagePositionsResponse {
+  can_manage: boolean;
 }

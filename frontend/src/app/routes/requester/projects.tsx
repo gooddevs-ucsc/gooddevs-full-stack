@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { paths } from '@/config/paths';
 import { useUserProjects } from '@/features/projects/api/get-user-projects'; // You'll need to create this
+import { useProjectTeamSizes } from '@/features/projects/hooks/use-project-team-sizes';
 import {
   ProjectCard,
   RequesterProject,
 } from '@/features/requester/components/project-card';
 import { Project } from '@/types/api';
+import { formatEstimatedTimeline } from '@/utils/format';
 
 // Map API project status to display status
 const mapProjectStatus = (apiStatus: string) => {
@@ -27,8 +29,11 @@ const mapProjectStatus = (apiStatus: string) => {
   }
 };
 
-// Transform API Project to RequesterProject
-const transformProject = (project: Project): RequesterProject => ({
+// Transform API Project to RequesterProject with team size
+const transformProject = (
+  project: Project,
+  teamSize: number = 0,
+): RequesterProject => ({
   id: project.id,
   title: project.title,
   description: project.description,
@@ -36,15 +41,11 @@ const transformProject = (project: Project): RequesterProject => ({
     | 'Pending'
     | 'Active'
     | 'Completed',
-  progress:
-    mapProjectStatus(project.status) === 'Completed'
-      ? 100
-      : mapProjectStatus(project.status) === 'Active'
-        ? 0
-        : 0,
   createdAt: new Date(project.created_at as string).toISOString().split('T')[0],
-  teamSize: 1,
-  estimatedCompletion: null,
+  teamSize: teamSize,
+  estimatedCompletion: project.estimated_timeline
+    ? formatEstimatedTimeline(project.estimated_timeline)
+    : null,
   projectType: project.project_type
     ? project.project_type.replace('_', ' ')
     : 'Unknown',
@@ -69,6 +70,11 @@ const RequesterProjectsRoute = () => {
   });
 
   const projects = projectsData?.data || [];
+  const projectIds = projects.map((project) => project.id);
+
+  // Fetch team sizes for all projects
+  const { teamSizes, isLoading: isLoadingTeamSizes } =
+    useProjectTeamSizes(projectIds);
 
   const statusTabs: ProjectStatus[] = ['All', 'Active', 'Completed', 'Pending'];
 
@@ -106,10 +112,10 @@ const RequesterProjectsRoute = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingTeamSizes) {
     return (
       <ContentLayout title="My Projects">
-        <div className="flex h-48 w-full items-center justify-center">
+        <div className="flex h-32 items-center justify-center">
           <Spinner size="lg" />
         </div>
       </ContentLayout>
@@ -212,7 +218,7 @@ const RequesterProjectsRoute = () => {
             {filteredProjects.map((project: Project) => (
               <ProjectCard
                 key={project.id}
-                project={transformProject(project)}
+                project={transformProject(project, teamSizes[project.id] || 0)}
               />
             ))}
           </div>
