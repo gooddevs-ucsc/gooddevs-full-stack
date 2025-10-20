@@ -529,7 +529,7 @@ const SponsorProfile = () => {
               <div className="flex gap-2">
                 <Button
                   size="sm"
-                  onClick={() => navigate(paths.sponsor.myDonations.getHref())}
+                  onClick={() => navigate(paths.payments.donation.getHref())}
                 >
                   <div className="flex items-center gap-4">
                     <Plus className="mr-2 size-4" />
@@ -565,18 +565,7 @@ const SponsorProfile = () => {
                 <Button
                   size="sm"
                   onClick={() =>
-                    navigate(paths.sponsor.donationsSponshorships.getHref())
-                  }
-                >
-                  <div className="flex items-center gap-4">
-                    <Plus className="mr-2 size-4" />
-                    Create Sponsorship
-                  </div>
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() =>
-                    navigate(paths.sponsor.donationsSponshorships.getHref())
+                    navigate(paths.sponsor.mySponsorships.getHref())
                   }
                 >
                   <div className="flex items-center gap-4">
