@@ -1,11 +1,12 @@
 import {
   ClipboardCheck,
   // Users, Folder,
-  DollarSign,
+  // DollarSign,
   Home,
   Settings,
   Ribbon,
   BarChart3,
+  Heart,
 } from 'lucide-react';
 import { Outlet } from 'react-router';
 
@@ -32,11 +33,12 @@ const AdminRoot = () => {
       to: paths.admin.projectApprovals.getHref(),
       icon: ClipboardCheck,
     },
-    {
-      name: 'Donations & Sponsorships',
-      to: paths.admin.donationsSponshorships.getHref(),
-      icon: DollarSign,
-    },
+    // TODO: Remove this path and related code
+    // {
+    //   name: 'Donations & Sponsorships',
+    //   to: paths.admin.donationsSponshorships.getHref(),
+    //   icon: DollarSign,
+    // },
     {
       name: 'All Donations & Reports',
       to: paths.admin.allDonations.getHref(),
@@ -46,6 +48,11 @@ const AdminRoot = () => {
       name: 'My Donations',
       to: paths.admin.myDonations.getHref(),
       icon: Ribbon,
+    },
+    {
+      name: 'My Sponsorships',
+      to: paths.admin.mySponsorships.getHref(),
+      icon: Heart,
     },
     {
       name: 'Settings',
