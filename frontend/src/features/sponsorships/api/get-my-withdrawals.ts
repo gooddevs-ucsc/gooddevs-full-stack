@@ -2,12 +2,11 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api-client';
 import { QueryConfig } from '@/lib/react-query';
-import { Meta } from '@/types/api';
+import { BaseEntity, Meta } from '@/types/api';
 
 export type WithdrawalStatus = 'NOT_WITHDRAWN' | 'PENDING' | 'COMPLETED';
 
-export type Withdrawal = {
-  id: string;
+export type Withdrawal = BaseEntity & {
   recipient_id: string;
   amount_requested: number;
   fee_percentage: number;
