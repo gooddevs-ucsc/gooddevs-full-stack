@@ -18,6 +18,7 @@ import { useNavigate, Link } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { paths } from '@/config/paths';
 import { useApprovedApplicants } from '@/features/projects/api/get-approved-applicants';
 import { useUser } from '@/lib/auth';
 import { usePublicUserProfile } from '@/lib/public-profile-api';
@@ -222,6 +223,23 @@ export const ProjectDescriptionTab = ({
                         <p className="text-sm text-slate-600">{member.email}</p>
                       )}
                     </div>
+                    {user && user.id !== member.id && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-pink-300 text-pink-600 hover:bg-pink-50 hover:text-pink-700"
+                        onClick={() =>
+                          navigate(
+                            paths.payments.sponsorship.getHref(member.id),
+                          )
+                        }
+                      >
+                        <div className="flex items-center">
+                          <Heart className="mr-1 size-4" />
+                          Sponsor
+                        </div>
+                      </Button>
+                    )}
                   </div>
                 );
               })}
