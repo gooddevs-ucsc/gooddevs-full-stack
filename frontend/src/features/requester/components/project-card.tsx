@@ -25,7 +25,7 @@ export interface RequesterProject {
   id: string;
   title: string;
   description: string;
-  status: 'Active' | 'Completed' | 'Pending';
+  status: 'Active' | 'Completed' | 'Pending' | 'Rejected';
   createdAt: string;
   teamSize: number;
   estimatedCompletion: string | null; // Now holds timeline text (e.g., "1-3 months"), not a date
@@ -45,6 +45,8 @@ const getStatusColor = (status: string) => {
       return 'border-blue-200 bg-blue-50 text-blue-700';
     case 'Pending':
       return 'border-orange-200 bg-orange-50 text-orange-700';
+    case 'Rejected':
+      return 'border-red-200 bg-red-50 text-red-700';
     default:
       return 'border-slate-200 bg-slate-50 text-slate-700';
   }

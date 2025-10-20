@@ -24,6 +24,8 @@ const mapProjectStatus = (apiStatus: string) => {
       return 'Active';
     case 'COMPLETED':
       return 'Completed';
+    case 'REJECTED':
+      return 'Rejected';
     default:
       return 'Pending';
   }
@@ -40,7 +42,8 @@ const transformProject = (
   status: mapProjectStatus(project.status) as
     | 'Pending'
     | 'Active'
-    | 'Completed',
+    | 'Completed'
+    | 'Rejected',
   createdAt: new Date(project.created_at as string).toISOString().split('T')[0],
   teamSize: teamSize,
   estimatedCompletion: project.estimated_timeline
@@ -52,7 +55,7 @@ const transformProject = (
   technologies: project.preferred_technologies?.split(',') || [],
 });
 
-type ProjectStatus = 'All' | 'Active' | 'Completed' | 'Pending';
+type ProjectStatus = 'All' | 'Active' | 'Completed' | 'Pending' | 'Rejected';
 
 const RequesterProjectsRoute = () => {
   const navigate = useNavigate();
@@ -76,7 +79,13 @@ const RequesterProjectsRoute = () => {
   const { teamSizes, isLoading: isLoadingTeamSizes } =
     useProjectTeamSizes(projectIds);
 
-  const statusTabs: ProjectStatus[] = ['All', 'Active', 'Completed', 'Pending'];
+  const statusTabs: ProjectStatus[] = [
+    'All',
+    'Active',
+    'Completed',
+    'Pending',
+    'Rejected',
+  ];
 
   // Filter projects based on search term and status
   const filteredProjects = projects.filter((project: Project) => {
@@ -107,6 +116,8 @@ const RequesterProjectsRoute = () => {
         return 'border-blue-200 bg-blue-50 text-blue-700';
       case 'Pending':
         return 'border-orange-200 bg-orange-50 text-orange-700';
+      case 'Rejected':
+        return 'border-red-200 bg-red-50 text-red-700';
       default:
         return 'border-slate-200 bg-slate-50 text-slate-700';
     }

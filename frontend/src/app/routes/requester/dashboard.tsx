@@ -87,8 +87,8 @@ const RequestorDashboardRoute = () => {
           };
         default:
           return {
-            status: 'Unknown',
-            statusColor: 'border-gray-200 bg-gray-50 text-gray-600',
+            status: 'Rejected',
+            statusColor: 'border-red-200 bg-red-100 text-red-800',
           };
       }
     };
