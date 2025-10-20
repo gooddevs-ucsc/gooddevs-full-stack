@@ -435,3 +435,39 @@ export interface NotificationsResponse {
     totalPages: number;
   };
 }
+
+// Add these types at the end of the file
+
+export interface OpenPosition {
+  id: string;
+  project_id: string;
+  volunteer_role: DeveloperRole;
+  openings_count: number;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OpenPositionCreate {
+  volunteer_role: DeveloperRole;
+  openings_count: number;
+  description?: string;
+}
+
+export interface OpenPositionUpdate {
+  openings_count?: number;
+  description?: string;
+}
+
+export interface OpenPositionsResponse {
+  data: OpenPosition[];
+  count: number;
+}
+
+export interface OpenPositionResponse {
+  data: OpenPosition;
+}
+
+export interface CanManagePositionsResponse {
+  can_manage: boolean;
+}

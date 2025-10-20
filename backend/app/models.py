@@ -246,6 +246,7 @@ class Project(ProjectBase, table=True):
     tasks: list["Task"] = Relationship(
         back_populates="project", cascade_delete=True)
     threads: list["ProjectThread"] = Relationship(back_populates="project")
+    openings: list["OpenPosition"] = Relationship(back_populates="project")
 
 
 # Properties to return via API, id is always required
@@ -1339,7 +1340,7 @@ class VolunteerProfileUpdate(SQLModel):
     contact_phone: str | None = Field(default=None, max_length=20)
     website: str | None = Field(default=None, max_length=255)
     skills: list[str] | None = None
-    experience: list[dict] | None = None
+    experience: list[dict] | None = Field(default=None)
 
 
 class VolunteerProfile(VolunteerProfileBase, table=True):
@@ -1389,3 +1390,54 @@ class VolunteerStatsPublic(SQLModel):
     total_replies_made: int
     volunteer_name: str
     member_since: str
+
+class OpenPosition(SQLModel, table=True):
+    """
+    Tracks open positions for projects that need volunteers.
+    Only users with review permissions can manage these.
+    """
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    project_id: uuid.UUID = Field(
+        foreign_key="project.id", nullable=False, ondelete="CASCADE"
+    )
+    volunteer_role: DeveloperRole = Field(
+        sa_column=Column(Enum(DeveloperRole))
+    )
+    openings_count: int = Field(ge=1, le=10, default=1)
+    description: str | None = Field(default=None, max_length=500)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationship
+    project: Project | None = Relationship()
+
+
+# API models for open positions
+class OpenPositionCreate(SQLModel):
+    volunteer_role: DeveloperRole
+    openings_count: int = Field(ge=1, le=10, default=1)
+    description: str | None = Field(default=None, max_length=500)
+
+
+class OpenPositionUpdate(SQLModel):
+    openings_count: int | None = Field(default=None, ge=1, le=10)
+    description: str | None = Field(default=None, max_length=500)
+
+
+class OpenPositionPublic(SQLModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    volunteer_role: DeveloperRole
+    openings_count: int
+    description: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class OpenPositionsPublic(SQLModel):
+    data: list[OpenPositionPublic]
+    count: int
+
+
+class OpenPositionResponse(SQLModel):
+    data: OpenPositionPublic

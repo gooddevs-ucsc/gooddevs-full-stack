@@ -3,7 +3,7 @@ from app.models import (
     Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, UserRole,
     ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate, TaskStatus,
     PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, DonationStatistics, UserVolunteerRole, VolunteerRole, VolunteerProfile, VolunteerProfileCreate, VolunteerProfilePublic, VolunteerProfileUpdate,
-    ApplicationReviewerPermission, ApplicationReviewerPermissionCreate, ApplicationReviewerPermissionPublic, ReviewerPermissionStatus, Sponsorship, SponsorshipCreate, SponsorshipStatistics, UserVolunteerRole, VolunteerRole, Withdrawal, WithdrawalStatus,
+    ApplicationReviewerPermission, ApplicationReviewerPermissionCreate, ApplicationReviewerPermissionPublic, ReviewerPermissionStatus, Sponsorship, SponsorshipCreate, SponsorshipStatistics, UserVolunteerRole, VolunteerRole, Withdrawal, WithdrawalStatus, OpenPosition, OpenPositionCreate, OpenPositionUpdate, DeveloperRole
 )
 
 import uuid
@@ -2607,3 +2607,90 @@ def get_volunteer_approved_projects(
     count = session.exec(count_statement).one()
 
     return list(projects), count
+
+def create_open_position(
+    *,
+    session: Session,
+    position_in: OpenPositionCreate,
+    project_id: uuid.UUID
+) -> OpenPosition:
+    """Create a new open position for a project"""
+    # Check if position for this role already exists
+    existing = get_open_position_by_role(
+        session=session, project_id=project_id, volunteer_role=position_in.volunteer_role
+    )
+    if existing:
+        raise ValueError(f"Open position for {position_in.volunteer_role} already exists")
+    
+    db_position = OpenPosition.model_validate(
+        position_in,
+        update={"project_id": project_id}
+    )
+    session.add(db_position)
+    session.commit()
+    session.refresh(db_position)
+    return db_position
+
+
+def get_open_position_by_id(
+    *, session: Session, position_id: uuid.UUID
+) -> OpenPosition | None:
+    """Get open position by ID"""
+    return session.get(OpenPosition, position_id)
+
+
+def get_open_position_by_role(
+    *,
+    session: Session,
+    project_id: uuid.UUID,
+    volunteer_role: DeveloperRole
+) -> OpenPosition | None:
+    """Get open position by project and role"""
+    statement = select(OpenPosition).where(
+        OpenPosition.project_id == project_id,
+        OpenPosition.volunteer_role == volunteer_role
+    )
+    return session.exec(statement).first()
+
+
+def get_open_positions_by_project(
+    *,
+    session: Session,
+    project_id: uuid.UUID
+) -> list[OpenPosition]:
+    """Get all open positions for a project"""
+    statement = (
+        select(OpenPosition)
+        .where(OpenPosition.project_id == project_id)
+        .order_by(OpenPosition.volunteer_role)
+    )
+    return session.exec(statement).all()
+
+
+def update_open_position(
+    *,
+    session: Session,
+    db_position: OpenPosition,
+    position_in: OpenPositionUpdate
+) -> OpenPosition:
+    """Update an open position"""
+    position_data = position_in.model_dump(exclude_unset=True)
+    position_data["updated_at"] = datetime.now(timezone.utc)
+
+    db_position.sqlmodel_update(position_data)
+    session.add(db_position)
+    session.commit()
+    session.refresh(db_position)
+    return db_position
+
+
+def delete_open_position(
+    *, session: Session, position_id: uuid.UUID
+) -> bool:
+    """Delete an open position"""
+    position = session.get(OpenPosition, position_id)
+    if position:
+        session.delete(position)
+        session.commit()
+        return True
+    return False
