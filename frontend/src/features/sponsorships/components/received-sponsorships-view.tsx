@@ -5,6 +5,9 @@ import {
   Clock,
   Filter,
   User,
+  Wallet,
+  TrendingUp,
+  AlertCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -13,6 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { useReceivedSponsorships } from '@/features/sponsorships/api/get-received-sponsorships';
+import { useWithdrawalBalance } from '@/features/sponsorships/api/get-withdrawal-balance';
+import { WithdrawalRequestDialog } from '@/features/sponsorships/components/withdrawal-request-dialog';
 import { PAYMENT_STATUS } from '@/types/api';
 
 export const ReceivedSponsorshipsView = () => {
@@ -25,7 +30,11 @@ export const ReceivedSponsorshipsView = () => {
     page: 1,
   });
 
+  // Fetch withdrawal balance
+  const balanceQuery = useWithdrawalBalance();
+
   const sponsorships = sponsorshipsQuery.data?.data || [];
+  const balance = balanceQuery.data;
 
   // Filter sponsorships based on selected status
   const filteredSponsorships = sponsorships.filter((sponsorship) => {
@@ -95,6 +104,55 @@ export const ReceivedSponsorshipsView = () => {
 
   return (
     <div className="space-y-6">
+      {/* Withdrawal Balance Card */}
+      {balance && (
+        <Card className="border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Wallet className="size-5 text-green-600" />
+                <CardTitle>Withdrawal Balance</CardTitle>
+              </div>
+              <WithdrawalRequestDialog
+                availableBalance={balance.available_balance}
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-4">
+              <div>
+                <p className="text-sm text-gray-600">Total Received</p>
+                <p className="text-xl font-bold text-gray-900">
+                  LKR {balance.total_received.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Total Withdrawn</p>
+                <p className="text-xl font-bold text-gray-900">
+                  LKR {balance.total_withdrawn.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Pending Withdrawals</p>
+                <p className="text-xl font-bold text-yellow-600">
+                  LKR {balance.pending_withdrawals.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Available Balance</p>
+                <p className="text-2xl font-bold text-green-600">
+                  LKR {balance.available_balance.toFixed(2)}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-800">
+              <AlertCircle className="size-4" />
+              <p>A 6% processing fee will be deducted from all withdrawals.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -102,7 +160,7 @@ export const ReceivedSponsorshipsView = () => {
             <CardTitle className="text-sm font-medium">
               Total Received
             </CardTitle>
-            <Heart className="size-4 text-pink-600" />
+            <TrendingUp className="size-4 text-pink-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
