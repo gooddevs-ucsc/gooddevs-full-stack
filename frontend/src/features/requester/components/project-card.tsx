@@ -145,7 +145,7 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
         </div>
 
         {/* Description */}
-        <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-slate-600">
+        <p className="mb-4 line-clamp-1 text-sm leading-relaxed text-slate-600">
           {project.description}
         </p>
 
@@ -191,8 +191,10 @@ export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
             onClick={handleViewApplications}
             className="border-blue-300/50 bg-white text-blue-600 shadow-sm transition-all duration-200 hover:border-blue-400 hover:bg-blue-50"
           >
-            <UserCheck className="mr-2 size-4" />
-            Applications
+            <div className="flex items-center gap-4">
+              <UserCheck className="mr-2 size-4" />
+              Applications
+            </div>
           </Button>
           <Button
             variant="outline"
