@@ -3,7 +3,7 @@ from app.models import (
     Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, UserRole,
     ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate, TaskStatus,
     PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, DonationStatistics, UserVolunteerRole, VolunteerRole, VolunteerProfile, VolunteerProfileCreate, VolunteerProfilePublic, VolunteerProfileUpdate,
-    ApplicationReviewerPermission, ApplicationReviewerPermissionCreate, ApplicationReviewerPermissionPublic, ReviewerPermissionStatus, Sponsorship, SponsorshipCreate, SponsorshipStatistics, UserVolunteerRole, VolunteerRole,
+    ApplicationReviewerPermission, ApplicationReviewerPermissionCreate, ApplicationReviewerPermissionPublic, ReviewerPermissionStatus, Sponsorship, SponsorshipCreate, SponsorshipStatistics, UserVolunteerRole, VolunteerRole, Withdrawal, WithdrawalStatus,
 )
 
 import uuid
@@ -1270,6 +1270,167 @@ def get_sponsorship_statistics(
         unique_sponsors=unique_sponsors,
         unique_recipients=unique_recipients
     )
+
+
+# Withdrawal CRUD operations
+
+
+def get_withdrawal_balance(
+    *,
+    session: Session,
+    recipient_id: uuid.UUID
+) -> dict[str, float]:
+    """
+    Calculate withdrawal balance for a recipient.
+    Returns total received, total withdrawn, pending withdrawals, and available balance.
+    """
+    
+    # Get total successfully received sponsorships
+    statement = (
+        select(func.sum(Payment.amount))
+        .select_from(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Sponsorship.recipient_id == recipient_id,
+            Payment.status == PaymentStatus.SUCCESS
+        )
+    )
+    total_received = session.exec(statement).one() or 0.0
+
+    # Get total withdrawn (completed withdrawals)
+    withdrawn_statement = (
+        select(func.sum(Withdrawal.amount_requested))
+        .where(
+            Withdrawal.recipient_id == recipient_id,
+            Withdrawal.status == WithdrawalStatus.COMPLETED
+        )
+    )
+    total_withdrawn = session.exec(withdrawn_statement).one() or 0.0
+
+    # Get pending withdrawals
+    pending_statement = (
+        select(func.sum(Withdrawal.amount_requested))
+        .where(
+            Withdrawal.recipient_id == recipient_id,
+            Withdrawal.status == WithdrawalStatus.PENDING
+        )
+    )
+    pending_withdrawals = session.exec(pending_statement).one() or 0.0
+
+    # Calculate available balance
+    available_balance = total_received - total_withdrawn - pending_withdrawals
+
+    return {
+        "total_received": float(total_received),
+        "total_withdrawn": float(total_withdrawn),
+        "pending_withdrawals": float(pending_withdrawals),
+        "available_balance": float(available_balance)
+    }
+
+
+def create_withdrawal(
+    *,
+    session: Session,
+    recipient_id: uuid.UUID,
+    amount_requested: float,
+    bank_account_number: str,
+    bank_name: str,
+    account_holder_name: str,
+    fee_percentage: float = 6.0
+) -> Withdrawal:
+    """
+    Create a new withdrawal request.
+    Calculates fee and amount to transfer automatically.
+    """
+    
+    # Calculate fee and amount to transfer
+    fee_amount = amount_requested * (fee_percentage / 100)
+    amount_to_transfer = amount_requested - fee_amount
+
+    withdrawal = Withdrawal(
+        recipient_id=recipient_id,
+        amount_requested=amount_requested,
+        fee_percentage=fee_percentage,
+        fee_amount=fee_amount,
+        amount_to_transfer=amount_to_transfer,
+        bank_account_number=bank_account_number,
+        bank_name=bank_name,
+        account_holder_name=account_holder_name,
+        status=WithdrawalStatus.PENDING,
+        requested_at=datetime.utcnow()
+    )
+
+    session.add(withdrawal)
+    session.commit()
+    session.refresh(withdrawal)
+    return withdrawal
+
+
+def get_withdrawals_by_recipient(
+    *,
+    session: Session,
+    recipient_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Withdrawal]:
+    """Get all withdrawals for a specific recipient, ordered by requested_at descending"""
+    
+    statement = (
+        select(Withdrawal)
+        .where(Withdrawal.recipient_id == recipient_id)
+        .order_by(Withdrawal.requested_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_withdrawals_by_recipient(
+    *,
+    session: Session,
+    recipient_id: uuid.UUID
+) -> int:
+    """Count total withdrawals for a recipient"""
+    
+    statement = (
+        select(func.count())
+        .select_from(Withdrawal)
+        .where(Withdrawal.recipient_id == recipient_id)
+    )
+    return session.exec(statement).one()
+
+
+def get_withdrawal_by_id(
+    *,
+    session: Session,
+    withdrawal_id: uuid.UUID
+) -> Withdrawal | None:
+    """Get a specific withdrawal by ID"""
+    
+    return session.get(Withdrawal, withdrawal_id)
+
+
+def complete_withdrawal(
+    *,
+    session: Session,
+    withdrawal_id: uuid.UUID
+) -> Withdrawal:
+    """
+    Mark a withdrawal as completed.
+    This would be called after the mock transfer is processed.
+    """
+    
+    withdrawal = session.get(Withdrawal, withdrawal_id)
+    if not withdrawal:
+        raise ValueError(f"Withdrawal with id {withdrawal_id} not found")
+    
+    withdrawal.status = WithdrawalStatus.COMPLETED
+    withdrawal.completed_at = datetime.utcnow()
+    
+    session.add(withdrawal)
+    session.commit()
+    session.refresh(withdrawal)
+    return withdrawal
 
 
 # Requester Profile CRUD operations
