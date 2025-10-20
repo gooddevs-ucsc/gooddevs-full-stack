@@ -254,6 +254,109 @@ def get_my_withdrawals(
         )
 
 
+@router.get("/all", response_model=WithdrawalsPublic, status_code=200)
+def get_all_withdrawals(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    skip: int = 0,
+    limit: int = 100
+) -> WithdrawalsPublic:
+    """
+    Get all withdrawal requests across all users (ADMIN only).
+
+    Returns withdrawals ordered by requested_at (most recent first).
+
+    Args:
+        skip: Number of records to skip (for pagination)
+        limit: Maximum number of records to return
+
+    Returns:
+        WithdrawalsPublic: List of all withdrawals with pagination metadata
+
+    Raises:
+        HTTPException 403: User is not admin
+
+    Requires admin authentication.
+    """
+    try:
+        # Only admins can view all withdrawals
+        if not current_user.is_superuser and current_user.role != UserRole.ADMIN:
+            raise HTTPException(
+                status_code=403,
+                detail="Only administrators can view all withdrawals"
+            )
+
+        # Get all withdrawals from database (we'll create a new crud function)
+        withdrawals = crud.get_all_withdrawals(
+            session=session,
+            skip=skip,
+            limit=limit
+        )
+
+        # Get total count for pagination
+        total = crud.count_all_withdrawals(session=session)
+
+        # Convert to public models with recipient info
+        withdrawals_public = []
+        for withdrawal in withdrawals:
+            # Get recipient user info
+            recipient = crud.get_user_by_id(
+                session=session, user_id=withdrawal.recipient_id)
+
+            withdrawal_public = WithdrawalPublic(
+                id=withdrawal.id,
+                recipient_id=withdrawal.recipient_id,
+                amount_requested=withdrawal.amount_requested,
+                fee_percentage=withdrawal.fee_percentage,
+                fee_amount=withdrawal.fee_amount,
+                amount_to_transfer=withdrawal.amount_to_transfer,
+                bank_account_number=withdrawal.bank_account_number,
+                bank_name=withdrawal.bank_name,
+                account_holder_name=withdrawal.account_holder_name,
+                status=withdrawal.status,
+                requested_at=withdrawal.requested_at,
+                completed_at=withdrawal.completed_at,
+                recipient=UserPublic(
+                    id=recipient.id,
+                    email=recipient.email,
+                    is_active=recipient.is_active,
+                    is_superuser=recipient.is_superuser,
+                    firstname=recipient.firstname,
+                    lastname=recipient.lastname,
+                    role=recipient.role
+                ) if recipient else None
+            )
+            withdrawals_public.append(withdrawal_public)
+
+        # Calculate pagination metadata
+        total_pages = (total + limit - 1) // limit if limit > 0 else 1
+        current_page = (skip // limit) + 1 if limit > 0 else 1
+
+        meta = Meta(
+            page=current_page,
+            total=total,
+            totalPages=total_pages
+        )
+
+        logger.info(
+            f"Admin {current_user.id} retrieved {len(withdrawals_public)} total withdrawals")
+
+        return WithdrawalsPublic(
+            data=withdrawals_public,
+            meta=meta
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching all withdrawals: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve withdrawals"
+        )
+
+
 @router.post("/{withdrawal_id}/complete", response_model=WithdrawalPublic, status_code=200)
 def complete_withdrawal(
     *,

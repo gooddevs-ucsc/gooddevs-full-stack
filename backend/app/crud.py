@@ -1284,7 +1284,7 @@ def get_withdrawal_balance(
     Calculate withdrawal balance for a recipient.
     Returns total received, total withdrawn, pending withdrawals, and available balance.
     """
-    
+
     # Get total successfully received sponsorships
     statement = (
         select(func.sum(Payment.amount))
@@ -1342,7 +1342,7 @@ def create_withdrawal(
     Create a new withdrawal request.
     Calculates fee and amount to transfer automatically.
     """
-    
+
     # Calculate fee and amount to transfer
     fee_amount = amount_requested * (fee_percentage / 100)
     amount_to_transfer = amount_requested - fee_amount
@@ -1374,7 +1374,7 @@ def get_withdrawals_by_recipient(
     limit: int = 100
 ) -> list[Withdrawal]:
     """Get all withdrawals for a specific recipient, ordered by requested_at descending"""
-    
+
     statement = (
         select(Withdrawal)
         .where(Withdrawal.recipient_id == recipient_id)
@@ -1391,7 +1391,7 @@ def count_withdrawals_by_recipient(
     recipient_id: uuid.UUID
 ) -> int:
     """Count total withdrawals for a recipient"""
-    
+
     statement = (
         select(func.count())
         .select_from(Withdrawal)
@@ -1406,7 +1406,7 @@ def get_withdrawal_by_id(
     withdrawal_id: uuid.UUID
 ) -> Withdrawal | None:
     """Get a specific withdrawal by ID"""
-    
+
     return session.get(Withdrawal, withdrawal_id)
 
 
@@ -1419,18 +1419,45 @@ def complete_withdrawal(
     Mark a withdrawal as completed.
     This would be called after the mock transfer is processed.
     """
-    
+
     withdrawal = session.get(Withdrawal, withdrawal_id)
     if not withdrawal:
         raise ValueError(f"Withdrawal with id {withdrawal_id} not found")
-    
+
     withdrawal.status = WithdrawalStatus.COMPLETED
     withdrawal.completed_at = datetime.utcnow()
-    
+
     session.add(withdrawal)
     session.commit()
     session.refresh(withdrawal)
     return withdrawal
+
+
+def get_all_withdrawals(
+    *,
+    session: Session,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Withdrawal]:
+    """Get all withdrawals across all users (admin only), ordered by requested_at descending"""
+
+    statement = (
+        select(Withdrawal)
+        .order_by(Withdrawal.requested_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_all_withdrawals(
+    *,
+    session: Session
+) -> int:
+    """Count total withdrawals across all users"""
+
+    statement = select(func.count()).select_from(Withdrawal)
+    return session.exec(statement).one()
 
 
 # Requester Profile CRUD operations
