@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import items, login, private, users, utils, projects, project_threads, tasks, project_applications, notifications, payments, requester_profile, donations, volunteer_profile, public_profiles, sponsorships, withdrawals, open_positions
+from app.api.routes import items, login, private, users, utils, projects, project_threads, tasks, project_applications, notifications, payments, requester_profile, donations, volunteer_profile, public_profiles, sponsorships, withdrawals, open_positions, sponsor_profile 
 from app.core.config import settings
 
 api_router = APIRouter()
@@ -18,12 +18,9 @@ api_router.include_router(donations.router)
 api_router.include_router(sponsorships.router)
 api_router.include_router(withdrawals.router)
 api_router.include_router(notifications.router)
+api_router.include_router(requester_profile.router, prefix="/requester-profile", tags=["requester-profile"])
+api_router.include_router(sponsor_profile.router, prefix="/sponsor-profile", tags=["sponsor-profile"])
 
-api_router.include_router(
-    requester_profile.router,
-    prefix="/requester-profile",
-    tags=["requester-profile"]
-)
 api_router.include_router(
     volunteer_profile.router,
     prefix="/volunteer-profile",

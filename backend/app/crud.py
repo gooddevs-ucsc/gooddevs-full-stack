@@ -1,8 +1,7 @@
 from sqlalchemy.orm import selectinload
 from app.models import (
     Item, ItemCreate, User, UserCreate, UserUpdate, Project, ProjectCreate, ProjectUpdate, ProjectStatus, Task, TaskCreate, TaskUpdate, ProjectThread, UserRole,
-    ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate, TaskStatus,
-    PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, DonationStatistics, UserVolunteerRole, VolunteerRole, VolunteerProfile, VolunteerProfileCreate, VolunteerProfilePublic, VolunteerProfileUpdate,
+    ProjectThreadCreate, Comment, CommentCreate, CommentUpdate, CommentPublic, Reply, ReplyCreate, ReplyUpdate, ReplyPublic, Payment, PaymentCreate, TaskStatus,PaymentCurrency, PaymentStatus, ProjectApplication, ProjectApplicationCreate, ProjectApplicationUpdate, ApplicationStatus, RequesterProfile, RequesterProfileCreate, RequesterProfileUpdate, RequesterProfilePublic, Donation, DonationCreate, DonationStatistics, UserVolunteerRole, VolunteerRole, SponsorProfile, SponsorProfileCreate, SponsorProfileUpdate, SponsorProfilePublic, VolunteerProfile, VolunteerProfileCreate, VolunteerProfilePublic, VolunteerProfileUpdate,
     ApplicationReviewerPermission, ApplicationReviewerPermissionCreate, ApplicationReviewerPermissionPublic, ReviewerPermissionStatus, Sponsorship, SponsorshipCreate, SponsorshipStatistics, UserVolunteerRole, VolunteerRole, Withdrawal, WithdrawalStatus, OpenPosition, OpenPositionCreate, OpenPositionUpdate, DeveloperRole
 )
 
@@ -1460,9 +1459,548 @@ def count_all_withdrawals(
     return session.exec(statement).one()
 
 
+def get_all_donations(
+    *,
+    session: Session,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Donation]:
+    """
+    Get all donations with SUCCESS or PENDING payment status,
+    ordered by order_id (descending) - for admin use.
+    """
+    statement = (
+        select(Donation)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+        .order_by(Donation.order_id.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_all_donations(
+    *,
+    session: Session
+) -> int:
+    """
+    Count total donations with SUCCESS or PENDING payment status - for admin use.
+    """
+    statement = (
+        select(func.count())
+        .select_from(Donation)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+    )
+    return session.exec(statement).one()
+
+
+def get_donation_statistics(
+    *,
+    session: Session
+) -> DonationStatistics:
+    """
+    Get donation statistics for admin dashboard.
+    Returns total donations, total amount, average donation, etc.
+    """
+    # Get all successful donations
+    statement = (
+        select(Donation, Payment)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.SUCCESS)
+    )
+    results = list(session.exec(statement).all())
+
+    if not results:
+        return DonationStatistics(
+            total_donations=0,
+            total_amount=0.0,
+            average_donation=0.0,
+            pending_donations=0,
+            successful_donations=0,
+            unique_donors=0
+        )
+
+    # Calculate statistics
+    total_amount = sum(payment.amount for _, payment in results)
+    successful_count = len(results)
+    average_donation = total_amount / successful_count if successful_count > 0 else 0.0
+
+    # Count pending donations
+    pending_statement = (
+        select(func.count())
+        .select_from(Donation)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.PENDING)
+    )
+    pending_count = session.exec(pending_statement).one()
+
+    # Count unique donors
+    unique_donors_statement = (
+        select(func.count(func.distinct(Donation.donor_id)))
+        .select_from(Donation)
+        .join(Payment, Donation.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.SUCCESS)
+    )
+    unique_donors = session.exec(unique_donors_statement).one()
+
+    return DonationStatistics(
+        total_donations=successful_count + pending_count,
+        total_amount=float(total_amount),
+        average_donation=float(average_donation),
+        pending_donations=pending_count,
+        successful_donations=successful_count,
+        unique_donors=unique_donors
+    )
+
+
+# Sponsorship CRUD operations
+
+
+def create_sponsorship(
+    *,
+    session: Session,
+    order_id: int,
+    sponsor_id: uuid.UUID,
+    recipient_id: uuid.UUID,
+    message: str | None = None
+) -> Sponsorship:
+    """
+    Create a new sponsorship record linked to a payment.
+    Called during payment initiation, not after payment completion.
+    """
+    # Check if sponsorship already exists for this order_id
+    existing = get_sponsorship_by_order_id(session=session, order_id=order_id)
+    if existing:
+        raise ValueError("Sponsorship already exists for this payment")
+
+    # Validate that sponsor and recipient are different users
+    if sponsor_id == recipient_id:
+        raise ValueError("Cannot sponsor yourself")
+
+    # Create sponsorship
+    db_sponsorship = Sponsorship(
+        sponsor_id=sponsor_id,
+        recipient_id=recipient_id,
+        order_id=order_id,
+        message=message
+    )
+    session.add(db_sponsorship)
+    session.commit()
+    session.refresh(db_sponsorship)
+    return db_sponsorship
+
+
+def get_sponsorship_by_order_id(
+    *,
+    session: Session,
+    order_id: int
+) -> Sponsorship | None:
+    """Get sponsorship by payment order_id"""
+    statement = select(Sponsorship).where(Sponsorship.order_id == order_id)
+    return session.exec(statement).first()
+
+
+def get_sponsorships_by_sponsor_id(
+    *,
+    session: Session,
+    sponsor_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Sponsorship]:
+    """
+    Get all sponsorships made by a specific sponsor with SUCCESS or PENDING payment status,
+    ordered by order_id (descending).
+    This returns sponsorships with their relationships loaded.
+    Only includes sponsorships where payment status is SUCCESS (2) or PENDING (0).
+    """
+    statement = (
+        select(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Sponsorship.sponsor_id == sponsor_id,
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+        .order_by(Sponsorship.order_id.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def get_sponsorships_by_recipient_id(
+    *,
+    session: Session,
+    recipient_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Sponsorship]:
+    """
+    Get all sponsorships received by a specific recipient with SUCCESS or PENDING payment status,
+    ordered by order_id (descending).
+    This returns sponsorships with their relationships loaded.
+    Only includes sponsorships where payment status is SUCCESS (2) or PENDING (0).
+    """
+    statement = (
+        select(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Sponsorship.recipient_id == recipient_id,
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+        .order_by(Sponsorship.order_id.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_sponsorships_by_sponsor_id(
+    *,
+    session: Session,
+    sponsor_id: uuid.UUID
+) -> int:
+    """
+    Count total sponsorships made by a specific sponsor with SUCCESS or PENDING payment status.
+    Only counts sponsorships where payment status is SUCCESS (2) or PENDING (0).
+    """
+    statement = (
+        select(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Sponsorship.sponsor_id == sponsor_id,
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+    )
+    return len(list(session.exec(statement).all()))
+
+
+def count_sponsorships_by_recipient_id(
+    *,
+    session: Session,
+    recipient_id: uuid.UUID
+) -> int:
+    """
+    Count total sponsorships received by a specific recipient with SUCCESS or PENDING payment status.
+    Only counts sponsorships where payment status is SUCCESS (2) or PENDING (0).
+    """
+    statement = (
+        select(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Sponsorship.recipient_id == recipient_id,
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+    )
+    return len(list(session.exec(statement).all()))
+
+
+def get_all_sponsorships(
+    *,
+    session: Session,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Sponsorship]:
+    """
+    Get all sponsorships with SUCCESS or PENDING payment status,
+    ordered by order_id (descending) - for admin use.
+    """
+    statement = (
+        select(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+        .order_by(Sponsorship.order_id.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_all_sponsorships(
+    *,
+    session: Session
+) -> int:
+    """
+    Count total sponsorships with SUCCESS or PENDING payment status - for admin use.
+    """
+    statement = (
+        select(func.count())
+        .select_from(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Payment.status.in_([PaymentStatus.SUCCESS, PaymentStatus.PENDING])
+        )
+    )
+    return session.exec(statement).one()
+
+
+def get_sponsorship_statistics(
+    *,
+    session: Session
+) -> SponsorshipStatistics:
+    """
+    Get sponsorship statistics for admin dashboard.
+    Returns total sponsorships, total amount, average sponsorship, etc.
+    """
+    # Get all successful sponsorships
+    statement = (
+        select(Sponsorship, Payment)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.SUCCESS)
+    )
+    results = list(session.exec(statement).all())
+
+    if not results:
+        return SponsorshipStatistics(
+            total_sponsorships=0,
+            total_amount=0.0,
+            average_sponsorship=0.0,
+            pending_sponsorships=0,
+            successful_sponsorships=0,
+            unique_sponsors=0,
+            unique_recipients=0
+        )
+
+    # Calculate statistics
+    total_amount = sum(payment.amount for _, payment in results)
+    successful_count = len(results)
+    average_sponsorship = total_amount / \
+        successful_count if successful_count > 0 else 0.0
+
+    # Count pending sponsorships
+    pending_statement = (
+        select(func.count())
+        .select_from(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.PENDING)
+    )
+    pending_count = session.exec(pending_statement).one()
+
+    # Count unique sponsors
+    unique_sponsors_statement = (
+        select(func.count(func.distinct(Sponsorship.sponsor_id)))
+        .select_from(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.SUCCESS)
+    )
+    unique_sponsors = session.exec(unique_sponsors_statement).one()
+
+    # Count unique recipients
+    unique_recipients_statement = (
+        select(func.count(func.distinct(Sponsorship.recipient_id)))
+        .select_from(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(Payment.status == PaymentStatus.SUCCESS)
+    )
+    unique_recipients = session.exec(unique_recipients_statement).one()
+
+    return SponsorshipStatistics(
+        total_sponsorships=successful_count + pending_count,
+        total_amount=float(total_amount),
+        average_sponsorship=float(average_sponsorship),
+        pending_sponsorships=pending_count,
+        successful_sponsorships=successful_count,
+        unique_sponsors=unique_sponsors,
+        unique_recipients=unique_recipients
+    )
+
+
+# Withdrawal CRUD operations
+
+
+def get_withdrawal_balance(
+    *,
+    session: Session,
+    recipient_id: uuid.UUID
+) -> dict[str, float]:
+    """
+    Calculate withdrawal balance for a recipient.
+    Returns total received, total withdrawn, pending withdrawals, and available balance.
+    """
+
+    # Get total successfully received sponsorships
+    statement = (
+        select(func.sum(Payment.amount))
+        .select_from(Sponsorship)
+        .join(Payment, Sponsorship.order_id == Payment.order_id)
+        .where(
+            Sponsorship.recipient_id == recipient_id,
+            Payment.status == PaymentStatus.SUCCESS
+        )
+    )
+    total_received = session.exec(statement).one() or 0.0
+
+    # Get total withdrawn (completed withdrawals)
+    withdrawn_statement = (
+        select(func.sum(Withdrawal.amount_requested))
+        .where(
+            Withdrawal.recipient_id == recipient_id,
+            Withdrawal.status == WithdrawalStatus.COMPLETED
+        )
+    )
+    total_withdrawn = session.exec(withdrawn_statement).one() or 0.0
+
+    # Get pending withdrawals
+    pending_statement = (
+        select(func.sum(Withdrawal.amount_requested))
+        .where(
+            Withdrawal.recipient_id == recipient_id,
+            Withdrawal.status == WithdrawalStatus.PENDING
+        )
+    )
+    pending_withdrawals = session.exec(pending_statement).one() or 0.0
+
+    # Calculate available balance
+    available_balance = total_received - total_withdrawn - pending_withdrawals
+
+    return {
+        "total_received": float(total_received),
+        "total_withdrawn": float(total_withdrawn),
+        "pending_withdrawals": float(pending_withdrawals),
+        "available_balance": float(available_balance)
+    }
+
+
+def create_withdrawal(
+    *,
+    session: Session,
+    recipient_id: uuid.UUID,
+    amount_requested: float,
+    bank_account_number: str,
+    bank_name: str,
+    account_holder_name: str,
+    fee_percentage: float = 6.0
+) -> Withdrawal:
+    """
+    Create a new withdrawal request.
+    Calculates fee and amount to transfer automatically.
+    """
+
+    # Calculate fee and amount to transfer
+    fee_amount = amount_requested * (fee_percentage / 100)
+    amount_to_transfer = amount_requested - fee_amount
+
+    withdrawal = Withdrawal(
+        recipient_id=recipient_id,
+        amount_requested=amount_requested,
+        fee_percentage=fee_percentage,
+        fee_amount=fee_amount,
+        amount_to_transfer=amount_to_transfer,
+        bank_account_number=bank_account_number,
+        bank_name=bank_name,
+        account_holder_name=account_holder_name,
+        status=WithdrawalStatus.PENDING,
+        requested_at=datetime.utcnow()
+    )
+
+    session.add(withdrawal)
+    session.commit()
+    session.refresh(withdrawal)
+    return withdrawal
+
+
+def get_withdrawals_by_recipient(
+    *,
+    session: Session,
+    recipient_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Withdrawal]:
+    """Get all withdrawals for a specific recipient, ordered by requested_at descending"""
+
+    statement = (
+        select(Withdrawal)
+        .where(Withdrawal.recipient_id == recipient_id)
+        .order_by(Withdrawal.requested_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_withdrawals_by_recipient(
+    *,
+    session: Session,
+    recipient_id: uuid.UUID
+) -> int:
+    """Count total withdrawals for a recipient"""
+
+    statement = (
+        select(func.count())
+        .select_from(Withdrawal)
+        .where(Withdrawal.recipient_id == recipient_id)
+    )
+    return session.exec(statement).one()
+
+
+def get_withdrawal_by_id(
+    *,
+    session: Session,
+    withdrawal_id: uuid.UUID
+) -> Withdrawal | None:
+    """Get a specific withdrawal by ID"""
+
+    return session.get(Withdrawal, withdrawal_id)
+
+
+def complete_withdrawal(
+    *,
+    session: Session,
+    withdrawal_id: uuid.UUID
+) -> Withdrawal:
+    """
+    Mark a withdrawal as completed.
+    This would be called after the mock transfer is processed.
+    """
+
+    withdrawal = session.get(Withdrawal, withdrawal_id)
+    if not withdrawal:
+        raise ValueError(f"Withdrawal with id {withdrawal_id} not found")
+
+    withdrawal.status = WithdrawalStatus.COMPLETED
+    withdrawal.completed_at = datetime.utcnow()
+
+    session.add(withdrawal)
+    session.commit()
+    session.refresh(withdrawal)
+    return withdrawal
+
+
+def get_all_withdrawals(
+    *,
+    session: Session,
+    skip: int = 0,
+    limit: int = 100
+) -> list[Withdrawal]:
+    """Get all withdrawals across all users (admin only), ordered by requested_at descending"""
+
+    statement = (
+        select(Withdrawal)
+        .order_by(Withdrawal.requested_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_all_withdrawals(
+    *,
+    session: Session
+) -> int:
+    """Count total withdrawals across all users"""
+
+    statement = select(func.count()).select_from(Withdrawal)
+    return session.exec(statement).one()
+
+
 # Requester Profile CRUD operations
-
-
 def create_requester_profile(
     *, session: Session, profile_in: RequesterProfileCreate, user_id: uuid.UUID
 ) -> RequesterProfile:
@@ -2694,3 +3232,161 @@ def delete_open_position(
         session.commit()
         return True
     return False
+
+# Sponsor Profile CRUD operations (identical to requester)
+def create_sponsor_profile(
+    *, session: Session, profile_in: SponsorProfileCreate, user_id: uuid.UUID
+) -> SponsorProfile:
+    """Create a new sponsor profile"""
+    db_profile = SponsorProfile.model_validate(
+        profile_in, update={
+            "user_id": user_id,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
+        }
+    )
+    session.add(db_profile)
+    session.commit()
+    session.refresh(db_profile)
+    return db_profile
+
+def get_sponsor_profile(*, session: Session, profile_id: uuid.UUID) -> SponsorProfilePublic | None:
+    """Get sponsor profile by ID with user data"""
+    statement = (
+        select(SponsorProfile)
+        .options(selectinload(SponsorProfile.user))
+        .where(SponsorProfile.id == profile_id)
+    )
+    profile = session.exec(statement).first()
+
+    if not profile:
+        return None
+
+    return SponsorProfilePublic.model_validate(profile, update={"user": profile.user})
+
+def get_sponsor_profile_by_user_id(
+    *, session: Session, user_id: uuid.UUID
+) -> SponsorProfilePublic | None:
+    """Get sponsor profile by user ID with user data"""
+    statement = (
+        select(SponsorProfile)
+        .options(selectinload(SponsorProfile.user))
+        .where(SponsorProfile.user_id == user_id)
+    )
+    profile = session.exec(statement).first()
+
+    if not profile:
+        return None
+
+    return SponsorProfilePublic.model_validate(profile, update={"user": profile.user})
+
+def update_sponsor_profile(
+    *, session: Session, db_profile: SponsorProfile, profile_in: SponsorProfileUpdate
+) -> SponsorProfilePublic:
+    """Update an existing sponsor profile"""
+    profile_data = profile_in.model_dump(exclude_unset=True)
+    profile_data["updated_at"] = datetime.now(timezone.utc)
+
+    db_profile.sqlmodel_update(profile_data)
+    session.add(db_profile)
+    session.commit()
+    session.refresh(db_profile)
+
+    session.refresh(db_profile, ["user"])
+
+    return SponsorProfilePublic.model_validate(db_profile, update={"user": db_profile.user})
+
+def delete_sponsor_profile(*, session: Session, profile_id: uuid.UUID) -> bool:
+    """Delete a sponsor profile"""
+    profile = session.get(SponsorProfile, profile_id)
+    if profile:
+        session.delete(profile)
+        session.commit()
+        return True
+    return False
+
+def get_sponsor_profiles(
+    *, session: Session, skip: int = 0, limit: int = 100
+) -> tuple[list[SponsorProfilePublic], int]:
+    """Get all sponsor profiles with pagination"""
+    statement = select(SponsorProfile).options(selectinload(SponsorProfile.user)).offset(skip).limit(limit)
+    profiles = session.exec(statement).all()
+    count_statement = select(func.count(SponsorProfile.id))
+    count = session.exec(count_statement).one()
+
+    public_profiles = [
+        RequesterProfilePublic.model_validate(
+            profile, update={"user": profile.user})
+        for profile in profiles
+    ]
+
+    return public_profiles, count
+
+def search_sponsor_profiles(
+    *, session: Session, search_query: str | None = None, location: str | None = None, skip: int = 0, limit: int = 100
+) -> tuple[list[SponsorProfilePublic], int]:
+    """Search sponsor profiles by query and filters"""
+    statement = select(SponsorProfile).options(selectinload(SponsorProfile.user))
+
+    filters = []
+    if search_query:
+        search_filter = (
+            User.firstname.ilike(f"%{search_query}%") |
+            User.lastname.ilike(f"%{search_query}%") |
+            User.email.ilike(f"%{search_query}%") |
+            RequesterProfile.tagline.ilike(f"%{search_query}%") |
+            RequesterProfile.about.ilike(f"%{search_query}%")
+        )
+        filters.append(search_filter)
+
+    if location:
+        filters.append(RequesterProfile.location.ilike(f"%{location}%"))
+
+    if filters:
+        statement = statement.where(*filters)
+
+    # Add pagination and ordering
+    count_statement = statement.with_only_columns(
+        func.count(RequesterProfile.id))
+    count = session.exec(count_statement).one()
+
+    profiles = session.exec(
+        statement.offset(skip).limit(limit).order_by(
+            RequesterProfile.created_at.desc())
+    ).all()
+
+    # Convert to public models
+    public_profiles = [
+        RequesterProfilePublic.model_validate(
+            profile, update={"user": profile.user})
+        for profile in profiles
+    ]
+
+    return public_profiles, count
+
+def get_sponsor_profile_stats(*, session: Session, user_id: uuid.UUID) -> dict:
+    """Get statistics for sponsor's dashboard (donations and sponsorships)"""
+    # Count total donations by sponsor (user_id)
+    total_donations = session.exec(
+        select(func.count(Donation.id)).where(Donation.donor_id == user_id)
+    ).one() or 0
+
+    # Count total sponsorships (assuming sponsorships are linked via a separate model or donation type; adjust if needed)
+    # Placeholder: If sponsorships are a subset of donations, filter accordingly. For now, assume all donations are sponsorships or add a flag.
+    total_sponsorships = session.exec(
+        select(func.count(Donation.id)).where(Donation.donor_id == user_id)  # Adjust filter if sponsorships differ
+    ).one() or 0
+
+    # Calculate total amount donated
+    total_amount_donated = session.exec(
+        select(func.sum(Payment.amount))
+        .join(Donation, Payment.order_id == Donation.order_id)
+        .where(Donation.donor_id == user_id)
+    ).one() or 0
+
+    return {
+        "total_donations": total_donations,
+        "total_sponsorships": total_sponsorships,
+        "total_amount_donated": total_amount_donated,
+        "active_sponsorships": total_sponsorships,  # Placeholder; adjust based on status if available
+    }
