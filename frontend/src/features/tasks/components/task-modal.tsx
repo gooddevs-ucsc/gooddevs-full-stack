@@ -138,7 +138,7 @@ export const TaskModal: FC<TaskModalProps> = ({
   // Create volunteer options for the dropdown
   const approvedApplicantOptions =
     approvedApplicantsData?.data?.map((applicant) => ({
-      label: `${getVolunteerFullName(applicant)} (${applicant.role})`,
+      label: `${getVolunteerFullName(applicant)}`,
       value: applicant.id,
     })) || [];
 
