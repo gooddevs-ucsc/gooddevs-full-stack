@@ -130,7 +130,7 @@ async def create_task(  # Make this async
                 message=f"A new task has been assigned to you: {task.title}",
                 related_entity_id=task.id,
                 related_entity_type="task",
-                action_url=f"/projects/{project_id}/tasks/{task.id}"
+                action_url=f"/projects/{project_id}"
             )
         except Exception as e:
             logging.warning(f"Could not send notification: {e}")
